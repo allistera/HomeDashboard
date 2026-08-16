@@ -662,6 +662,14 @@ a {
   opacity: 0.55;
 }
 
+.plan__label {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  fill: var(--label);
+  text-anchor: middle;
+}
+
 .plan__lead {
   stroke: var(--accent);
   stroke-width: 1.5;

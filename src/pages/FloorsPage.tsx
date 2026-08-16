@@ -21,54 +21,71 @@ interface Callout {
   dot: [number, number];
 }
 
+interface PlanLabel {
+  x: number;
+  y: number;
+  text: string;
+}
+
 interface FloorPlan {
   id: FloorId;
   title: string;
   floorLabel: string;
+  outline: string;
+  slab: string;
   walls: string[];
   stairs: string;
+  labels: PlanLabel[];
   stairsAction: { text: string; target: FloorId };
   callouts: Callout[];
 }
 
-// Isometric grid: p(a, b) = (650 + (a - b) * 41.6, 150 + (a + b) * 24)
-// on a 1300 x 800 canvas. Wall paths below are precomputed from that grid.
-const OUTLINE = "M 650 150 L 1066 390 L 650 630 L 234 390 Z";
-const SLAB = "M 1066 390 L 1066 408 L 650 648 L 234 408 L 234 390 M 650 630 L 650 648";
-
+// Isometric grid: p(a, b) = (660 + (a - b) * 38, 140 + (a + b) * 22) on a
+// 1300 x 800 canvas. Geometry traced from the real Dedridge floor plan:
+// ground floor is an L-shape (kitchen block raised top-left, lounge/dining
+// down the right, stairs + closets + WC on the left), first floor is a
+// rectangle with three bedrooms, a bathroom, and a closet under the stairs.
 const floors: FloorPlan[] = [
   {
     id: "ground",
     title: "Ground floor",
     floorLabel: "Ground floor",
+    outline: "M 660 140 L 850 250 L 812 272 L 1002 382 L 584 624 L 204 404 Z",
+    slab: "M 1002 382 L 1002 398 L 584 640 L 204 420 L 204 404 M 584 624 L 584 640",
     walls: [
-      "M 899.6 294 L 483.6 534", // a = 6
-      "M 483.6 246 L 733.2 390", // b = 4, kitchen / hall
-      "M 358.8 318 L 608.4 462", // b = 7, hall / utility
+      "M 812 272 L 394 514", // hall / lounge divider (x = 5)
+      "M 432 272 L 622 382", // kitchen back wall (y = 6)
+      "M 299 349 L 394 404", // closet wall (y = 9.5)
+      "M 261 371 L 356 426", // WC wall (y = 10.5)
+      "M 394 404 L 299 459", // closet / hall divider (x = 2.5)
     ],
-    stairs: "525.2,294 650,366 566.8,414 442,342",
+    stairs: "451,305 527,349 432,404 356,360",
+    labels: [
+      { x: 326, y: 390, text: "C" },
+      { x: 280, y: 417, text: "WC" },
+    ],
     stairsAction: { text: "Go up to first floor", target: "first" },
     callouts: [
       {
         roomId: "kitchen",
         left: 3,
         top: 15,
-        line: "M 355 132 H 691.6 V 258",
-        dot: [691.6, 270],
+        line: "M 355 132 H 641 V 249",
+        dot: [641, 261],
       },
       {
         roomId: "hallway",
         left: 3,
         top: 45,
-        line: "M 345 372 H 500 V 380",
-        dot: [500, 388],
+        line: "M 345 372 H 500 V 388",
+        dot: [500, 400],
       },
       {
         roomId: "living-room",
         left: 71,
         top: 37,
-        line: "M 920 320 H 774.8 V 450",
-        dot: [774.8, 462],
+        line: "M 920 320 H 698 V 436",
+        dot: [698, 448],
       },
     ],
   },
@@ -76,33 +93,41 @@ const floors: FloorPlan[] = [
     id: "first",
     title: "First floor",
     floorLabel: "First floor",
+    outline: "M 660 140 L 1040 360 L 622 602 L 242 382 Z",
+    slab: "M 1040 360 L 1040 376 L 622 618 L 242 398 L 242 382 M 622 602 L 622 618",
     walls: [
-      "M 858 270 L 442 510", // a = 5
-      "M 442 270 L 858 510", // b = 5
+      "M 839 243 L 421 485", // bedrooms / landing divider (x = 4.7)
+      "M 489 239 L 668 342", // Jaicobs Room back wall (y = 4.5)
+      "M 618 371 L 820 488", // bedroom / Elsies Room divider (y = 5.8)
+      "M 329 331 L 508 435", // bathroom wall (y = 8.7)
     ],
-    stairs: "442,318 546,378 462.8,426 358.8,366",
+    stairs: "497,257 565,296 462,356 394,316",
+    labels: [
+      { x: 398, y: 349, text: "C" },
+      { x: 375, y: 410, text: "BATHROOM" },
+    ],
     stairsAction: { text: "Go down to ground floor", target: "ground" },
     callouts: [
       {
         roomId: "jaicobs-room",
         left: 3,
         top: 15,
-        line: "M 355 132 H 650 V 258",
-        dot: [650, 270],
+        line: "M 355 132 H 664 V 227",
+        dot: [664, 239],
       },
       {
         roomId: "bedroom",
         left: 71,
         top: 30,
-        line: "M 920 252 H 858 V 378",
-        dot: [858, 390],
+        line: "M 920 252 H 835 V 352",
+        dot: [835, 364],
       },
       {
         roomId: "elsies-room",
         left: 71,
         top: 62,
-        line: "M 920 508 H 691.6 V 474",
-        dot: [691.6, 462],
+        line: "M 920 508 H 622 V 496",
+        dot: [622, 488],
       },
     ],
   },
@@ -246,15 +271,21 @@ export default defineComponent({
                 </pattern>
               </defs>
 
-              <path d={OUTLINE} class="plan__slab" />
-              <path d={SLAB} class="plan__wall" fill="none" />
-              <path d={OUTLINE} class="plan__wall" fill="none" />
+              <path d={floor.value.outline} class="plan__slab" />
+              <path d={floor.value.slab} class="plan__wall" fill="none" />
+              <path d={floor.value.outline} class="plan__wall" fill="none" />
               {floor.value.walls.map((d, index) => (
                 <path key={index} d={d} class="plan__wall" fill="none" />
               ))}
 
               <polygon points={floor.value.stairs} class="plan__stairs" />
               <polygon points={floor.value.stairs} fill="url(#stair-hatch)" stroke="none" />
+
+              {floor.value.labels.map((label) => (
+                <text key={label.text} x={label.x} y={label.y} class="plan__label">
+                  {label.text}
+                </text>
+              ))}
 
               {floor.value.callouts.map((callout) => (
                 <g key={callout.roomId}>
