@@ -36,7 +36,7 @@ export default defineComponent({
       return (
         <main class="main">
           <TopBar
-            left={["7:42 PM · THU", "OUTSIDE 12°"]}
+            left={["OUTSIDE 12°"]}
             right={[`${security.peopleHome} PEOPLE HOME`]}
             status={security.allSecure ? "ALL SYSTEMS OK" : "STUDIO WINDOW OPEN"}
           />

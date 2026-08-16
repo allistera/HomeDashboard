@@ -18,7 +18,7 @@ export default defineComponent({
     return () => (
       <main class="main">
         <TopBar
-          left={["7:42 PM · THU", `TARIFF ${energy.tariff}`]}
+          left={[`TARIFF ${energy.tariff}`]}
           right={[`BILLING PERIOD DAY ${energy.billingDay} / ${energy.billingDays}`]}
           status={`DRAWING ${energy.liveDrawKw.toFixed(1)} KW`}
         />

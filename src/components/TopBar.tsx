@@ -1,5 +1,6 @@
 import { defineComponent, type PropType } from "vue";
 
+import { useClock } from "@/composables/useClock";
 import { useThemeStore } from "@/stores/theme";
 
 export default defineComponent({
@@ -15,10 +16,12 @@ export default defineComponent({
   },
   setup(props) {
     const theme = useThemeStore();
+    const clock = useClock();
     return () => (
       <header class="topbar">
         <div class="topbar__group">
-          <span class="topbar__home">MAPLE STREET</span>
+          <span class="topbar__home">Dedridge</span>
+          <span>{clock.value}</span>
           {props.left.map((item) => (
             <span key={item}>{item}</span>
           ))}

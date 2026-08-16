@@ -1,4 +1,4 @@
-# Maple Street — Home Dashboard
+# Dedridge — Home Dashboard
 
 A smart-home dashboard built from the "Editorial Sheet" design concepts in
 `Smart Home Dashboard.html`. One dense page per area, rules instead of cards,

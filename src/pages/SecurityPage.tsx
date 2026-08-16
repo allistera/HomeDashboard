@@ -34,7 +34,7 @@ export default defineComponent({
     return () => (
       <main class="main">
         <TopBar
-          left={["7:42 PM · THU", `${security.cameras.length} CAMERAS · 9 SENSORS`]}
+          left={[`${security.cameras.length} CAMERAS · 9 SENSORS`]}
           right={[`${security.peopleHome} PEOPLE HOME`]}
           status={security.armLabel}
         />
