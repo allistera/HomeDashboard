@@ -36,19 +36,6 @@ export type Scene = "relax" | "bright" | "all-off";
 
 const seedRooms: Room[] = [
   {
-    id: "hallway",
-    name: "Hallway",
-    floor: "Ground floor",
-    lights: [{ id: "ceiling", name: "Ceiling", level: 55 }],
-    blinds: [],
-    temp: 20.5,
-    target: 20.5,
-    meta: "MOTION 6M AGO",
-    events: [],
-    deviceCount: 2,
-    offlineCount: 0,
-  },
-  {
     id: "living-room",
     name: "Living room",
     floor: "Ground floor",
@@ -97,6 +84,19 @@ const seedRooms: Room[] = [
     },
     events: [{ time: "6:58", text: "Vacuum returned to dock" }],
     deviceCount: 5,
+    offlineCount: 0,
+  },
+  {
+    id: "hallway",
+    name: "Hallway",
+    floor: "Ground floor",
+    lights: [{ id: "ceiling", name: "Ceiling", level: 55 }],
+    blinds: [],
+    temp: 20.5,
+    target: 20.5,
+    meta: "MOTION 6M AGO",
+    events: [],
+    deviceCount: 2,
     offlineCount: 0,
   },
   {
