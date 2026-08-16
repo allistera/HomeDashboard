@@ -35,11 +35,7 @@ export default defineComponent({
       const room = rooms.selectedRoom;
       return (
         <main class="main">
-          <TopBar
-            left={["OUTSIDE 12°"]}
-            right={[`${security.peopleHome} PEOPLE HOME`]}
-            status={security.allSecure ? "ALL SYSTEMS OK" : "STUDIO WINDOW OPEN"}
-          />
+          <TopBar left={["OUTSIDE 12°"]} showPeople status={security.statusLabel} />
 
           <div class="cols" style={{ gridTemplateColumns: "296px 1fr" }}>
             <div class="col">

@@ -70,8 +70,8 @@ const seedState: SecurityState = {
       detail: "LOCKED · 6:31 PM",
     },
     {
-      id: "studio-window",
-      name: "Studio window",
+      id: "jaicobs-room-window",
+      name: "Jaicobs Room window",
       kind: "window",
       locked: false,
       open: true,
@@ -129,6 +129,13 @@ export const useSecurityStore = defineStore("security", {
     },
     allSecure(state): boolean {
       return state.entries.every((e) => e.locked && !e.open);
+    },
+    statusLabel(state): string {
+      const open = state.entries.find((e) => e.open);
+      if (open) return `${open.name.toUpperCase()} OPEN`;
+      const unlocked = state.entries.find((e) => !e.locked);
+      if (unlocked) return `${unlocked.name.toUpperCase()} UNLOCKED`;
+      return "ALL SYSTEMS OK";
     },
     armLabel(state): string {
       switch (state.armState) {

@@ -40,6 +40,28 @@ describe("App", () => {
     expect(wrapper.text()).toContain("Secure since 7:02 PM");
   });
 
+  it("lists who is home in the people popover", async () => {
+    const { wrapper, router } = mountApp();
+    await router.isReady();
+
+    expect(wrapper.get(".topbar__people").text()).toContain("3 PEOPLE HOME");
+    const popover = wrapper.get(".topbar__popover");
+    expect(popover.text()).toContain("Mara");
+    expect(popover.text()).toContain("Jonas");
+    expect(popover.text()).toContain("Elsa");
+    expect(popover.text()).not.toContain("Cleaner");
+  });
+
+  it("shows the new rooms and not the studio", async () => {
+    const { wrapper, router } = mountApp();
+    await router.isReady();
+
+    await router.push("/rooms");
+    expect(wrapper.text()).toContain("Jaicobs Room");
+    expect(wrapper.text()).toContain("Elsies Room");
+    expect(wrapper.text()).not.toContain("Studio");
+  });
+
   it("toggles dark mode on the document root", async () => {
     const { wrapper, router } = mountApp();
     await router.isReady();

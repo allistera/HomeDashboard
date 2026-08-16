@@ -8,11 +8,11 @@ describe("security store", () => {
     setActivePinia(createPinia());
   });
 
-  it("starts armed for home with the studio window open", () => {
+  it("starts armed for home with the Jaicobs Room window open", () => {
     const security = useSecurityStore();
     expect(security.armState).toBe("home");
     expect(security.armLabel).toBe("ARMED — HOME");
-    expect(security.openEntries.map((e) => e.id)).toEqual(["studio-window"]);
+    expect(security.openEntries.map((e) => e.id)).toEqual(["jaicobs-room-window"]);
     expect(security.allSecure).toBe(false);
   });
 
@@ -26,7 +26,7 @@ describe("security store", () => {
 
   it("locking an open entry also closes it", () => {
     const security = useSecurityStore();
-    security.setLocked("studio-window", true);
+    security.setLocked("jaicobs-room-window", true);
     expect(security.openEntries).toHaveLength(0);
     expect(security.allSecure).toBe(true);
   });
@@ -42,5 +42,16 @@ describe("security store", () => {
   it("counts residents but not guests as people home", () => {
     const security = useSecurityStore();
     expect(security.peopleHome).toBe(3);
+  });
+
+  it("derives the status label from the perimeter state", () => {
+    const security = useSecurityStore();
+    expect(security.statusLabel).toBe("JAICOBS ROOM WINDOW OPEN");
+
+    security.setLocked("jaicobs-room-window", true);
+    expect(security.statusLabel).toBe("ALL SYSTEMS OK");
+
+    security.setLocked("front-door", false);
+    expect(security.statusLabel).toBe("FRONT DOOR UNLOCKED");
   });
 });

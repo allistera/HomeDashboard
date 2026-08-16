@@ -35,7 +35,7 @@ export default defineComponent({
       <main class="main">
         <TopBar
           left={[`${security.cameras.length} CAMERAS · 9 SENSORS`]}
-          right={[`${security.peopleHome} PEOPLE HOME`]}
+          showPeople
           status={security.armLabel}
         />
 

@@ -71,7 +71,8 @@ export const useEnergyStore = defineStore("energy", {
       { name: "Living room", kwh: 3.1 },
       { name: "Utility", kwh: 2.6 },
       { name: "Bedroom", kwh: 1.8 },
-      { name: "Studio", kwh: 1.8 },
+      { name: "Jaicobs Room", kwh: 1.0 },
+      { name: "Elsies Room", kwh: 0.8 },
     ],
     week: [
       { day: "M", height: 62, state: "past" },

@@ -42,11 +42,7 @@ export default defineComponent({
 
     return () => (
       <main class="main">
-        <TopBar
-          left={["OUTSIDE 12°"]}
-          right={[`${security.peopleHome} PEOPLE HOME`]}
-          status={security.allSecure ? "ALL SYSTEMS OK" : "STUDIO WINDOW OPEN"}
-        />
+        <TopBar left={["OUTSIDE 12°"]} showPeople status={security.statusLabel} />
 
         <div class="hero">
           <div>

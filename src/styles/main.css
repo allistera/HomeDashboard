@@ -570,3 +570,51 @@ a {
 .settings-form__status--error {
   color: var(--danger);
 }
+
+/* ── People-home popover ────────────────────────────── */
+
+.topbar__people {
+  position: relative;
+  cursor: default;
+}
+
+.topbar__popover {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  padding-top: 10px;
+  z-index: 20;
+}
+
+.topbar__people:hover .topbar__popover,
+.topbar__people:focus .topbar__popover {
+  display: block;
+}
+
+.topbar__popover-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 150px;
+  padding: 14px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.14);
+}
+
+.topbar__popover-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.topbar__popover-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}

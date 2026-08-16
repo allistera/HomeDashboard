@@ -1,6 +1,7 @@
 import { defineComponent, type PropType } from "vue";
 
 import { useClock } from "@/composables/useClock";
+import { useSecurityStore } from "@/stores/security";
 import { useThemeStore } from "@/stores/theme";
 
 export default defineComponent({
@@ -13,9 +14,11 @@ export default defineComponent({
     // SAFETY: same Vue PropType pattern as above.
     right: { type: Array as PropType<string[]>, default: () => [] },
     status: { type: String, required: true },
+    showPeople: { type: Boolean, default: false },
   },
   setup(props) {
     const theme = useThemeStore();
+    const security = useSecurityStore();
     const clock = useClock();
     return () => (
       <header class="topbar">
@@ -30,6 +33,23 @@ export default defineComponent({
           {props.right.map((item) => (
             <span key={item}>{item}</span>
           ))}
+          {props.showPeople && (
+            <span class="topbar__people" tabindex={0}>
+              {security.peopleHome} PEOPLE HOME
+              <span class="topbar__popover" role="tooltip">
+                <span class="topbar__popover-box">
+                  {security.people
+                    .filter((person) => !person.guest)
+                    .map((person) => (
+                      <span key={person.id} class="topbar__popover-row">
+                        <span class="topbar__popover-dot" style={{ background: person.color }} />
+                        {person.name}
+                      </span>
+                    ))}
+                </span>
+              </span>
+            </span>
+          )}
           <span class="topbar__status">● {props.status}</span>
           <button
             type="button"
