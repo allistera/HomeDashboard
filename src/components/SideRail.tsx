@@ -4,7 +4,7 @@ import { RouterLink } from "vue-router";
 const links = [
   { label: "HOME", to: "/" },
   { label: "ROOMS", to: "/rooms" },
-  { label: "ENERGY", to: "/energy" },
+  { label: "FLOORS", to: "/floors" },
   { label: "SECURITY", to: "/security" },
 ];
 

@@ -22,7 +22,7 @@ describe("App", () => {
     const { wrapper, router } = mountApp();
     await router.isReady();
     const links = wrapper.findAll(".rail__link").map((link) => link.text());
-    expect(links).toEqual(["HOME", "ROOMS", "ENERGY", "SECURITY"]);
+    expect(links).toEqual(["HOME", "ROOMS", "FLOORS", "SECURITY"]);
     expect(wrapper.text()).toContain("Everything's quiet.");
   });
 
@@ -33,8 +33,8 @@ describe("App", () => {
     await router.push("/rooms");
     expect(wrapper.text()).toContain("Living room");
 
-    await router.push("/energy");
-    expect(wrapper.text()).toContain("Projected bill");
+    await router.push("/floors");
+    expect(wrapper.text()).toContain("Ground floor");
 
     await router.push("/security");
     expect(wrapper.text()).toContain("Secure since 7:02 PM");
@@ -60,6 +60,32 @@ describe("App", () => {
     expect(wrapper.text()).toContain("Jaicobs Room");
     expect(wrapper.text()).toContain("Elsies Room");
     expect(wrapper.text()).not.toContain("Studio");
+  });
+
+  it("switches floors in the god view", async () => {
+    const { wrapper, router } = mountApp();
+    await router.isReady();
+
+    await router.push("/floors");
+    expect(wrapper.text()).toContain("Kitchen");
+    expect(wrapper.text()).not.toContain("Elsies Room");
+
+    const firstFloorButton = wrapper
+      .findAll("button")
+      .find((button) => button.text() === "First floor")!;
+    await firstFloorButton.trigger("click");
+    expect(wrapper.text()).toContain("Elsies Room");
+    expect(wrapper.text()).toContain("Jaicobs Room");
+    expect(wrapper.text()).not.toContain("Kitchen");
+  });
+
+  it("redirects the old energy route to floors", async () => {
+    const { wrapper, router } = mountApp();
+    await router.isReady();
+
+    await router.push("/energy");
+    expect(router.currentRoute.value.path).toBe("/floors");
+    expect(wrapper.text()).toContain("Floor plan");
   });
 
   it("toggles dark mode on the document root", async () => {

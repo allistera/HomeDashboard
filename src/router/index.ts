@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 
-import EnergyPage from "@/pages/EnergyPage";
+import FloorsPage from "@/pages/FloorsPage";
 import HomePage from "@/pages/HomePage";
 import RoomsPage from "@/pages/RoomsPage";
 import SecurityPage from "@/pages/SecurityPage";
@@ -11,7 +11,8 @@ export const router = createRouter({
   routes: [
     { path: "/", name: "home", component: HomePage },
     { path: "/rooms", name: "rooms", component: RoomsPage },
-    { path: "/energy", name: "energy", component: EnergyPage },
+    { path: "/floors", name: "floors", component: FloorsPage },
+    { path: "/energy", redirect: "/floors" },
     { path: "/security", name: "security", component: SecurityPage },
     { path: "/settings", name: "settings", component: SettingsPage },
   ],

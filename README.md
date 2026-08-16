@@ -10,9 +10,9 @@ type carries the hierarchy.
   front-door camera, activity feed, and scene shortcuts (Good night / Movie / Away).
 - **Rooms** (`/rooms`) — room list on the left, the selected room's lights,
   blinds, climate, media, and activity as ruled rows on the right.
-- **Energy** (`/energy`) — live draw, 24-hour curve, current consumers, per-room
-  usage, weekly bars, and the projected bill. Also comes in dark mode — toggle
-  it from the top bar (design 3b).
+- **Floors** (`/floors`) — the "God View": isometric floor plans of the ground
+  and first floors with live room callouts (lights, blinds, media, windows),
+  a floor switcher, and a stairs shortcut. `/energy` redirects here.
 - **Security** (`/security`) — arm state, camera wall, every door and window as
   a ruled row, presence, and today's events.
 
@@ -21,7 +21,7 @@ type carries the hierarchy.
 - [Vue 3](https://vuejs.org) with TSX components (`@vitejs/plugin-vue-jsx`)
 - TypeScript (strict)
 - [Vue Router](https://router.vuejs.org) for the four pages
-- [Pinia](https://pinia.vuejs.org) stores: `rooms`, `energy`, `security`, `theme`
+- [Pinia](https://pinia.vuejs.org) stores: `rooms`, `security`, `settings`, `theme`
 - [Vitest](https://vitest.dev) + Vue Test Utils
 - [oxlint](https://oxc.rs) for linting
 - [oxfmt](https://oxc.rs) formats TypeScript/TSX; [Prettier](https://prettier.io)

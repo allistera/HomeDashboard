@@ -618,3 +618,175 @@ a {
   border-radius: 50%;
   flex-shrink: 0;
 }
+
+/* ── God view / floor plan ──────────────────────────── */
+
+.plan-wrap {
+  flex: 1;
+  min-height: 0;
+  padding: 10px 24px 0;
+}
+
+.plan-canvas {
+  position: relative;
+  width: min(100%, 1360px, calc((100vh - 350px) * 1.625));
+  margin: 0 auto;
+  aspect-ratio: 13 / 8;
+}
+
+.plan-canvas > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.plan__slab {
+  fill: var(--highlight);
+}
+
+.plan__wall {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+.plan__stairs {
+  fill: var(--bg);
+  stroke: var(--accent);
+  stroke-width: 1.2;
+}
+
+.plan__hatch-line {
+  stroke: var(--accent);
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+.plan__lead {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.plan__dot {
+  fill: var(--accent);
+}
+
+.callout {
+  position: absolute;
+  width: 26%;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.callout__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.callout__name {
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+
+.callout__temp {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.callout__chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  border: 1px solid var(--btn-border);
+  background: var(--bg);
+  padding: 9px 12px;
+  min-width: 84px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chip__label {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.chip__value {
+  font-size: 15px;
+}
+
+.chip--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.chip--attention {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+
+.chip--active .chip__label,
+.chip--attention .chip__label {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.stairs-btn {
+  position: absolute;
+  left: 3%;
+  bottom: 5%;
+  border: 1px solid var(--accent);
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 15px;
+  padding: 15px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+}
+
+.plan-foot {
+  border-top: 1px solid var(--border);
+  padding: 18px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.legend {
+  display: flex;
+  gap: 24px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.legend > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend__swatch {
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+}
