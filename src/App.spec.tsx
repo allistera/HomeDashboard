@@ -44,11 +44,12 @@ describe("App", () => {
     const { wrapper, router } = mountApp();
     await router.isReady();
 
-    expect(wrapper.get(".topbar__people").text()).toContain("3 PEOPLE HOME");
+    expect(wrapper.get(".topbar__people").text()).toContain("4 PEOPLE HOME");
     const popover = wrapper.get(".topbar__popover");
-    expect(popover.text()).toContain("Mara");
-    expect(popover.text()).toContain("Jonas");
-    expect(popover.text()).toContain("Elsa");
+    expect(popover.text()).toContain("Allister");
+    expect(popover.text()).toContain("Tonnii");
+    expect(popover.text()).toContain("Elsie");
+    expect(popover.text()).toContain("Jaicob");
     expect(popover.text()).not.toContain("Cleaner");
   });
 

@@ -41,7 +41,7 @@ describe("security store", () => {
 
   it("counts residents but not guests as people home", () => {
     const security = useSecurityStore();
-    expect(security.peopleHome).toBe(3);
+    expect(security.peopleHome).toBe(4);
   });
 
   it("derives the status label from the perimeter state", () => {

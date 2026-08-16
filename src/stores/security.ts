@@ -98,9 +98,10 @@ const seedState: SecurityState = {
     },
   ],
   people: [
-    { id: "mara", name: "Mara", status: "ARRIVED 7:02 PM", color: "#C7CEEC" },
-    { id: "jonas", name: "Jonas", status: "HOME ALL DAY", color: "#D8D3C4" },
-    { id: "elsa", name: "Elsa", status: "ARRIVED 4:40 PM", color: "#CBD9CC" },
+    { id: "allister", name: "Allister", status: "ARRIVED 7:02 PM", color: "#C7CEEC" },
+    { id: "tonnii", name: "Tonnii", status: "HOME ALL DAY", color: "#D8D3C4" },
+    { id: "elsie", name: "Elsie", status: "ARRIVED 4:40 PM", color: "#CBD9CC" },
+    { id: "jaicob", name: "Jaicob", status: "ARRIVED 3:15 PM", color: "#E7CDB8" },
     {
       id: "cleaner",
       name: "Cleaner · guest code",
@@ -110,10 +111,10 @@ const seedState: SecurityState = {
     },
   ],
   events: [
-    { time: "7:02", text: "Front door unlocked · Mara" },
+    { time: "7:02", text: "Front door unlocked · Allister" },
     { time: "6:31", text: "Patio door closed and locked" },
     { time: "5:47", text: "Package detected at front door", accent: true },
-    { time: "4:40", text: "Back door unlocked · Elsa" },
+    { time: "4:40", text: "Back door unlocked · Elsie" },
     { time: "1:12", text: "Motion · driveway, 8 seconds" },
   ],
 };

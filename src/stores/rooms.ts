@@ -163,7 +163,7 @@ const seedRooms: Room[] = [
 ];
 
 const seedActivity: RoomEvent[] = [
-  { time: "7:02", text: "Front door unlocked by Mara" },
+  { time: "7:02", text: "Front door unlocked by Allister" },
   { time: "6:58", text: "Vacuum returned to dock" },
   { time: "6:30", text: "Blinds lowered · sunset" },
   { time: "5:47", text: "Package detected at front door" },
