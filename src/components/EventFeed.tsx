@@ -9,6 +9,9 @@ export interface FeedEvent {
 export default defineComponent({
   name: "EventFeed",
   props: {
+    // SAFETY: `Array as PropType<T[]>` is Vue's documented pattern for typed array
+    // props — the runtime validator stays `Array`, the cast only narrows the
+    // compile-time element type.
     events: { type: Array as PropType<FeedEvent[]>, required: true },
   },
   setup(props) {

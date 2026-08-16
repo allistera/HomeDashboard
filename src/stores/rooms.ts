@@ -143,16 +143,18 @@ const seedRooms: Room[] = [
   },
 ];
 
+const seedActivity: RoomEvent[] = [
+  { time: "7:02", text: "Front door unlocked by Mara" },
+  { time: "6:58", text: "Vacuum returned to dock" },
+  { time: "6:30", text: "Blinds lowered · sunset" },
+  { time: "5:47", text: "Package detected at front door" },
+];
+
 export const useRoomsStore = defineStore("rooms", {
   state: () => ({
     rooms: seedRooms,
     selectedRoomId: "living-room",
-    activity: [
-      { time: "7:02", text: "Front door unlocked by Mara" },
-      { time: "6:58", text: "Vacuum returned to dock" },
-      { time: "6:30", text: "Blinds lowered · sunset" },
-      { time: "5:47", text: "Package detected at front door" },
-    ] as RoomEvent[],
+    activity: seedActivity,
   }),
   getters: {
     selectedRoom(state): Room {
@@ -207,11 +209,11 @@ export const useRoomsStore = defineStore("rooms", {
     applyScene(roomId: string, scene: Scene) {
       const room = this.rooms.find((r) => r.id === roomId);
       if (!room) return;
-      const levels: Record<Scene, number> = {
+      const levels = {
         relax: 35,
         bright: 100,
         "all-off": 0,
-      };
+      } satisfies Record<Scene, number>;
       for (const light of room.lights) {
         light.level = levels[scene];
       }

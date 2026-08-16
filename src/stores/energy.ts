@@ -8,7 +8,7 @@ export interface RangeSummary {
   note: string;
 }
 
-const summaries: Record<EnergyRange, RangeSummary> = {
+const summaries = {
   day: {
     usage: "14.2 kWh",
     cost: "£3.98",
@@ -29,11 +29,27 @@ const summaries: Record<EnergyRange, RangeSummary> = {
     cost: "£1,095",
     note: "On pace for your lowest year yet — the heat pump swap in March is doing most of the work.",
   },
-};
+} satisfies Record<EnergyRange, RangeSummary>;
+
+interface EnergyState {
+  range: EnergyRange;
+  liveDrawKw: number;
+  tariff: string;
+  billingDay: number;
+  billingDays: number;
+  hourly: number[];
+  peakNote: string;
+  liveHoursFromEnd: number;
+  usingNow: { name: string; kw: number }[];
+  byRoom: { name: string; kwh: number }[];
+  week: { day: string; height: number; state: "past" | "today" | "future" }[];
+  projectedBill: string;
+  projectedNote: string;
+}
 
 export const useEnergyStore = defineStore("energy", {
-  state: () => ({
-    range: "day" as EnergyRange,
+  state: (): EnergyState => ({
+    range: "day",
     liveDrawKw: 1.4,
     tariff: "0.28 / KWH",
     billingDay: 12,
