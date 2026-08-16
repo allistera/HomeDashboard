@@ -15,6 +15,7 @@
   --toggle-off: #c9c7c0;
   --camera-a: #e2e0da;
   --camera-b: #d8d6cf;
+  --danger: #a63d2a;
 }
 
 [data-theme="dark"] {
@@ -34,6 +35,7 @@
   --toggle-off: #3a3a34;
   --camera-a: #232320;
   --camera-b: #2b2b27;
+  --danger: #e08a70;
 }
 
 * {
@@ -112,6 +114,21 @@ a {
 
 .rail__link--active,
 .rail__link--active:hover {
+  color: var(--ink);
+}
+
+.rail__settings {
+  margin-top: auto;
+  display: flex;
+  color: var(--label);
+}
+
+.rail__settings:hover {
+  color: var(--muted);
+}
+
+.rail__settings--active,
+.rail__settings--active:hover {
   color: var(--ink);
 }
 
@@ -494,4 +511,62 @@ a {
   height: 30px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+/* ── Settings form ──────────────────────────────────── */
+
+.settings-form {
+  padding: 32px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  max-width: 620px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field__input {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  padding: 13px 14px;
+  border: 1px solid var(--btn-border);
+  border-radius: 0;
+  background: var(--bg);
+  color: var(--ink);
+  width: 100%;
+}
+
+.field__input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.field__hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.settings-form__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.settings-form__status {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.settings-form__status--ok {
+  color: var(--accent);
+}
+
+.settings-form__status--error {
+  color: var(--danger);
 }
