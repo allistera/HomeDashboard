@@ -1,25 +1,37 @@
-import { defineComponent, ref } from "vue";
+import { computed, defineComponent, ref } from "vue";
 
 import TopBar from "@/components/TopBar";
+import { connectHa, disconnectHa } from "@/services/haClient";
+import { applyEntities } from "@/services/haSync";
+import { useHaStore } from "@/stores/ha";
 import { useSettingsStore } from "@/stores/settings";
 
 export default defineComponent({
   name: "SettingsPage",
   setup() {
     const settings = useSettingsStore();
+    const ha = useHaStore();
     const url = ref(settings.url);
     const token = ref(settings.token);
 
     const submit = async (event: Event) => {
       event.preventDefault();
-      await settings.validateAndSave(url.value, token.value);
+      const saved = await settings.validateAndSave(url.value, token.value);
+      if (saved) await connectHa(applyEntities);
     };
 
     const clear = () => {
+      disconnectHa();
       settings.clear();
       url.value = "";
       token.value = "";
     };
+
+    const connectionLine = computed(() => {
+      const parts = [ha.status.toUpperCase()];
+      if (ha.entityCount > 0) parts.push(`${ha.entityCount} ENTITIES`);
+      return parts.join(" · ");
+    });
 
     return () => (
       <main class="main">
@@ -100,6 +112,34 @@ export default defineComponent({
               {settings.message}
             </p>
           )}
+
+          <div class="connection">
+            <div class="label">Live connection</div>
+            <p
+              class={[
+                "settings-form__status",
+                "mono",
+                {
+                  "settings-form__status--ok": ha.status === "connected",
+                  "settings-form__status--error": ha.status === "error",
+                },
+              ]}
+              role="status"
+            >
+              {connectionLine.value}
+              {ha.message !== "" && ` — ${ha.message}`}
+            </p>
+            {settings.configured && ha.status !== "connected" && (
+              <button
+                type="button"
+                class="btn btn--small"
+                style={{ alignSelf: "flex-start" }}
+                onClick={() => void connectHa(applyEntities)}
+              >
+                Reconnect
+              </button>
+            )}
+          </div>
         </form>
       </main>
     );

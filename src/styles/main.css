@@ -798,3 +798,13 @@ a {
   height: 10px;
   display: inline-block;
 }
+
+/* ── Live connection panel ──────────────────────────── */
+
+.connection {
+  border-top: 1px solid var(--hairline);
+  padding-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

@@ -39,7 +39,7 @@ export default defineComponent({
               <span class="topbar__popover" role="tooltip">
                 <span class="topbar__popover-box">
                   {security.people
-                    .filter((person) => !person.guest)
+                    .filter((person) => !person.guest && person.home !== false)
                     .map((person) => (
                       <span key={person.id} class="topbar__popover-row">
                         <span class="topbar__popover-dot" style={{ background: person.color }} />

@@ -1,5 +1,8 @@
 import { defineStore } from "pinia";
 
+import { entryBindings } from "@/services/haBindings";
+import { haCallService } from "@/services/haClient";
+
 export type ArmState = "home" | "away" | "disarmed";
 
 export interface Entry {
@@ -24,6 +27,7 @@ export interface Person {
   status: string;
   color: string;
   guest?: boolean;
+  home?: boolean;
 }
 
 export interface SecurityEvent {
@@ -123,7 +127,7 @@ export const useSecurityStore = defineStore("security", {
   state: (): SecurityState => structuredClone(seedState),
   getters: {
     peopleHome(state): number {
-      return state.people.filter((p) => !p.guest).length;
+      return state.people.filter((p) => !p.guest && p.home !== false).length;
     },
     openEntries(state): Entry[] {
       return state.entries.filter((e) => e.open);
@@ -156,6 +160,10 @@ export const useSecurityStore = defineStore("security", {
     setLocked(id: string, locked: boolean) {
       const entry = this.entries.find((e) => e.id === id);
       if (!entry) return;
+      const lock = entryBindings.find((b) => b.entryId === id)?.lock;
+      if (lock) {
+        void haCallService("lock", locked ? "lock" : "unlock", undefined, { entity_id: lock });
+      }
       entry.locked = locked;
       if (locked) {
         entry.open = false;

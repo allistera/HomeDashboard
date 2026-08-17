@@ -1,5 +1,8 @@
 import { defineStore } from "pinia";
 
+import { roomBindingFor } from "@/services/haBindings";
+import { haCallService } from "@/services/haClient";
+
 export interface Light {
   id: string;
   name: string;
@@ -169,6 +172,17 @@ const seedActivity: RoomEvent[] = [
   { time: "5:47", text: "Package detected at front door" },
 ];
 
+// Mirrors a dashboard light change out to Home Assistant (no-op offline).
+function pushLight(roomId: string, lightId: string, level: number): void {
+  const entityId = roomBindingFor(roomId)?.lights.find((l) => l.lightId === lightId)?.entityId;
+  if (!entityId) return;
+  if (level > 0) {
+    void haCallService("light", "turn_on", { brightness_pct: level }, { entity_id: entityId });
+  } else {
+    void haCallService("light", "turn_off", undefined, { entity_id: entityId });
+  }
+}
+
 export const useRoomsStore = defineStore("rooms", {
   state: () => ({
     rooms: seedRooms,
@@ -206,6 +220,7 @@ export const useRoomsStore = defineStore("rooms", {
       if (!room) return;
       for (const light of room.lights) {
         light.level = on ? 70 : 0;
+        pushLight(room.id, light.id, light.level);
       }
     },
     setAllLights(on: boolean) {
@@ -217,12 +232,22 @@ export const useRoomsStore = defineStore("rooms", {
       const light = this.rooms.find((r) => r.id === roomId)?.lights.find((l) => l.id === lightId);
       if (light) {
         light.level = Math.min(100, Math.max(0, level));
+        pushLight(roomId, lightId, light.level);
       }
     },
     adjustTarget(roomId: string, delta: number) {
       const room = this.rooms.find((r) => r.id === roomId);
       if (room) {
         room.target = Math.round((room.target + delta) * 2) / 2;
+        const climate = roomBindingFor(roomId)?.climate;
+        if (climate) {
+          void haCallService(
+            "climate",
+            "set_temperature",
+            { temperature: room.target },
+            { entity_id: climate },
+          );
+        }
       }
     },
     applyScene(roomId: string, scene: Scene) {
@@ -235,6 +260,7 @@ export const useRoomsStore = defineStore("rooms", {
       } satisfies Record<Scene, number>;
       for (const light of room.lights) {
         light.level = levels[scene];
+        pushLight(room.id, light.id, light.level);
       }
     },
   },
