@@ -66,7 +66,7 @@ export const homePageBindings = {
     entityId: "camera.front_door",
   },
   mediaPlayer: {
-    roomId: "kitchen",
+    roomId: "living-room",
     entityId: "media_player.apple_tv",
   },
 } satisfies {
@@ -91,7 +91,7 @@ export const roomBindings: RoomBinding[] = [
       { blindId: "patio-door", entityId: "cover.living_room_patio_door" },
     ],
     climate: "climate.living_room",
-    media: "media_player.living_room",
+    media: homePageBindings.mediaPlayer.entityId,
   },
   {
     roomId: "kitchen",
@@ -101,7 +101,7 @@ export const roomBindings: RoomBinding[] = [
     ],
     covers: [],
     climate: "climate.kitchen",
-    media: homePageBindings.mediaPlayer.entityId,
+    media: "media_player.kitchen",
   },
   {
     roomId: "hallway",
