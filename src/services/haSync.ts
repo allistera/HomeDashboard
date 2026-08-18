@@ -3,6 +3,7 @@ import type { HassEntities, HassEntity } from "home-assistant-js-websocket";
 import { entryBindings, personBindings, roomBindings } from "@/services/haBindings";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
+import { useSettingsStore } from "@/stores/settings";
 
 export function lightLevelFrom(entity: HassEntity): number {
   if (entity.state !== "on") return 0;
@@ -17,6 +18,18 @@ export function blindClosedFrom(entity: HassEntity): number {
   return entity.state === "open" ? 0 : 100;
 }
 
+export function numericPropertyFrom(
+  entity: HassEntity | undefined,
+  attribute: string,
+): number | null {
+  if (!entity) return null;
+  const value = attribute === "" ? entity.state : entity.attributes[attribute];
+  const serialized = String(value ?? "").trim();
+  if (serialized === "") return null;
+  const number = Number(serialized);
+  return Number.isFinite(number) ? number : null;
+}
+
 function timeOf(entity: HassEntity): string {
   return new Date(entity.last_changed).toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -27,6 +40,12 @@ function timeOf(entity: HassEntity): string {
 export function applyEntities(entities: HassEntities): void {
   const rooms = useRoomsStore();
   const security = useSecurityStore();
+  const settings = useSettingsStore();
+
+  rooms.setHouseClimateValues(
+    numericPropertyFrom(entities[settings.houseTempEntity], settings.houseTempAttribute),
+    numericPropertyFrom(entities[settings.houseTargetEntity], settings.houseTargetAttribute),
+  );
 
   for (const binding of roomBindings) {
     const room = rooms.rooms.find((r) => r.id === binding.roomId);

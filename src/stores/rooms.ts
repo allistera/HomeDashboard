@@ -37,6 +37,14 @@ export interface Room {
 
 export type Scene = "relax" | "bright" | "all-off";
 
+interface RoomsState {
+  rooms: Room[];
+  selectedRoomId: string;
+  activity: RoomEvent[];
+  houseTempFromHa: number | null;
+  houseTargetFromHa: number | null;
+}
+
 const seedRooms: Room[] = [
   {
     id: "living-room",
@@ -184,10 +192,12 @@ function pushLight(roomId: string, lightId: string, level: number): void {
 }
 
 export const useRoomsStore = defineStore("rooms", {
-  state: () => ({
+  state: (): RoomsState => ({
     rooms: seedRooms,
     selectedRoomId: "living-room",
     activity: seedActivity,
+    houseTempFromHa: null,
+    houseTargetFromHa: null,
   }),
   getters: {
     selectedRoom(state): Room {
@@ -200,16 +210,22 @@ export const useRoomsStore = defineStore("rooms", {
       return state.rooms.some((r) => r.lights.some((l) => l.level > 0));
     },
     houseTemp(state): number {
+      if (state.houseTempFromHa !== null) return state.houseTempFromHa;
       const inside = state.rooms.filter((r) => r.id !== "garden");
       const avg = inside.reduce((sum, r) => sum + r.temp, 0) / inside.length;
       return Math.round(avg * 2) / 2;
     },
     houseTarget(state): number {
+      if (state.houseTargetFromHa !== null) return state.houseTargetFromHa;
       const targets = state.rooms.filter((r) => r.id !== "garden").map((r) => r.target);
       return Math.max(...targets);
     },
   },
   actions: {
+    setHouseClimateValues(temperature: number | null, target: number | null) {
+      this.houseTempFromHa = temperature;
+      this.houseTargetFromHa = target;
+    },
     selectRoom(id: string) {
       if (this.rooms.some((r) => r.id === id)) {
         this.selectedRoomId = id;

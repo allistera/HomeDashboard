@@ -49,6 +49,17 @@ describe("rooms store", () => {
     expect(rooms.selectedRoom.target).toBe(21.5);
   });
 
+  it("uses Home Assistant house climate values when available", () => {
+    const rooms = useRoomsStore();
+    rooms.setHouseClimateValues(20.7, 21.5);
+    expect(rooms.houseTemp).toBe(20.7);
+    expect(rooms.houseTarget).toBe(21.5);
+
+    rooms.setHouseClimateValues(null, null);
+    expect(rooms.houseTemp).toBe(20.5);
+    expect(rooms.houseTarget).toBe(21.5);
+  });
+
   it("ignores selecting a room that does not exist", () => {
     const rooms = useRoomsStore();
     rooms.selectRoom("garage-gym");

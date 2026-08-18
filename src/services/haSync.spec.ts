@@ -2,9 +2,15 @@ import type { HassEntities, HassEntity } from "home-assistant-js-websocket";
 import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { applyEntities, blindClosedFrom, lightLevelFrom } from "@/services/haSync";
+import {
+  applyEntities,
+  blindClosedFrom,
+  lightLevelFrom,
+  numericPropertyFrom,
+} from "@/services/haSync";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
+import { useSettingsStore } from "@/stores/settings";
 
 function entity(
   entityId: string,
@@ -39,6 +45,18 @@ describe("entity conversion", () => {
     expect(blindClosedFrom(entity("cover.x", "open"))).toBe(0);
     expect(blindClosedFrom(entity("cover.x", "closed"))).toBe(100);
   });
+
+  it("reads a numeric entity state or attribute", () => {
+    const climate = entity("climate.house", "heat", {
+      current_temperature: 20.7,
+      temperature: "21.5",
+    });
+    expect(numericPropertyFrom(entity("sensor.house_temperature", "20.3"), "")).toBe(20.3);
+    expect(numericPropertyFrom(climate, "current_temperature")).toBe(20.7);
+    expect(numericPropertyFrom(climate, "temperature")).toBe(21.5);
+    expect(numericPropertyFrom(climate, "missing")).toBeNull();
+    expect(numericPropertyFrom(entity("sensor.unavailable", "unavailable"), "")).toBeNull();
+  });
 });
 
 describe("applyEntities", () => {
@@ -58,6 +76,41 @@ describe("applyEntities", () => {
     const livingRoom = rooms.rooms.find((r) => r.id === "living-room")!;
     expect(livingRoom.lights.find((l) => l.id === "ceiling")!.level).toBe(50);
     expect(livingRoom.lights.find((l) => l.id === "floor-lamp")!.level).toBe(0);
+  });
+
+  it("maps configured house climate properties into dashboard values", () => {
+    const rooms = useRoomsStore();
+    const settings = useSettingsStore();
+    settings.houseTempEntity = "climate.house";
+    settings.houseTempAttribute = "current_temperature";
+    settings.houseTargetEntity = "input_number.house_target";
+
+    applyEntities(
+      asEntities([
+        entity("climate.house", "heat", { current_temperature: 20.7 }),
+        entity("input_number.house_target", "21.5"),
+      ]),
+    );
+
+    expect(rooms.houseTemp).toBe(20.7);
+    expect(rooms.houseTarget).toBe(21.5);
+  });
+
+  it("falls back to room values when configured house properties are unavailable", () => {
+    const rooms = useRoomsStore();
+    const settings = useSettingsStore();
+    settings.houseTempEntity = "sensor.house_temperature";
+    settings.houseTargetEntity = "sensor.house_target";
+
+    applyEntities(
+      asEntities([
+        entity("sensor.house_temperature", "unavailable"),
+        entity("sensor.house_target", "unknown"),
+      ]),
+    );
+
+    expect(rooms.houseTemp).toBe(20.5);
+    expect(rooms.houseTarget).toBe(21.5);
   });
 
   it("maps covers, climate, and media into a room", () => {
