@@ -1,16 +1,7 @@
 import { createPinia, setActivePinia } from "pinia";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  HA_HOUSE_TARGET_ATTRIBUTE_KEY,
-  HA_HOUSE_TARGET_ENTITY_KEY,
-  HA_HOUSE_TEMP_ATTRIBUTE_KEY,
-  HA_HOUSE_TEMP_ENTITY_KEY,
-  HA_TOKEN_KEY,
-  HA_URL_KEY,
-  normalizeUrl,
-  useSettingsStore,
-} from "@/stores/settings";
+import { HA_TOKEN_KEY, HA_URL_KEY, normalizeUrl, useSettingsStore } from "@/stores/settings";
 
 describe("normalizeUrl", () => {
   it("adds a protocol when missing and strips trailing slashes", () => {
@@ -35,18 +26,10 @@ describe("settings store", () => {
 
     localStorage.setItem(HA_URL_KEY, "http://ha.local:8123");
     localStorage.setItem(HA_TOKEN_KEY, "token-123");
-    localStorage.setItem(HA_HOUSE_TEMP_ENTITY_KEY, "climate.house");
-    localStorage.setItem(HA_HOUSE_TEMP_ATTRIBUTE_KEY, "current_temperature");
-    localStorage.setItem(HA_HOUSE_TARGET_ENTITY_KEY, "climate.house");
-    localStorage.setItem(HA_HOUSE_TARGET_ATTRIBUTE_KEY, "temperature");
     setActivePinia(createPinia());
     const settings = useSettingsStore();
     expect(settings.configured).toBe(true);
     expect(settings.url).toBe("http://ha.local:8123");
-    expect(settings.houseTempEntity).toBe("climate.house");
-    expect(settings.houseTempAttribute).toBe("current_temperature");
-    expect(settings.houseTargetEntity).toBe("climate.house");
-    expect(settings.houseTargetAttribute).toBe("temperature");
   });
 
   it("validates against the HA API and saves on success", async () => {
@@ -63,23 +46,6 @@ describe("settings store", () => {
     expect(settings.validation).toBe("valid");
     expect(localStorage.getItem(HA_URL_KEY)).toBe("http://ha.local:8123");
     expect(localStorage.getItem(HA_TOKEN_KEY)).toBe("token-123");
-  });
-
-  it("trims and saves house climate entity properties", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}", { status: 200 })));
-
-    const settings = useSettingsStore();
-    await settings.validateAndSave("http://ha.local:8123", "token-123", {
-      houseTempEntity: " climate.house ",
-      houseTempAttribute: " current_temperature ",
-      houseTargetEntity: " input_number.house_target ",
-      houseTargetAttribute: " ",
-    });
-
-    expect(localStorage.getItem(HA_HOUSE_TEMP_ENTITY_KEY)).toBe("climate.house");
-    expect(localStorage.getItem(HA_HOUSE_TEMP_ATTRIBUTE_KEY)).toBe("current_temperature");
-    expect(localStorage.getItem(HA_HOUSE_TARGET_ENTITY_KEY)).toBe("input_number.house_target");
-    expect(localStorage.getItem(HA_HOUSE_TARGET_ATTRIBUTE_KEY)).toBe("");
   });
 
   it("reports a rejected token and saves nothing", async () => {
@@ -125,9 +91,5 @@ describe("settings store", () => {
     expect(settings.configured).toBe(false);
     expect(localStorage.getItem(HA_URL_KEY)).toBeNull();
     expect(localStorage.getItem(HA_TOKEN_KEY)).toBeNull();
-    expect(localStorage.getItem(HA_HOUSE_TEMP_ENTITY_KEY)).toBeNull();
-    expect(localStorage.getItem(HA_HOUSE_TEMP_ATTRIBUTE_KEY)).toBeNull();
-    expect(localStorage.getItem(HA_HOUSE_TARGET_ENTITY_KEY)).toBeNull();
-    expect(localStorage.getItem(HA_HOUSE_TARGET_ATTRIBUTE_KEY)).toBeNull();
   });
 });

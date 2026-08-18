@@ -4,6 +4,7 @@ import CameraTile from "@/components/CameraTile";
 import EventFeed from "@/components/EventFeed";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
+import { homePageBindings } from "@/services/haBindings";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
 
@@ -14,12 +15,18 @@ export default defineComponent({
   setup() {
     const rooms = useRoomsStore();
     const security = useSecurityStore();
+    const homeCamera = computed(() =>
+      security.cameras.find((camera) => camera.id === homePageBindings.camera.cameraId),
+    );
+    const mediaRoom = computed(() =>
+      rooms.rooms.find((room) => room.id === homePageBindings.mediaPlayer.roomId),
+    );
 
     const headline = computed(() => (rooms.anyLightOn ? "Everything's quiet." : "Lights out."));
     const summary = computed(() => {
       const lightsOn = rooms.rooms.reduce((sum, room) => sum + rooms.lightsOn(room), 0);
       const doors = security.allSecure ? "Doors locked" : "A window is open";
-      return `${doors}, ${lightsOn} lights on, heating holding ${rooms.houseTemp}°. Vacuum finished the kitchen 40 minutes ago.`;
+      return `${doors}, ${lightsOn} lights on, heating holding ${rooms.houseTemp}°.`;
     });
 
     const goodNight = () => {
@@ -42,7 +49,11 @@ export default defineComponent({
 
     return () => (
       <main class="main">
-        <TopBar left={["OUTSIDE 12°"]} showPeople status={security.statusLabel} />
+        <TopBar
+          left={[`OUTSIDE ${rooms.outsideTemp.toFixed(0)}°`]}
+          showPeople
+          status={security.statusLabel}
+        />
 
         <div class="hero">
           <div>
@@ -130,7 +141,13 @@ export default defineComponent({
               <span class="label">Front door · Live</span>
             </div>
             <div style={{ padding: "0 40px" }}>
-              <CameraTile name="camera feed — front door" live height={250} />
+              <CameraTile
+                name={`camera feed — ${homeCamera.value?.name ?? "front door"}`}
+                live={homeCamera.value?.live ?? false}
+                note={homeCamera.value?.note}
+                streamUrl={homeCamera.value?.streamUrl}
+                height={250}
+              />
             </div>
             <div class="section-head" style={{ padding: "20px 40px 8px" }}>
               <span class="label">Activity</span>
@@ -140,7 +157,10 @@ export default defineComponent({
             </div>
             <div class="col-foot" style={{ padding: "18px 40px", alignItems: "center" }}>
               <div>
-                <div class="label">Playing · Kitchen</div>
+                <div class="label">
+                  {mediaRoom.value?.media?.playing ? "Playing" : "Paused"} ·{" "}
+                  {mediaRoom.value?.name ?? "Media"}
+                </div>
                 <div
                   style={{
                     fontSize: "20px",
@@ -148,21 +168,34 @@ export default defineComponent({
                     marginTop: "5px",
                   }}
                 >
-                  Evening Acoustic
+                  {mediaRoom.value?.media?.title ?? "Nothing playing"}
                 </div>
               </div>
               <div class="media-controls">
-                <button type="button" class="media-controls__btn" aria-label="Previous track">
+                <button
+                  type="button"
+                  class="media-controls__btn"
+                  aria-label="Previous track"
+                  onClick={() =>
+                    rooms.controlMedia(homePageBindings.mediaPlayer.roomId, "previous")
+                  }
+                >
                   ◀
                 </button>
                 <button
                   type="button"
                   class="media-controls__btn media-controls__btn--primary"
-                  aria-label="Pause"
+                  aria-label={mediaRoom.value?.media?.playing ? "Pause" : "Play"}
+                  onClick={() => rooms.controlMedia(homePageBindings.mediaPlayer.roomId, "toggle")}
                 >
-                  ❚❚
+                  {mediaRoom.value?.media?.playing ? "❚❚" : "▶"}
                 </button>
-                <button type="button" class="media-controls__btn" aria-label="Next track">
+                <button
+                  type="button"
+                  class="media-controls__btn"
+                  aria-label="Next track"
+                  onClick={() => rooms.controlMedia(homePageBindings.mediaPlayer.roomId, "next")}
+                >
                   ▶
                 </button>
               </div>

@@ -36,6 +36,47 @@ export interface CameraBinding {
   entityId: string;
 }
 
+export interface EntityPropertyBinding {
+  entityId: string;
+  attribute: string;
+}
+
+export interface MediaPlayerBinding {
+  roomId: string;
+  entityId: string;
+}
+
+// Home-page entity selections live here. Display copy and other presentation-only
+// values stay in HomePage; room lights, entries and people use the bindings below.
+export const homePageBindings = {
+  outsideTemperature: {
+    entityId: "sensor.outside_temperature",
+    attribute: "",
+  },
+  houseTemperature: {
+    entityId: "sensor.house_temperature",
+    attribute: "",
+  },
+  houseTarget: {
+    entityId: "input_number.house_target_temperature",
+    attribute: "",
+  },
+  camera: {
+    cameraId: "front-door",
+    entityId: "camera.front_door",
+  },
+  mediaPlayer: {
+    roomId: "kitchen",
+    entityId: "media_player.apple_tv",
+  },
+} satisfies {
+  outsideTemperature: EntityPropertyBinding;
+  houseTemperature: EntityPropertyBinding;
+  houseTarget: EntityPropertyBinding;
+  camera: CameraBinding;
+  mediaPlayer: MediaPlayerBinding;
+};
+
 export const roomBindings: RoomBinding[] = [
   {
     roomId: "living-room",
@@ -60,7 +101,7 @@ export const roomBindings: RoomBinding[] = [
     ],
     covers: [],
     climate: "climate.kitchen",
-    media: "media_player.kitchen",
+    media: homePageBindings.mediaPlayer.entityId,
   },
   {
     roomId: "hallway",
@@ -117,7 +158,7 @@ export const personBindings: PersonBinding[] = [
 ];
 
 export const cameraBindings: CameraBinding[] = [
-  { cameraId: "front-door", entityId: "camera.front_door" },
+  homePageBindings.camera,
   { cameraId: "driveway", entityId: "camera.driveway" },
   { cameraId: "back-garden", entityId: "camera.back_garden" },
   { cameraId: "hallway", entityId: "camera.hallway" },

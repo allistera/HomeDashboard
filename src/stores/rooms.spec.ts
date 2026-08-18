@@ -51,13 +51,27 @@ describe("rooms store", () => {
 
   it("uses Home Assistant house climate values when available", () => {
     const rooms = useRoomsStore();
-    rooms.setHouseClimateValues(20.7, 21.5);
+    rooms.setHomeClimateValues(8.4, 20.7, 21.5);
+    expect(rooms.outsideTemp).toBe(8.4);
     expect(rooms.houseTemp).toBe(20.7);
     expect(rooms.houseTarget).toBe(21.5);
 
-    rooms.setHouseClimateValues(null, null);
+    rooms.setHomeClimateValues(null, null, null);
+    expect(rooms.outsideTemp).toBe(12);
     expect(rooms.houseTemp).toBe(20.5);
     expect(rooms.houseTarget).toBe(21.5);
+  });
+
+  it("controls the configured room media player optimistically", () => {
+    const rooms = useRoomsStore();
+    const kitchen = rooms.rooms.find((room) => room.id === "kitchen")!;
+    expect(kitchen.media!.playing).toBe(true);
+
+    rooms.controlMedia("kitchen", "toggle");
+    expect(kitchen.media!.playing).toBe(false);
+
+    rooms.controlMedia("kitchen", "toggle");
+    expect(kitchen.media!.playing).toBe(true);
   });
 
   it("ignores selecting a room that does not exist", () => {

@@ -13,19 +13,10 @@ export default defineComponent({
     const ha = useHaStore();
     const url = ref(settings.url);
     const token = ref(settings.token);
-    const houseTempEntity = ref(settings.houseTempEntity);
-    const houseTempAttribute = ref(settings.houseTempAttribute);
-    const houseTargetEntity = ref(settings.houseTargetEntity);
-    const houseTargetAttribute = ref(settings.houseTargetAttribute);
 
     const submit = async (event: Event) => {
       event.preventDefault();
-      const saved = await settings.validateAndSave(url.value, token.value, {
-        houseTempEntity: houseTempEntity.value,
-        houseTempAttribute: houseTempAttribute.value,
-        houseTargetEntity: houseTargetEntity.value,
-        houseTargetAttribute: houseTargetAttribute.value,
-      });
+      const saved = await settings.validateAndSave(url.value, token.value);
       if (saved) await connectHa(applyEntities);
     };
 
@@ -34,10 +25,6 @@ export default defineComponent({
       settings.clear();
       url.value = "";
       token.value = "";
-      houseTempEntity.value = "";
-      houseTempAttribute.value = "";
-      houseTargetEntity.value = "";
-      houseTargetAttribute.value = "";
     };
 
     const connectionLine = computed(() => {
@@ -93,64 +80,6 @@ export default defineComponent({
             <p class="field__hint">
               Create one in Home Assistant under your profile → Security → Long-lived access tokens.
             </p>
-          </div>
-
-          <div class="field">
-            <label class="label" for="ha-house-temp-entity">
-              House temperature entity
-            </label>
-            <input
-              id="ha-house-temp-entity"
-              class="field__input"
-              type="text"
-              placeholder="sensor.house_temperature"
-              v-model={houseTempEntity.value}
-            />
-            <p class="field__hint">
-              Reads the entity state by default. Leave blank to calculate the value from rooms.
-            </p>
-          </div>
-
-          <div class="field">
-            <label class="label" for="ha-house-temp-attribute">
-              House temperature attribute · Optional
-            </label>
-            <input
-              id="ha-house-temp-attribute"
-              class="field__input"
-              type="text"
-              placeholder="current_temperature"
-              v-model={houseTempAttribute.value}
-            />
-          </div>
-
-          <div class="field">
-            <label class="label" for="ha-house-target-entity">
-              Target temperature entity
-            </label>
-            <input
-              id="ha-house-target-entity"
-              class="field__input"
-              type="text"
-              placeholder="input_number.house_target_temperature"
-              v-model={houseTargetEntity.value}
-            />
-            <p class="field__hint">
-              Reads the entity state by default. Leave blank to use the highest room target.
-            </p>
-          </div>
-
-          <div class="field">
-            <label class="label" for="ha-house-target-attribute">
-              Target temperature attribute · Optional
-            </label>
-            <input
-              id="ha-house-target-attribute"
-              class="field__input"
-              type="text"
-              placeholder="temperature"
-              v-model={houseTargetAttribute.value}
-            />
           </div>
 
           <div class="settings-form__actions">

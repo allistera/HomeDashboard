@@ -36,11 +36,13 @@ export interface Room {
 }
 
 export type Scene = "relax" | "bright" | "all-off";
+export type MediaCommand = "previous" | "toggle" | "next";
 
 interface RoomsState {
   rooms: Room[];
   selectedRoomId: string;
   activity: RoomEvent[];
+  outsideTempFromHa: number | null;
   houseTempFromHa: number | null;
   houseTargetFromHa: number | null;
 }
@@ -196,6 +198,7 @@ export const useRoomsStore = defineStore("rooms", {
     rooms: seedRooms,
     selectedRoomId: "living-room",
     activity: seedActivity,
+    outsideTempFromHa: null,
     houseTempFromHa: null,
     houseTargetFromHa: null,
   }),
@@ -208,6 +211,10 @@ export const useRoomsStore = defineStore("rooms", {
     },
     anyLightOn(state): boolean {
       return state.rooms.some((r) => r.lights.some((l) => l.level > 0));
+    },
+    outsideTemp(state): number {
+      if (state.outsideTempFromHa !== null) return state.outsideTempFromHa;
+      return state.rooms.find((room) => room.id === "garden")?.temp ?? 0;
     },
     houseTemp(state): number {
       if (state.houseTempFromHa !== null) return state.houseTempFromHa;
@@ -222,7 +229,12 @@ export const useRoomsStore = defineStore("rooms", {
     },
   },
   actions: {
-    setHouseClimateValues(temperature: number | null, target: number | null) {
+    setHomeClimateValues(
+      outsideTemperature: number | null,
+      temperature: number | null,
+      target: number | null,
+    ) {
+      this.outsideTempFromHa = outsideTemperature;
       this.houseTempFromHa = temperature;
       this.houseTargetFromHa = target;
     },
@@ -278,6 +290,19 @@ export const useRoomsStore = defineStore("rooms", {
         light.level = levels[scene];
         pushLight(room.id, light.id, light.level);
       }
+    },
+    controlMedia(roomId: string, command: MediaCommand) {
+      const room = this.rooms.find((item) => item.id === roomId);
+      const entityId = roomBindingFor(roomId)?.media;
+      if (!room?.media || !entityId) return;
+
+      const service = {
+        previous: "media_previous_track",
+        toggle: "media_play_pause",
+        next: "media_next_track",
+      } satisfies Record<MediaCommand, string>;
+      void haCallService("media_player", service[command], undefined, { entity_id: entityId });
+      if (command === "toggle") room.media.playing = !room.media.playing;
     },
   },
 });

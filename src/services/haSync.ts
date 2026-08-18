@@ -1,6 +1,12 @@
 import type { HassEntities, HassEntity } from "home-assistant-js-websocket";
 
-import { cameraBindings, entryBindings, personBindings, roomBindings } from "@/services/haBindings";
+import {
+  cameraBindings,
+  entryBindings,
+  homePageBindings,
+  personBindings,
+  roomBindings,
+} from "@/services/haBindings";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
 import { useSettingsStore } from "@/stores/settings";
@@ -52,9 +58,19 @@ export function applyEntities(entities: HassEntities): void {
   const security = useSecurityStore();
   const settings = useSettingsStore();
 
-  rooms.setHouseClimateValues(
-    numericPropertyFrom(entities[settings.houseTempEntity], settings.houseTempAttribute),
-    numericPropertyFrom(entities[settings.houseTargetEntity], settings.houseTargetAttribute),
+  rooms.setHomeClimateValues(
+    numericPropertyFrom(
+      entities[homePageBindings.outsideTemperature.entityId],
+      homePageBindings.outsideTemperature.attribute,
+    ),
+    numericPropertyFrom(
+      entities[homePageBindings.houseTemperature.entityId],
+      homePageBindings.houseTemperature.attribute,
+    ),
+    numericPropertyFrom(
+      entities[homePageBindings.houseTarget.entityId],
+      homePageBindings.houseTarget.attribute,
+    ),
   );
 
   for (const binding of roomBindings) {
@@ -89,6 +105,8 @@ export function applyEntities(entities: HassEntities): void {
         room.media.playing = entity.state === "playing";
         const title = entity.attributes.media_title;
         if (title) room.media.title = String(title);
+        const output = entity.attributes.source ?? entity.attributes.friendly_name;
+        if (output) room.media.output = String(output);
       }
     }
   }

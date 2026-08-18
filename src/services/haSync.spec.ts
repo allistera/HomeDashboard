@@ -93,35 +93,32 @@ describe("applyEntities", () => {
 
   it("maps configured house climate properties into dashboard values", () => {
     const rooms = useRoomsStore();
-    const settings = useSettingsStore();
-    settings.houseTempEntity = "climate.house";
-    settings.houseTempAttribute = "current_temperature";
-    settings.houseTargetEntity = "input_number.house_target";
 
     applyEntities(
       asEntities([
-        entity("climate.house", "heat", { current_temperature: 20.7 }),
-        entity("input_number.house_target", "21.5"),
+        entity("sensor.outside_temperature", "8.4"),
+        entity("sensor.house_temperature", "20.7"),
+        entity("input_number.house_target_temperature", "21.5"),
       ]),
     );
 
+    expect(rooms.outsideTemp).toBe(8.4);
     expect(rooms.houseTemp).toBe(20.7);
     expect(rooms.houseTarget).toBe(21.5);
   });
 
   it("falls back to room values when configured house properties are unavailable", () => {
     const rooms = useRoomsStore();
-    const settings = useSettingsStore();
-    settings.houseTempEntity = "sensor.house_temperature";
-    settings.houseTargetEntity = "sensor.house_target";
 
     applyEntities(
       asEntities([
+        entity("sensor.outside_temperature", "unknown"),
         entity("sensor.house_temperature", "unavailable"),
-        entity("sensor.house_target", "unknown"),
+        entity("input_number.house_target_temperature", "unknown"),
       ]),
     );
 
+    expect(rooms.outsideTemp).toBe(12);
     expect(rooms.houseTemp).toBe(20.5);
     expect(rooms.houseTarget).toBe(21.5);
   });
@@ -132,7 +129,14 @@ describe("applyEntities", () => {
       asEntities([
         entity("cover.living_room_south_window", "open", { current_position: 40 }),
         entity("climate.living_room", "heat", { current_temperature: 20.5, temperature: 22 }),
-        entity("media_player.living_room", "playing", { media_title: "Night Jazz" }),
+        entity("media_player.living_room", "playing", {
+          media_title: "Night Jazz",
+          friendly_name: "Apple TV",
+        }),
+        entity("media_player.apple_tv", "playing", {
+          media_title: "Night Jazz",
+          friendly_name: "Apple TV",
+        }),
       ]),
     );
 
@@ -142,6 +146,7 @@ describe("applyEntities", () => {
     expect(livingRoom.target).toBe(22);
     expect(livingRoom.media!.playing).toBe(true);
     expect(livingRoom.media!.title).toBe("Night Jazz");
+    expect(livingRoom.media!.output).toBe("Apple TV");
   });
 
   it("maps locks and door/window sensors into security entries", () => {
