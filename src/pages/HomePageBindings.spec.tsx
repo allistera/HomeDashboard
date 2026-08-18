@@ -41,12 +41,14 @@ describe("HomePage bindings", () => {
     const rooms = useRoomsStore();
     const livingRoom = rooms.rooms.find((room) => room.id === "living-room")!;
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
+    const pauseButton = wrapper.get('[aria-label="Pause"]');
 
     expect(livingRoom.media!.playing).toBe(true);
-    await wrapper.get('[aria-label="Pause"]').trigger("click");
+    expect(pauseButton.text()).toBe("❚❚");
+    await pauseButton.trigger("click");
 
     expect(livingRoom.media!.playing).toBe(false);
-    expect(wrapper.get('[aria-label="Play"]').attributes("aria-label")).toBe("Play");
+    expect(wrapper.get('[aria-label="Play"]').text()).toBe("▶");
     expect(wrapper.text()).toContain("Paused · Living room");
   });
 });
