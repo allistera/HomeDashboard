@@ -1,6 +1,6 @@
 import type { HassEntities, HassEntity } from "home-assistant-js-websocket";
 
-import { entryBindings, personBindings, roomBindings } from "@/services/haBindings";
+import { cameraBindings, entryBindings, personBindings, roomBindings } from "@/services/haBindings";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
 import { useSettingsStore } from "@/stores/settings";
@@ -28,6 +28,16 @@ export function numericPropertyFrom(
   if (serialized === "") return null;
   const number = Number(serialized);
   return Number.isFinite(number) ? number : null;
+}
+
+export function cameraStreamUrlFrom(baseUrl: string, entity: HassEntity): string | null {
+  const accessToken = String(entity.attributes.access_token ?? "").trim();
+  if (baseUrl === "" || accessToken === "") return null;
+
+  const root = baseUrl.replace(/\/+$/, "");
+  const entityId = encodeURIComponent(entity.entity_id);
+  const token = encodeURIComponent(accessToken);
+  return `${root}/api/camera_proxy_stream/${entityId}?token=${token}`;
 }
 
 function timeOf(entity: HassEntity): string {
@@ -106,5 +116,23 @@ export function applyEntities(entities: HassEntities): void {
     if (!person || !entity) continue;
     person.home = entity.state === "home";
     person.status = person.home ? `ARRIVED ${timeOf(entity)}` : "AWAY";
+  }
+
+  for (const binding of cameraBindings) {
+    const camera = security.cameras.find((item) => item.id === binding.cameraId);
+    const entity = entities[binding.entityId];
+    if (!camera) continue;
+    if (!entity) {
+      camera.live = false;
+      camera.streamUrl = undefined;
+      camera.note = "STREAM UNAVAILABLE";
+      continue;
+    }
+
+    const available = !["off", "unavailable", "unknown"].includes(entity.state);
+    const streamUrl = available ? cameraStreamUrlFrom(settings.url, entity) : null;
+    camera.live = streamUrl !== null;
+    camera.streamUrl = streamUrl ?? undefined;
+    camera.note = camera.live ? undefined : "STREAM UNAVAILABLE";
   }
 }

@@ -1,10 +1,10 @@
-import { computed, defineComponent } from "vue";
+import { computed, defineComponent, nextTick, onBeforeUnmount, ref, watch } from "vue";
 
 import CameraTile from "@/components/CameraTile";
 import EventFeed from "@/components/EventFeed";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
-import { useSecurityStore, type ArmState } from "@/stores/security";
+import { useSecurityStore, type ArmState, type Camera } from "@/stores/security";
 
 const armOptions: { id: ArmState; name: string }[] = [
   { id: "home", name: "Armed — home" },
@@ -16,6 +16,31 @@ export default defineComponent({
   name: "SecurityPage",
   setup() {
     const security = useSecurityStore();
+    const selectedCamera = ref<Camera | null>(null);
+    const cameraDialog = ref<HTMLElement | null>(null);
+    const modalStreamFailed = ref(false);
+    let previouslyFocused: HTMLElement | null = null;
+
+    const openCamera = (camera: Camera) => {
+      previouslyFocused =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      modalStreamFailed.value = false;
+      selectedCamera.value = camera;
+      void nextTick(() => cameraDialog.value?.focus());
+    };
+
+    const closeCamera = () => {
+      selectedCamera.value = null;
+      void nextTick(() => previouslyFocused?.focus());
+    };
+
+    watch(selectedCamera, (camera) => {
+      document.body.style.overflow = camera ? "hidden" : "";
+    });
+
+    onBeforeUnmount(() => {
+      document.body.style.overflow = "";
+    });
 
     const headline = computed(() =>
       security.armState === "disarmed"
@@ -85,6 +110,8 @@ export default defineComponent({
                   name={camera.name}
                   live={camera.live}
                   note={camera.note}
+                  streamUrl={camera.streamUrl}
+                  onSelect={() => openCamera(camera)}
                 />
               ))}
             </div>
@@ -178,6 +205,71 @@ export default defineComponent({
             </div>
           </div>
         </div>
+
+        {selectedCamera.value && (
+          <div
+            class="camera-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="camera-modal-title"
+            tabindex={-1}
+            ref={cameraDialog}
+            onClick={(event) => {
+              if (event.target === event.currentTarget) closeCamera();
+            }}
+            onKeydown={(event) => {
+              if (event.key === "Escape") closeCamera();
+            }}
+          >
+            <div class="camera-modal__panel">
+              <div class="camera-modal__head">
+                <div>
+                  <div class="label">
+                    Camera ·{" "}
+                    {selectedCamera.value.streamUrl && !modalStreamFailed.value
+                      ? "Live"
+                      : "Unavailable"}
+                  </div>
+                  <h2 id="camera-modal-title" class="camera-modal__title">
+                    {selectedCamera.value.name}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  class="camera-modal__close"
+                  aria-label="Close camera view"
+                  onClick={closeCamera}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M5 5l14 14M19 5 5 19" />
+                  </svg>
+                </button>
+              </div>
+              <div class="camera-modal__viewport">
+                {selectedCamera.value.streamUrl && !modalStreamFailed.value ? (
+                  <img
+                    class="camera-modal__stream"
+                    src={selectedCamera.value.streamUrl}
+                    alt={`${selectedCamera.value.name} live camera enlarged`}
+                    referrerpolicy="no-referrer"
+                    onError={() => {
+                      modalStreamFailed.value = true;
+                    }}
+                  />
+                ) : (
+                  <div class="camera-modal__empty">
+                    <span class="label">Live stream unavailable for this camera</span>
+                  </div>
+                )}
+                {selectedCamera.value.live &&
+                  selectedCamera.value.streamUrl &&
+                  !modalStreamFailed.value && (
+                    <span class="camera__tag camera__tag--live camera-modal__live">LIVE</span>
+                  )}
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     );
   },

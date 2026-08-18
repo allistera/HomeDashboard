@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   applyEntities,
   blindClosedFrom,
+  cameraStreamUrlFrom,
   lightLevelFrom,
   numericPropertyFrom,
 } from "@/services/haSync";
@@ -56,6 +57,18 @@ describe("entity conversion", () => {
     expect(numericPropertyFrom(climate, "temperature")).toBe(21.5);
     expect(numericPropertyFrom(climate, "missing")).toBeNull();
     expect(numericPropertyFrom(entity("sensor.unavailable", "unavailable"), "")).toBeNull();
+  });
+
+  it("builds a camera stream URL from the per-camera access token", () => {
+    const camera = entity("camera.front_door", "idle", { access_token: "token with spaces" });
+
+    expect(cameraStreamUrlFrom("http://ha.local:8123/", camera)).toBe(
+      "http://ha.local:8123/api/camera_proxy_stream/camera.front_door?token=token%20with%20spaces",
+    );
+    expect(cameraStreamUrlFrom("", camera)).toBeNull();
+    expect(
+      cameraStreamUrlFrom("http://ha.local:8123", entity("camera.front_door", "idle")),
+    ).toBeNull();
   });
 });
 
@@ -166,6 +179,31 @@ describe("applyEntities", () => {
     expect(elsie.status).toMatch(/^ARRIVED /);
 
     expect(security.peopleHome).toBe(3);
+  });
+
+  it("maps available camera entities into live proxy streams", () => {
+    const security = useSecurityStore();
+    const settings = useSettingsStore();
+    settings.url = "http://ha.local:8123";
+
+    applyEntities(
+      asEntities([
+        entity("camera.front_door", "idle", { access_token: "front-token" }),
+        entity("camera.driveway", "unavailable", { access_token: "drive-token" }),
+      ]),
+    );
+
+    const frontDoor = security.cameras.find((camera) => camera.id === "front-door")!;
+    expect(frontDoor.live).toBe(true);
+    expect(frontDoor.note).toBeUndefined();
+    expect(frontDoor.streamUrl).toBe(
+      "http://ha.local:8123/api/camera_proxy_stream/camera.front_door?token=front-token",
+    );
+
+    const driveway = security.cameras.find((camera) => camera.id === "driveway")!;
+    expect(driveway.live).toBe(false);
+    expect(driveway.streamUrl).toBeUndefined();
+    expect(driveway.note).toBe("STREAM UNAVAILABLE");
   });
 
   it("leaves stores untouched for unknown or missing entities", () => {

@@ -19,6 +19,7 @@ export interface Camera {
   name: string;
   live: boolean;
   note?: string;
+  streamUrl?: string;
 }
 
 export interface Person {

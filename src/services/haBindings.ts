@@ -31,6 +31,11 @@ export interface PersonBinding {
   entityId: string;
 }
 
+export interface CameraBinding {
+  cameraId: string;
+  entityId: string;
+}
+
 export const roomBindings: RoomBinding[] = [
   {
     roomId: "living-room",
@@ -109,6 +114,13 @@ export const personBindings: PersonBinding[] = [
   { personId: "tonnii", entityId: "person.tonnii" },
   { personId: "elsie", entityId: "person.elsie" },
   { personId: "jaicob", entityId: "person.jaicob" },
+];
+
+export const cameraBindings: CameraBinding[] = [
+  { cameraId: "front-door", entityId: "camera.front_door" },
+  { cameraId: "driveway", entityId: "camera.driveway" },
+  { cameraId: "back-garden", entityId: "camera.back_garden" },
+  { cameraId: "hallway", entityId: "camera.hallway" },
 ];
 
 export function roomBindingFor(roomId: string): RoomBinding | undefined {
