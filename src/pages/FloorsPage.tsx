@@ -1,6 +1,7 @@
 import { computed, defineComponent, ref } from "vue";
 
 import TopBar from "@/components/TopBar";
+import { floorsPageBindings } from "@/services/haBindings";
 import { useRoomsStore, type Room } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
 
@@ -182,16 +183,28 @@ export default defineComponent({
 
       const blinds = blindsChip(room);
       switch (room.id) {
-        case "kitchen":
+        case floorsPageBindings.kitchenRoomId:
           if (room.media?.playing) chips.push({ label: "Music", value: "On", tone: "active" });
-          chips.push({ label: "Vacuum", value: "Clean" });
+          if (room.vacuum) {
+            chips.push({
+              label: "Vacuum",
+              value: room.vacuum.state,
+              tone: room.vacuum.state === "Cleaning" ? "active" : undefined,
+            });
+          }
           break;
-        case "living-room":
+        case floorsPageBindings.livingRoomId:
           if (blinds) chips.push(blinds);
           if (room.media?.playing) chips.push({ label: "TV", value: "On", tone: "active" });
           break;
-        case "hallway": {
-          chips.push({ label: "Motion", value: "6m ago" });
+        case floorsPageBindings.hallwayRoomId: {
+          if (room.motion) {
+            chips.push({
+              label: "Motion",
+              value: room.motion.active ? "Active" : room.motion.lastChanged,
+              tone: room.motion.active ? "attention" : undefined,
+            });
+          }
           const frontDoor = security.entries.find((e) => e.id === "front-door");
           if (frontDoor) {
             chips.push(
@@ -213,10 +226,10 @@ export default defineComponent({
           }
           break;
         }
-        case "bedroom":
-        case "elsies-room":
+        case floorsPageBindings.bedroomRoomIds[0]:
+        case floorsPageBindings.bedroomRoomIds[1]:
           if (blinds) chips.push(blinds);
-          chips.push({ label: "Heat", value: "Eco" });
+          if (room.climateMode) chips.push({ label: "Heat", value: room.climateMode });
           break;
       }
       return chips;

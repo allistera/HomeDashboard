@@ -18,6 +18,8 @@ export interface RoomBinding {
   covers: CoverBinding[];
   climate?: string;
   media?: string;
+  motion?: string;
+  vacuum?: string;
 }
 
 export interface EntryBinding {
@@ -46,6 +48,33 @@ export interface MediaPlayerBinding {
   entityId: string;
 }
 
+export interface EntityActionBinding {
+  domain: string;
+  service: string;
+  entityId: string;
+}
+
+export type AlarmArmState = "home" | "away" | "disarmed";
+
+export interface AlarmControlPanelBinding {
+  entityId: string;
+  states: Record<AlarmArmState, string>;
+  services: Record<AlarmArmState, string>;
+}
+
+// Home Assistant attributes consumed by rendered page elements. Keeping these
+// here makes both entity IDs and property names configurable at one seam.
+export const entityProperties = {
+  lightBrightness: "brightness",
+  coverPosition: "current_position",
+  climateCurrentTemperature: "current_temperature",
+  climateTargetTemperature: "temperature",
+  climatePreset: "preset_mode",
+  mediaTitle: "media_title",
+  mediaOutput: ["source", "friendly_name"],
+  cameraAccessToken: "access_token",
+} as const;
+
 // Home-page entity selections live here. Display copy and other presentation-only
 // values stay in HomePage; room lights, entries and people use the bindings below.
 export const homePageBindings = {
@@ -69,12 +98,20 @@ export const homePageBindings = {
     roomId: "living-room",
     entityId: "media_player.apple_tv",
   },
+  excludedRoomIds: ["garden"],
+  actions: {
+    goodNight: { domain: "scene", service: "turn_on", entityId: "scene.good_night" },
+    movie: { domain: "scene", service: "turn_on", entityId: "scene.movie" },
+    away: { domain: "scene", service: "turn_on", entityId: "scene.away" },
+  },
 } satisfies {
   outsideTemperature: EntityPropertyBinding;
   houseTemperature: EntityPropertyBinding;
   houseTarget: EntityPropertyBinding;
   camera: CameraBinding;
   mediaPlayer: MediaPlayerBinding;
+  excludedRoomIds: string[];
+  actions: Record<"goodNight" | "movie" | "away", EntityActionBinding>;
 };
 
 export const roomBindings: RoomBinding[] = [
@@ -102,11 +139,13 @@ export const roomBindings: RoomBinding[] = [
     covers: [],
     climate: "climate.kitchen",
     media: "media_player.kitchen",
+    vacuum: "vacuum.kitchen",
   },
   {
     roomId: "hallway",
     lights: [{ lightId: "ceiling", entityId: "light.hallway_ceiling" }],
     covers: [],
+    motion: "binary_sensor.hallway_motion",
   },
   {
     roomId: "bedroom",
@@ -163,6 +202,32 @@ export const cameraBindings: CameraBinding[] = [
   { cameraId: "back-garden", entityId: "camera.back_garden" },
   { cameraId: "hallway", entityId: "camera.hallway" },
 ];
+
+export const floorsPageBindings = {
+  kitchenRoomId: "kitchen",
+  livingRoomId: "living-room",
+  hallwayRoomId: "hallway",
+  bedroomRoomIds: ["bedroom", "elsies-room"],
+} as const;
+
+export const securityPageBindings = {
+  alarmControlPanel: {
+    entityId: "alarm_control_panel.home",
+    states: {
+      home: "armed_home",
+      away: "armed_away",
+      disarmed: "disarmed",
+    },
+    services: {
+      home: "alarm_arm_home",
+      away: "alarm_arm_away",
+      disarmed: "alarm_disarm",
+    },
+  } satisfies AlarmControlPanelBinding,
+  sensorCount:
+    entryBindings.filter((binding) => binding.sensor !== undefined).length +
+    roomBindings.filter((binding) => binding.motion !== undefined).length,
+};
 
 export function roomBindingFor(roomId: string): RoomBinding | undefined {
   return roomBindings.find((binding) => binding.roomId === roomId);

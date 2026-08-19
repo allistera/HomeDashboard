@@ -2,24 +2,29 @@ import type { HassEntities, HassEntity } from "home-assistant-js-websocket";
 
 import {
   cameraBindings,
+  entityProperties,
   entryBindings,
   homePageBindings,
   personBindings,
   roomBindings,
+  securityPageBindings,
+  type AlarmArmState,
 } from "@/services/haBindings";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
 import { useSettingsStore } from "@/stores/settings";
 
+const alarmArmStates = ["home", "away", "disarmed"] satisfies AlarmArmState[];
+
 export function lightLevelFrom(entity: HassEntity): number {
   if (entity.state !== "on") return 0;
-  const brightness = entity.attributes.brightness;
+  const brightness = entity.attributes[entityProperties.lightBrightness];
   return Number.isFinite(brightness) ? Math.round(Number(brightness) / 2.55) : 100;
 }
 
 // HA cover position is % open; the dashboard shows % closed.
 export function blindClosedFrom(entity: HassEntity): number {
-  const position = entity.attributes.current_position;
+  const position = entity.attributes[entityProperties.coverPosition];
   if (Number.isFinite(position)) return 100 - Number(position);
   return entity.state === "open" ? 0 : 100;
 }
@@ -37,7 +42,7 @@ export function numericPropertyFrom(
 }
 
 export function cameraStreamUrlFrom(baseUrl: string, entity: HassEntity): string | null {
-  const accessToken = String(entity.attributes.access_token ?? "").trim();
+  const accessToken = String(entity.attributes[entityProperties.cameraAccessToken] ?? "").trim();
   if (baseUrl === "" || accessToken === "") return null;
 
   const root = baseUrl.replace(/\/+$/, "");
@@ -51,6 +56,10 @@ function timeOf(entity: HassEntity): string {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+function stateLabel(state: string): string {
+  return state.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 export function applyEntities(entities: HassEntities): void {
@@ -92,10 +101,12 @@ export function applyEntities(entities: HassEntities): void {
     if (binding.climate) {
       const entity = entities[binding.climate];
       if (entity) {
-        const current = entity.attributes.current_temperature;
-        const target = entity.attributes.temperature;
+        const current = entity.attributes[entityProperties.climateCurrentTemperature];
+        const target = entity.attributes[entityProperties.climateTargetTemperature];
+        const preset = entity.attributes[entityProperties.climatePreset];
         if (Number.isFinite(current)) room.temp = Number(current);
         if (Number.isFinite(target)) room.target = Number(target);
+        if (preset) room.climateMode = stateLabel(String(preset));
       }
     }
 
@@ -103,12 +114,36 @@ export function applyEntities(entities: HassEntities): void {
       const entity = entities[binding.media];
       if (entity) {
         room.media.playing = entity.state === "playing";
-        const title = entity.attributes.media_title;
+        const title = entity.attributes[entityProperties.mediaTitle];
         if (title) room.media.title = String(title);
-        const output = entity.attributes.source ?? entity.attributes.friendly_name;
+        const output = entityProperties.mediaOutput
+          .map((attribute) => entity.attributes[attribute])
+          .find(Boolean);
         if (output) room.media.output = String(output);
       }
     }
+
+    if (binding.motion && room.motion) {
+      const entity = entities[binding.motion];
+      if (entity) {
+        room.motion.active = entity.state === "on";
+        room.motion.lastChanged = timeOf(entity);
+      }
+    }
+
+    if (binding.vacuum && room.vacuum) {
+      const entity = entities[binding.vacuum];
+      if (entity) room.vacuum.state = stateLabel(entity.state);
+    }
+  }
+
+  const alarmBinding = securityPageBindings.alarmControlPanel;
+  const alarmEntity = entities[alarmBinding.entityId];
+  if (alarmEntity) {
+    const armState = alarmArmStates.find(
+      (state) => alarmBinding.states[state] === alarmEntity.state,
+    );
+    if (armState) security.setArmStateFromHa(armState, timeOf(alarmEntity));
   }
 
   for (const binding of entryBindings) {

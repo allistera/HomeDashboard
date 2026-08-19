@@ -4,6 +4,7 @@ import CameraTile from "@/components/CameraTile";
 import EventFeed from "@/components/EventFeed";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
+import { securityPageBindings } from "@/services/haBindings";
 import { useSecurityStore, type ArmState, type Camera } from "@/stores/security";
 
 const armOptions: { id: ArmState; name: string }[] = [
@@ -59,7 +60,9 @@ export default defineComponent({
     return () => (
       <main class="main">
         <TopBar
-          left={[`${security.cameras.length} CAMERAS · 9 SENSORS`]}
+          left={[
+            `${security.cameras.length} CAMERAS · ${securityPageBindings.sensorCount} SENSORS`,
+          ]}
           showPeople
           status={security.armLabel}
         />

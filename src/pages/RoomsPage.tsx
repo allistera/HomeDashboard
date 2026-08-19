@@ -35,7 +35,11 @@ export default defineComponent({
       const room = rooms.selectedRoom;
       return (
         <main class="main">
-          <TopBar left={["OUTSIDE 12°"]} showPeople status={security.statusLabel} />
+          <TopBar
+            left={[`OUTSIDE ${rooms.outsideTemp.toFixed(0)}°`]}
+            showPeople
+            status={security.statusLabel}
+          />
 
           <div class="cols" style={{ gridTemplateColumns: "296px 1fr" }}>
             <div class="col">
@@ -266,20 +270,23 @@ export default defineComponent({
                               type="button"
                               class="media-controls__btn"
                               aria-label="Previous track"
+                              onClick={() => rooms.controlMedia(room.id, "previous")}
                             >
                               ◀
                             </button>
                             <button
                               type="button"
                               class="media-controls__btn media-controls__btn--primary"
-                              aria-label="Pause"
+                              aria-label={room.media.playing ? "Pause" : "Play"}
+                              onClick={() => rooms.controlMedia(room.id, "toggle")}
                             >
-                              ❚❚
+                              {room.media.playing ? "❚❚" : "▶"}
                             </button>
                             <button
                               type="button"
                               class="media-controls__btn"
                               aria-label="Next track"
+                              onClick={() => rooms.controlMedia(room.id, "next")}
                             >
                               ▶
                             </button>

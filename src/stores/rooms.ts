@@ -30,6 +30,9 @@ export interface Room {
   target: number;
   meta: string;
   media?: { title: string; output: string; playing: boolean };
+  motion?: { active: boolean; lastChanged: string };
+  vacuum?: { state: string };
+  climateMode?: string;
   events: RoomEvent[];
   deviceCount: number;
   offlineCount: number;
@@ -95,6 +98,7 @@ const seedRooms: Room[] = [
       output: "Kitchen speaker",
       playing: true,
     },
+    vacuum: { state: "Ready" },
     events: [{ time: "6:58", text: "Vacuum returned to dock" }],
     deviceCount: 5,
     offlineCount: 0,
@@ -108,6 +112,7 @@ const seedRooms: Room[] = [
     temp: 20.5,
     target: 20.5,
     meta: "MOTION 6M AGO",
+    motion: { active: false, lastChanged: "6m ago" },
     events: [],
     deviceCount: 2,
     offlineCount: 0,
@@ -124,6 +129,7 @@ const seedRooms: Room[] = [
     temp: 19.5,
     target: 19.5,
     meta: "BLINDS DOWN",
+    climateMode: "Eco",
     events: [{ time: "6:30", text: "Blinds lowered · sunset" }],
     deviceCount: 4,
     offlineCount: 0,
@@ -156,6 +162,7 @@ const seedRooms: Room[] = [
     temp: 20.0,
     target: 20.0,
     meta: "NIGHT LIGHT",
+    climateMode: "Eco",
     events: [{ time: "7:30", text: "Night light on · bedtime" }],
     deviceCount: 4,
     offlineCount: 0,

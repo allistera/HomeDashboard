@@ -4,7 +4,8 @@ import CameraTile from "@/components/CameraTile";
 import EventFeed from "@/components/EventFeed";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
-import { homePageBindings } from "@/services/haBindings";
+import { homePageBindings, type EntityActionBinding } from "@/services/haBindings";
+import { haCallService } from "@/services/haClient";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
 
@@ -29,14 +30,25 @@ export default defineComponent({
       return `${doors}, ${lightsOn} lights on, heating holding ${rooms.houseTemp}°.`;
     });
 
+    const runBoundAction = (binding: EntityActionBinding) => {
+      void haCallService(binding.domain, binding.service, undefined, {
+        entity_id: binding.entityId,
+      });
+    };
+
     const goodNight = () => {
       rooms.setAllLights(false);
       security.arm("home");
+      runBoundAction(homePageBindings.actions.goodNight);
     };
-    const movie = () => rooms.applyScene("living-room", "relax");
+    const movie = () => {
+      rooms.applyScene(homePageBindings.mediaPlayer.roomId, "relax");
+      runBoundAction(homePageBindings.actions.movie);
+    };
     const away = () => {
       rooms.setAllLights(false);
       security.arm("away");
+      runBoundAction(homePageBindings.actions.away);
     };
 
     const roomMeta = (roomId: string) => {
@@ -80,7 +92,7 @@ export default defineComponent({
             </div>
             <div class="rows">
               {rooms.rooms
-                .filter((room) => room.id !== "garden")
+                .filter((room) => !homePageBindings.excludedRoomIds.includes(room.id))
                 .map((room) => {
                   const on = rooms.lightsOn(room) > 0;
                   return (

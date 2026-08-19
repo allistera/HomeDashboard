@@ -1,9 +1,9 @@
 import { defineStore } from "pinia";
 
-import { entryBindings } from "@/services/haBindings";
+import { entryBindings, securityPageBindings, type AlarmArmState } from "@/services/haBindings";
 import { haCallService } from "@/services/haClient";
 
-export type ArmState = "home" | "away" | "disarmed";
+export type ArmState = AlarmArmState;
 
 export interface Entry {
   id: string;
@@ -157,6 +157,14 @@ export const useSecurityStore = defineStore("security", {
   actions: {
     arm(state: ArmState) {
       this.armState = state;
+      const alarm = securityPageBindings.alarmControlPanel;
+      void haCallService("alarm_control_panel", alarm.services[state], undefined, {
+        entity_id: alarm.entityId,
+      });
+    },
+    setArmStateFromHa(state: ArmState, changedAt: string) {
+      this.armState = state;
+      this.secureSince = changedAt;
     },
     setLocked(id: string, locked: boolean) {
       const entry = this.entries.find((e) => e.id === id);

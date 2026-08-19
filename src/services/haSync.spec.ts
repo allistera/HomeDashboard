@@ -2,6 +2,7 @@ import type { HassEntities, HassEntity } from "home-assistant-js-websocket";
 import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { homePageBindings, roomBindingFor, securityPageBindings } from "@/services/haBindings";
 import {
   applyEntities,
   blindClosedFrom,
@@ -128,7 +129,11 @@ describe("applyEntities", () => {
     applyEntities(
       asEntities([
         entity("cover.living_room_south_window", "open", { current_position: 40 }),
-        entity("climate.living_room", "heat", { current_temperature: 20.5, temperature: 22 }),
+        entity("climate.living_room", "heat", {
+          current_temperature: 20.5,
+          temperature: 22,
+          preset_mode: "eco",
+        }),
         entity("media_player.living_room", "playing", {
           media_title: "Night Jazz",
           friendly_name: "Apple TV",
@@ -144,9 +149,39 @@ describe("applyEntities", () => {
     expect(livingRoom.blinds.find((b) => b.id === "south-window")!.closed).toBe(60);
     expect(livingRoom.temp).toBe(20.5);
     expect(livingRoom.target).toBe(22);
+    expect(livingRoom.climateMode).toBe("Eco");
     expect(livingRoom.media!.playing).toBe(true);
     expect(livingRoom.media!.title).toBe("Night Jazz");
     expect(livingRoom.media!.output).toBe("Apple TV");
+  });
+
+  it("maps floor-page motion and vacuum bindings into room state", () => {
+    const rooms = useRoomsStore();
+    const hallwayBinding = roomBindingFor("hallway")!;
+    const kitchenBinding = roomBindingFor("kitchen")!;
+
+    applyEntities(
+      asEntities([
+        entity(hallwayBinding.motion!, "on"),
+        entity(kitchenBinding.vacuum!, "cleaning"),
+      ]),
+    );
+
+    const hallway = rooms.rooms.find((room) => room.id === "hallway")!;
+    const kitchen = rooms.rooms.find((room) => room.id === "kitchen")!;
+    expect(hallway.motion?.active).toBe(true);
+    expect(hallway.motion?.lastChanged).toMatch(/\d/);
+    expect(kitchen.vacuum?.state).toBe("Cleaning");
+  });
+
+  it("maps the configured alarm panel into security arm state", () => {
+    const security = useSecurityStore();
+    const alarm = securityPageBindings.alarmControlPanel;
+
+    applyEntities(asEntities([entity(alarm.entityId, alarm.states.away)]));
+
+    expect(security.armState).toBe("away");
+    expect(security.secureSince).toMatch(/\d/);
   });
 
   it("maps locks and door/window sensors into security entries", () => {
@@ -193,7 +228,7 @@ describe("applyEntities", () => {
 
     applyEntities(
       asEntities([
-        entity("camera.front_door", "idle", { access_token: "front-token" }),
+        entity(homePageBindings.camera.entityId, "idle", { access_token: "front-token" }),
         entity("camera.driveway", "unavailable", { access_token: "drive-token" }),
       ]),
     );
@@ -202,7 +237,7 @@ describe("applyEntities", () => {
     expect(frontDoor.live).toBe(true);
     expect(frontDoor.note).toBeUndefined();
     expect(frontDoor.streamUrl).toBe(
-      "http://ha.local:8123/api/camera_proxy_stream/camera.front_door?token=front-token",
+      `http://ha.local:8123/api/camera_proxy_stream/${encodeURIComponent(homePageBindings.camera.entityId)}?token=front-token`,
     );
 
     const driveway = security.cameras.find((camera) => camera.id === "driveway")!;
