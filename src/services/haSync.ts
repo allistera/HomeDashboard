@@ -8,6 +8,7 @@ import {
   personBindings,
   roomBindings,
   securityPageBindings,
+  watchedEntityIds,
   type AlarmArmState,
 } from "@/services/haBindings";
 import { useRoomsStore } from "@/stores/rooms";
@@ -41,14 +42,52 @@ export function numericPropertyFrom(
   return Number.isFinite(number) ? number : null;
 }
 
-export function cameraStreamUrlFrom(baseUrl: string, entity: HassEntity): string | null {
+const consumedAttributes = [
+  entityProperties.lightBrightness,
+  entityProperties.coverPosition,
+  entityProperties.climateCurrentTemperature,
+  entityProperties.climateTargetTemperature,
+  entityProperties.climatePreset,
+  entityProperties.mediaTitle,
+  ...entityProperties.mediaOutput,
+  entityProperties.cameraAccessToken,
+] as const;
+
+let lastApplyKey = "";
+
+export function resetApplyEntitiesCache(): void {
+  lastApplyKey = "";
+}
+
+function entityApplyKey(entity: HassEntity | undefined): string {
+  if (!entity) return "";
+  const parts = [entity.state, entity.last_changed];
+  for (const attribute of consumedAttributes) {
+    parts.push(String(entity.attributes[attribute] ?? ""));
+  }
+  return parts.join("\0");
+}
+
+function cameraProxyUrlFrom(
+  baseUrl: string,
+  entity: HassEntity,
+  endpoint: "camera_proxy" | "camera_proxy_stream",
+): string | null {
   const accessToken = String(entity.attributes[entityProperties.cameraAccessToken] ?? "").trim();
   if (baseUrl === "" || accessToken === "") return null;
 
   const root = baseUrl.replace(/\/+$/, "");
   const entityId = encodeURIComponent(entity.entity_id);
   const token = encodeURIComponent(accessToken);
-  return `${root}/api/camera_proxy_stream/${entityId}?token=${token}`;
+  return `${root}/api/${endpoint}/${entityId}?token=${token}`;
+}
+
+export function cameraSnapshotUrlFrom(baseUrl: string, entity: HassEntity): string | null {
+  return cameraProxyUrlFrom(baseUrl, entity, "camera_proxy");
+}
+
+export function cameraStreamUrlFrom(baseUrl: string, entity: HassEntity): string | null {
+  return cameraProxyUrlFrom(baseUrl, entity, "camera_proxy_stream");
 }
 
 function timeOf(entity: HassEntity): string {
@@ -66,6 +105,11 @@ export function applyEntities(entities: HassEntities): void {
   const rooms = useRoomsStore();
   const security = useSecurityStore();
   const settings = useSettingsStore();
+  const applyKey = `${settings.url}\n${watchedEntityIds()
+    .map((id) => `${id}:${entityApplyKey(entities[id])}`)
+    .join("|")}`;
+  if (applyKey === lastApplyKey) return;
+  lastApplyKey = applyKey;
 
   rooms.setHomeClimateValues(
     numericPropertyFrom(
@@ -177,14 +221,17 @@ export function applyEntities(entities: HassEntities): void {
     if (!camera) continue;
     if (!entity) {
       camera.live = false;
+      camera.snapshotUrl = undefined;
       camera.streamUrl = undefined;
       camera.note = "STREAM UNAVAILABLE";
       continue;
     }
 
     const available = !["off", "unavailable", "unknown"].includes(entity.state);
+    const snapshotUrl = available ? cameraSnapshotUrlFrom(settings.url, entity) : null;
     const streamUrl = available ? cameraStreamUrlFrom(settings.url, entity) : null;
-    camera.live = streamUrl !== null;
+    camera.live = snapshotUrl !== null;
+    camera.snapshotUrl = snapshotUrl ?? undefined;
     camera.streamUrl = streamUrl ?? undefined;
     camera.note = camera.live ? undefined : "STREAM UNAVAILABLE";
   }

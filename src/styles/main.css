@@ -16,6 +16,7 @@
   --camera-a: #e2e0da;
   --camera-b: #d8d6cf;
   --danger: #a63d2a;
+  --mono: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, monospace;
 }
 
 [data-theme="dark"] {
@@ -55,11 +56,11 @@ a {
 }
 
 .mono {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--mono);
 }
 
 .label {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.1em;
   color: var(--label);
@@ -102,7 +103,7 @@ a {
 
 .rail__link {
   writing-mode: vertical-rl;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.06em;
   color: var(--label);
@@ -146,7 +147,7 @@ a {
   gap: 26px;
   padding: 20px 40px;
   border-bottom: 1px solid var(--border);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--mono);
   font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--muted);
@@ -332,7 +333,7 @@ a {
 }
 
 .row__meta {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--mono);
   font-size: 12px;
   color: var(--muted);
 }
@@ -386,11 +387,6 @@ a {
   width: 100%;
 }
 
-.camera:hover .camera__stream,
-.camera:focus-visible .camera__stream {
-  transform: scale(1.02);
-}
-
 .camera:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -402,11 +398,10 @@ a {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 180ms ease;
 }
 
 .camera__tag {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--mono);
   font-size: 11px;
   color: var(--muted);
   background: var(--bg);
@@ -519,12 +514,6 @@ a {
   bottom: 16px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .camera__stream {
-    transition: none;
-  }
-}
-
 @media (max-width: 720px) {
   .camera-modal {
     padding: 12px;
@@ -558,7 +547,7 @@ a {
 }
 
 .event__time {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--mono);
   font-size: 12px;
   color: var(--label);
   width: 52px;
@@ -596,7 +585,7 @@ a {
 .bars-axis {
   display: flex;
   justify-content: space-between;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--mono);
   font-size: 11px;
   color: var(--label);
 }
@@ -677,7 +666,7 @@ a {
 }
 
 .field__input {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--mono);
   font-size: 13px;
   padding: 13px 14px;
   border: 1px solid var(--btn-border);
@@ -810,7 +799,7 @@ a {
 }
 
 .plan__label {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.08em;
   fill: var(--label);
@@ -848,7 +837,7 @@ a {
 }
 
 .callout__temp {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--mono);
   font-size: 12px;
   color: var(--muted);
 }
@@ -870,7 +859,7 @@ a {
 }
 
 .chip__label {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -928,7 +917,7 @@ a {
 .legend {
   display: flex;
   gap: 24px;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.08em;
   color: var(--muted);

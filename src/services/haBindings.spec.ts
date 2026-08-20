@@ -9,6 +9,7 @@ import {
   personBindings,
   roomBindings,
   securityPageBindings,
+  watchedEntityIds,
 } from "@/services/haBindings";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
@@ -52,6 +53,18 @@ describe("Home Assistant binding completeness", () => {
         .sort(),
     );
     expect(securityPageBindings.alarmControlPanel.entityId).toBeTruthy();
+    expect(new Set(cameraBindings.map((item) => item.entityId)).size).toBe(cameraBindings.length);
+  });
+
+  it("lists each consumed entity id once for the live subscription", () => {
+    const ids = watchedEntityIds();
+
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toContain("light.living_room_ceiling");
+    expect(ids).toContain(homePageBindings.camera.entityId);
+    expect(ids).toContain("camera.back_garden");
+    expect(ids).toContain(securityPageBindings.alarmControlPanel.entityId);
+    expect(ids).not.toContain(homePageBindings.actions.goodNight.entityId);
   });
 
   it("keeps page-level selections connected to configured entities", () => {

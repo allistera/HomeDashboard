@@ -6,9 +6,11 @@ import { homePageBindings, roomBindingFor, securityPageBindings } from "@/servic
 import {
   applyEntities,
   blindClosedFrom,
+  cameraSnapshotUrlFrom,
   cameraStreamUrlFrom,
   lightLevelFrom,
   numericPropertyFrom,
+  resetApplyEntitiesCache,
 } from "@/services/haSync";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
@@ -60,12 +62,16 @@ describe("entity conversion", () => {
     expect(numericPropertyFrom(entity("sensor.unavailable", "unavailable"), "")).toBeNull();
   });
 
-  it("builds a camera stream URL from the per-camera access token", () => {
+  it("builds camera snapshot and stream URLs from the per-camera access token", () => {
     const camera = entity("camera.front_door", "idle", { access_token: "token with spaces" });
 
+    expect(cameraSnapshotUrlFrom("http://ha.local:8123/", camera)).toBe(
+      "http://ha.local:8123/api/camera_proxy/camera.front_door?token=token%20with%20spaces",
+    );
     expect(cameraStreamUrlFrom("http://ha.local:8123/", camera)).toBe(
       "http://ha.local:8123/api/camera_proxy_stream/camera.front_door?token=token%20with%20spaces",
     );
+    expect(cameraSnapshotUrlFrom("", camera)).toBeNull();
     expect(cameraStreamUrlFrom("", camera)).toBeNull();
     expect(
       cameraStreamUrlFrom("http://ha.local:8123", entity("camera.front_door", "idle")),
@@ -76,6 +82,7 @@ describe("entity conversion", () => {
 describe("applyEntities", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    resetApplyEntitiesCache();
   });
 
   it("maps bound light entities into the rooms store", () => {
@@ -221,7 +228,7 @@ describe("applyEntities", () => {
     expect(security.peopleHome).toBe(3);
   });
 
-  it("maps available camera entities into live proxy streams", () => {
+  it("maps available camera entities into snapshots and live proxy streams", () => {
     const security = useSecurityStore();
     const settings = useSettingsStore();
     settings.url = "http://ha.local:8123";
@@ -233,17 +240,47 @@ describe("applyEntities", () => {
       ]),
     );
 
+    const encodedId = encodeURIComponent(homePageBindings.camera.entityId);
     const frontDoor = security.cameras.find((camera) => camera.id === "front-door")!;
     expect(frontDoor.live).toBe(true);
     expect(frontDoor.note).toBeUndefined();
+    expect(frontDoor.snapshotUrl).toBe(
+      `http://ha.local:8123/api/camera_proxy/${encodedId}?token=front-token`,
+    );
     expect(frontDoor.streamUrl).toBe(
-      `http://ha.local:8123/api/camera_proxy_stream/${encodeURIComponent(homePageBindings.camera.entityId)}?token=front-token`,
+      `http://ha.local:8123/api/camera_proxy_stream/${encodedId}?token=front-token`,
     );
 
     const driveway = security.cameras.find((camera) => camera.id === "driveway")!;
     expect(driveway.live).toBe(false);
+    expect(driveway.snapshotUrl).toBeUndefined();
     expect(driveway.streamUrl).toBeUndefined();
     expect(driveway.note).toBe("STREAM UNAVAILABLE");
+  });
+
+  it("ignores unused media player attributes when applying entities", () => {
+    const rooms = useRoomsStore();
+    applyEntities(
+      asEntities([
+        entity("media_player.apple_tv", "playing", {
+          media_title: "Night Jazz",
+          media_position: 12,
+        }),
+      ]),
+    );
+    const livingRoom = rooms.rooms.find((r) => r.id === "living-room")!;
+    expect(livingRoom.media!.title).toBe("Night Jazz");
+
+    applyEntities(
+      asEntities([
+        entity("media_player.apple_tv", "playing", {
+          media_title: "Night Jazz",
+          media_position: 48,
+        }),
+      ]),
+    );
+    expect(livingRoom.media!.title).toBe("Night Jazz");
+    expect(livingRoom.media!.playing).toBe(true);
   });
 
   it("leaves stores untouched for unknown or missing entities", () => {

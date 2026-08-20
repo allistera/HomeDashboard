@@ -4,11 +4,12 @@ import {
   createLongLivedTokenAuth,
   ERR_CANNOT_CONNECT,
   ERR_INVALID_AUTH,
-  subscribeEntities,
   type Connection,
   type HassEntities,
 } from "home-assistant-js-websocket";
 
+import { watchedEntityIds } from "@/services/haBindings";
+import { subscribeWatchedEntities } from "@/services/haSubscribe";
 import { useHaStore } from "@/stores/ha";
 import { useSettingsStore } from "@/stores/settings";
 
@@ -51,7 +52,7 @@ export async function connectHa(onEntities: (entities: HassEntities) => void): P
     ha.message = "";
   });
 
-  unsubscribe = subscribeEntities(connection, (entities) => {
+  unsubscribe = await subscribeWatchedEntities(connection, watchedEntityIds(), (entities) => {
     ha.entityCount = Object.keys(entities).length;
     onEntities(entities);
   });

@@ -1,5 +1,7 @@
 import { computed, defineComponent, nextTick, onBeforeUnmount, ref, watch } from "vue";
 
+import { useDocumentVisible } from "@/composables/useDocumentVisible";
+
 import CameraTile from "@/components/CameraTile";
 import EventFeed from "@/components/EventFeed";
 import ToggleSwitch from "@/components/ToggleSwitch";
@@ -17,6 +19,7 @@ export default defineComponent({
   name: "SecurityPage",
   setup() {
     const security = useSecurityStore();
+    const pageVisible = useDocumentVisible();
     const selectedCamera = ref<Camera | null>(null);
     const cameraDialog = ref<HTMLElement | null>(null);
     const modalStreamFailed = ref(false);
@@ -113,7 +116,7 @@ export default defineComponent({
                   name={camera.name}
                   live={camera.live}
                   note={camera.note}
-                  streamUrl={camera.streamUrl}
+                  imageUrl={camera.snapshotUrl ?? ""}
                   onSelect={() => openCamera(camera)}
                 />
               ))}
@@ -229,7 +232,7 @@ export default defineComponent({
                 <div>
                   <div class="label">
                     Camera ·{" "}
-                    {selectedCamera.value.streamUrl && !modalStreamFailed.value
+                    {selectedCamera.value.streamUrl && !modalStreamFailed.value && pageVisible.value
                       ? "Live"
                       : "Unavailable"}
                   </div>
@@ -249,11 +252,12 @@ export default defineComponent({
                 </button>
               </div>
               <div class="camera-modal__viewport">
-                {selectedCamera.value.streamUrl && !modalStreamFailed.value ? (
+                {selectedCamera.value.streamUrl && !modalStreamFailed.value && pageVisible.value ? (
                   <img
                     class="camera-modal__stream"
                     src={selectedCamera.value.streamUrl}
                     alt={`${selectedCamera.value.name} live camera enlarged`}
+                    decoding="async"
                     referrerpolicy="no-referrer"
                     onError={() => {
                       modalStreamFailed.value = true;
@@ -266,7 +270,8 @@ export default defineComponent({
                 )}
                 {selectedCamera.value.live &&
                   selectedCamera.value.streamUrl &&
-                  !modalStreamFailed.value && (
+                  !modalStreamFailed.value &&
+                  pageVisible.value && (
                     <span class="camera__tag camera__tag--live camera-modal__live">LIVE</span>
                   )}
               </div>

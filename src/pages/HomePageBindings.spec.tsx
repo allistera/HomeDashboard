@@ -23,6 +23,7 @@ describe("HomePage bindings", () => {
 
     const frontDoor = useSecurityStore().cameras.find((camera) => camera.id === "front-door")!;
     frontDoor.live = true;
+    frontDoor.snapshotUrl = "http://ha.local/front-door-snap";
     frontDoor.streamUrl = "http://ha.local/front-door-stream";
 
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
@@ -32,9 +33,11 @@ describe("HomePage bindings", () => {
     expect(wrapper.text()).toContain("21.5°");
     expect(wrapper.text()).toContain("Playing · Living room");
     expect(wrapper.text()).toContain("Night Jazz");
-    expect(wrapper.get(".camera__stream").attributes("src")).toBe(
-      "http://ha.local/front-door-stream",
+    expect(wrapper.get(".camera__stream").attributes("src")).toContain(
+      "http://ha.local/front-door-snap",
     );
+    expect(wrapper.get(".camera__stream").attributes("src")).not.toContain("front-door-stream");
+    wrapper.unmount();
   });
 
   it("controls the bound media player from the homepage", async () => {

@@ -157,7 +157,7 @@ export default defineComponent({
                 name={`camera feed — ${homeCamera.value?.name ?? "front door"}`}
                 live={homeCamera.value?.live ?? false}
                 note={homeCamera.value?.note}
-                streamUrl={homeCamera.value?.streamUrl}
+                imageUrl={homeCamera.value?.snapshotUrl ?? ""}
                 height={250}
               />
             </div>

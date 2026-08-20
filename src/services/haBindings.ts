@@ -92,7 +92,7 @@ export const homePageBindings = {
   },
   camera: {
     cameraId: "front-door",
-    entityId: "camera.front_door",
+    entityId: "camera.g5_turret_ultra",
   },
   mediaPlayer: {
     roomId: "living-room",
@@ -231,4 +231,37 @@ export const securityPageBindings = {
 
 export function roomBindingFor(roomId: string): RoomBinding | undefined {
   return roomBindings.find((binding) => binding.roomId === roomId);
+}
+
+function addEntityId(ids: Set<string>, entityId: string | undefined): void {
+  if (entityId) ids.add(entityId);
+}
+
+// Entity IDs whose state this dashboard actually reads. Used to subscribe
+// without pulling every Home Assistant entity over the websocket.
+export function watchedEntityIds(): string[] {
+  const ids = new Set<string>();
+  addEntityId(ids, homePageBindings.outsideTemperature.entityId);
+  addEntityId(ids, homePageBindings.houseTemperature.entityId);
+  addEntityId(ids, homePageBindings.houseTarget.entityId);
+  addEntityId(ids, securityPageBindings.alarmControlPanel.entityId);
+
+  for (const room of roomBindings) {
+    for (const light of room.lights) addEntityId(ids, light.entityId);
+    for (const cover of room.covers) addEntityId(ids, cover.entityId);
+    addEntityId(ids, room.climate);
+    addEntityId(ids, room.media);
+    addEntityId(ids, room.motion);
+    addEntityId(ids, room.vacuum);
+  }
+
+  for (const entry of entryBindings) {
+    addEntityId(ids, entry.lock);
+    addEntityId(ids, entry.sensor);
+  }
+
+  for (const person of personBindings) addEntityId(ids, person.entityId);
+  for (const camera of cameraBindings) addEntityId(ids, camera.entityId);
+
+  return [...ids];
 }
