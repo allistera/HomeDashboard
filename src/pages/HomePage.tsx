@@ -23,7 +23,20 @@ export default defineComponent({
       rooms.rooms.find((room) => room.id === homePageBindings.mediaPlayer.roomId),
     );
 
-    const headline = computed(() => (rooms.anyLightOn ? "Everything's quiet." : "Lights out."));
+    const headline = computed(() => {
+      if (!rooms.anyLightOn) return "Lights out.";
+      const latest = rooms.activity[0];
+      if (!latest) return "Everything's quiet.";
+      return latest.text.endsWith(".") ? latest.text : `${latest.text}.`;
+    });
+    const headlineSize = computed(() => {
+      const length = headline.value.length;
+      if (length <= 20) return 76;
+      if (length <= 40) return 56;
+      if (length <= 65) return 44;
+      if (length <= 95) return 34;
+      return 26;
+    });
     const summary = computed(() => {
       const lightsOn = rooms.rooms.reduce((sum, room) => sum + rooms.lightsOn(room), 0);
       const doors = security.allSecure ? "Doors locked" : "A window is open";
@@ -69,12 +82,14 @@ export default defineComponent({
 
         <div class="hero">
           <div>
-            <h1 class="hero__title hero__title--xl">{headline.value}</h1>
+            <h1 class="hero__title hero__title--xl" style={{ fontSize: `${headlineSize.value}px` }}>
+              {headline.value}
+            </h1>
             <p class="hero__sub">{summary.value}</p>
           </div>
           <div class="hero__actions">
             <button type="button" class="btn btn--primary" onClick={goodNight}>
-              Good night
+              Get Jaicob
             </button>
             <button type="button" class="btn" onClick={movie}>
               Movie

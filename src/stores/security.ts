@@ -108,13 +108,6 @@ const seedState: SecurityState = {
     { id: "tonnii", name: "Tonnii", status: "HOME ALL DAY", color: "#D8D3C4" },
     { id: "elsie", name: "Elsie", status: "ARRIVED 4:40 PM", color: "#CBD9CC" },
     { id: "jaicob", name: "Jaicob", status: "ARRIVED 3:15 PM", color: "#E7CDB8" },
-    {
-      id: "cleaner",
-      name: "Cleaner · guest code",
-      status: "EXPIRES FRI 12:00",
-      color: "#E6E4DE",
-      guest: true,
-    },
   ],
   events: [
     { time: "7:02", text: "Front door unlocked · Allister" },

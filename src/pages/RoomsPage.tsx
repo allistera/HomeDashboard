@@ -321,9 +321,6 @@ export default defineComponent({
                     <span class="label">
                       {room.deviceCount} devices · {room.offlineCount} offline
                     </span>
-                    <a href="#" onClick={(e: Event) => e.preventDefault()}>
-                      Manage room
-                    </a>
                   </div>
                 </div>
               </div>

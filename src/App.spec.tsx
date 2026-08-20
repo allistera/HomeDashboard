@@ -23,7 +23,7 @@ describe("App", () => {
     await router.isReady();
     const links = wrapper.findAll(".rail__link").map((link) => link.text());
     expect(links).toEqual(["HOME", "ROOMS", "FLOORS", "SECURITY"]);
-    expect(wrapper.text()).toContain("Everything's quiet.");
+    expect(wrapper.text()).toContain("Front door unlocked by Allister.");
   });
 
   it("navigates between the four pages", async () => {

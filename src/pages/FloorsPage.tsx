@@ -12,6 +12,7 @@ interface Chip {
   label: string;
   value: string;
   tone?: ChipTone;
+  onClick?: () => void;
 }
 
 interface Callout {
@@ -28,6 +29,14 @@ interface PlanLabel {
   text: string;
 }
 
+interface PlanMarker {
+  label: string;
+  left: number; // percent of canvas width
+  top: number; // percent of canvas height
+  line: string; // SVG path from marker to dot
+  dot: [number, number];
+}
+
 interface FloorPlan {
   id: FloorId;
   title: string;
@@ -37,8 +46,8 @@ interface FloorPlan {
   walls: string[];
   stairs: string;
   labels: PlanLabel[];
-  stairsAction: { text: string; target: FloorId };
   callouts: Callout[];
+  markers?: PlanMarker[];
 }
 
 // Isometric grid: p(a, b) = (660 + (a - b) * 38, 140 + (a + b) * 22) on a
@@ -57,15 +66,17 @@ const floors: FloorPlan[] = [
       "M 812 272 L 394 514", // hall / lounge divider (x = 5)
       "M 432 272 L 622 382", // kitchen back wall (y = 6)
       "M 299 349 L 394 404", // closet wall (y = 9.5)
-      "M 261 371 L 356 426", // WC wall (y = 10.5)
+      "M 261 371 L 356 426", // closet divider (y = 10.5)
       "M 394 404 L 299 459", // closet / hall divider (x = 2.5)
+      "M 470 294 L 413 327", // hall closet wall (x = 1)
+      "M 375 305 L 413 327", // hall closet wall (y = 7.5)
     ],
     stairs: "451,305 527,349 432,404 356,360",
     labels: [
+      { x: 422, y: 303, text: "C" },
       { x: 326, y: 390, text: "C" },
-      { x: 280, y: 417, text: "WC" },
+      { x: 280, y: 417, text: "C" },
     ],
-    stairsAction: { text: "Go up to first floor", target: "first" },
     callouts: [
       {
         roomId: "kitchen",
@@ -89,6 +100,15 @@ const floors: FloorPlan[] = [
         dot: [698, 448],
       },
     ],
+    markers: [
+      {
+        label: "Garden",
+        left: 34,
+        top: 2,
+        line: "M 750 60 H 793 V 161",
+        dot: [793, 173],
+      },
+    ],
   },
   {
     id: "first",
@@ -107,10 +127,9 @@ const floors: FloorPlan[] = [
       { x: 398, y: 349, text: "C" },
       { x: 375, y: 410, text: "BATHROOM" },
     ],
-    stairsAction: { text: "Go down to ground floor", target: "ground" },
     callouts: [
       {
-        roomId: "jaicobs-room",
+        roomId: "elsies-room",
         left: 3,
         top: 15,
         line: "M 355 132 H 664 V 227",
@@ -124,7 +143,7 @@ const floors: FloorPlan[] = [
         dot: [835, 364],
       },
       {
-        roomId: "elsies-room",
+        roomId: "jaicobs-room",
         left: 71,
         top: 62,
         line: "M 920 508 H 622 V 496",
@@ -156,12 +175,6 @@ export default defineComponent({
 
     const deviceCount = computed(() => rooms.rooms.reduce((sum, r) => sum + r.deviceCount, 0));
 
-    const alert = computed(() => {
-      const open = security.openEntries[0];
-      if (open) return `${open.name} has been open 42 minutes`;
-      return `Front door locked since ${security.secureSince}`;
-    });
-
     const blindsChip = (room: Room): Chip | null => {
       if (room.blinds.length === 0) return null;
       const avg = Math.round(
@@ -178,6 +191,7 @@ export default defineComponent({
           label: "Lights",
           value: on > 0 ? `${on} on` : "Off",
           tone: on > 0 ? "active" : undefined,
+          onClick: () => rooms.setRoomLights(room.id, on === 0),
         },
       ];
 
@@ -209,8 +223,17 @@ export default defineComponent({
           if (frontDoor) {
             chips.push(
               frontDoor.locked
-                ? { label: "Door", value: "Locked" }
-                : { label: "Door", value: "Unlocked", tone: "attention" },
+                ? {
+                    label: "Door",
+                    value: "Locked",
+                    onClick: () => security.setLocked(frontDoor.id, false),
+                  }
+                : {
+                    label: "Door",
+                    value: "Unlocked",
+                    tone: "attention",
+                    onClick: () => security.setLocked(frontDoor.id, true),
+                  },
             );
           }
           break;
@@ -306,6 +329,13 @@ export default defineComponent({
                   <circle cx={callout.dot[0]} cy={callout.dot[1]} r="5" class="plan__dot" />
                 </g>
               ))}
+
+              {(floor.value.markers ?? []).map((marker) => (
+                <g key={marker.label}>
+                  <path d={marker.line} class="plan__lead" fill="none" />
+                  <circle cx={marker.dot[0]} cy={marker.dot[1]} r="5" class="plan__dot" />
+                </g>
+              ))}
             </svg>
 
             {floor.value.callouts.map((callout) => {
@@ -322,36 +352,48 @@ export default defineComponent({
                     <span class="callout__temp">{room.temp.toFixed(1)}°</span>
                   </div>
                   <div class="callout__chips">
-                    {chipsFor(room).map((chip) => (
-                      <div
-                        key={chip.label}
-                        class={[
-                          "chip",
-                          {
-                            "chip--active": chip.tone === "active",
-                            "chip--attention": chip.tone === "attention",
-                          },
-                        ]}
-                      >
-                        <span class="chip__label">{chip.label}</span>
-                        <span class="chip__value">{chip.value}</span>
-                      </div>
-                    ))}
+                    {chipsFor(room).map((chip) => {
+                      const chipClass = [
+                        "chip",
+                        {
+                          "chip--active": chip.tone === "active",
+                          "chip--attention": chip.tone === "attention",
+                          "chip--button": Boolean(chip.onClick),
+                        },
+                      ];
+                      return chip.onClick ? (
+                        <button
+                          type="button"
+                          key={chip.label}
+                          class={chipClass}
+                          onClick={chip.onClick}
+                        >
+                          <span class="chip__label">{chip.label}</span>
+                          <span class="chip__value">{chip.value}</span>
+                        </button>
+                      ) : (
+                        <div key={chip.label} class={chipClass}>
+                          <span class="chip__label">{chip.label}</span>
+                          <span class="chip__value">{chip.value}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
             })}
 
-            <button
-              type="button"
-              class="stairs-btn"
-              onClick={() => (floorId.value = floor.value.stairsAction.target)}
-            >
-              {floor.value.stairsAction.text}
-              <span class="mono" style={{ fontSize: "11px", letterSpacing: "0.08em" }}>
-                STAIRS
-              </span>
-            </button>
+            {(floor.value.markers ?? []).map((marker) => (
+              <div
+                key={marker.label}
+                class="callout"
+                style={{ left: `${marker.left}%`, top: `${marker.top}%` }}
+              >
+                <div class="callout__head">
+                  <span class="callout__name">{marker.label}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -366,12 +408,6 @@ export default defineComponent({
             <span>
               <span class="legend__swatch" style={{ border: "1px solid var(--btn-border)" }} /> IDLE
             </span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-            <span style={{ fontSize: "16px" }}>{alert.value}</span>
-            <button type="button" class="btn btn--small">
-              Remind me
-            </button>
           </div>
         </div>
       </main>

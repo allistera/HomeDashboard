@@ -54,10 +54,10 @@ export default defineComponent({
           <button
             type="button"
             class="topbar__theme"
-            onClick={() => theme.toggle()}
-            aria-pressed={theme.dark}
+            onClick={() => theme.cycle()}
+            aria-label={`Theme: ${theme.mode}. Click to change.`}
           >
-            {theme.dark ? "LIGHT" : "DARK"}
+            {theme.mode.toUpperCase()}
           </button>
         </div>
       </header>

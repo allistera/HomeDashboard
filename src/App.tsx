@@ -15,6 +15,7 @@ export default defineComponent({
 
     onMounted(() => {
       if (settings.configured) void connectHa(applyEntities);
+      theme.watchSystem();
     });
 
     watchEffect(() => {
