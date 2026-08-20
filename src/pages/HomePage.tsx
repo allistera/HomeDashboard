@@ -78,6 +78,7 @@ export default defineComponent({
           left={[`OUTSIDE ${rooms.outsideTemp.toFixed(0)}°`]}
           showPeople
           status={security.statusLabel}
+          statusTone={security.statusTone}
         />
 
         <div class="hero">

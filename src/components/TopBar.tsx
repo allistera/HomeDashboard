@@ -1,7 +1,7 @@
 import { defineComponent, type PropType } from "vue";
 
 import { useClock } from "@/composables/useClock";
-import { useSecurityStore } from "@/stores/security";
+import { useSecurityStore, type StatusTone } from "@/stores/security";
 import { useThemeStore } from "@/stores/theme";
 
 export default defineComponent({
@@ -14,6 +14,8 @@ export default defineComponent({
     // SAFETY: same Vue PropType pattern as above.
     right: { type: Array as PropType<string[]>, default: () => [] },
     status: { type: String, required: true },
+    // SAFETY: same Vue PropType pattern as above.
+    statusTone: { type: String as PropType<StatusTone>, default: "alert" },
     showPeople: { type: Boolean, default: false },
   },
   setup(props) {
@@ -50,7 +52,9 @@ export default defineComponent({
               </span>
             </span>
           )}
-          <span class="topbar__status">● {props.status}</span>
+          <span class={["topbar__status", `topbar__status--${props.statusTone}`]}>
+            ● {props.status}
+          </span>
           <button
             type="button"
             class="topbar__theme"
