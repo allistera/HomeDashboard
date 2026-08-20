@@ -4,7 +4,6 @@ import { entryBindings, securityPageBindings, type AlarmArmState } from "@/servi
 import { haCallService } from "@/services/haClient";
 
 export type ArmState = AlarmArmState;
-export type StatusTone = "ok" | "alert";
 
 export interface Entry {
   id: string;
@@ -130,20 +129,6 @@ export const useSecurityStore = defineStore("security", {
     },
     allSecure(state): boolean {
       return state.entries.every((e) => e.locked && !e.open);
-    },
-    statusLabel(state): string {
-      const open = state.entries.find((e) => e.open);
-      // An open window is a drying-weather cue, not a perimeter breach.
-      if (open)
-        return open.kind === "window" ? "PUT OUT THE WASHING" : `${open.name.toUpperCase()} OPEN`;
-      const unlocked = state.entries.find((e) => !e.locked);
-      if (unlocked) return `${unlocked.name.toUpperCase()} UNLOCKED`;
-      return "ALL SYSTEMS OK";
-    },
-    statusTone(state): StatusTone {
-      const open = state.entries.find((e) => e.open);
-      if (open) return open.kind === "window" ? "ok" : "alert";
-      return state.entries.every((e) => e.locked) ? "ok" : "alert";
     },
     armLabel(state): string {
       switch (state.armState) {

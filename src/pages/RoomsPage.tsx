@@ -3,13 +3,11 @@ import { computed, defineComponent } from "vue";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
 import { useRoomsStore, type Room, type Scene } from "@/stores/rooms";
-import { useSecurityStore } from "@/stores/security";
 
 export default defineComponent({
   name: "RoomsPage",
   setup() {
     const rooms = useRoomsStore();
-    const security = useSecurityStore();
 
     const listMeta = (room: Room) => {
       const on = rooms.lightsOn(room);
@@ -38,8 +36,8 @@ export default defineComponent({
           <TopBar
             left={[`OUTSIDE ${rooms.outsideTemp.toFixed(0)}°`]}
             showPeople
-            status={security.statusLabel}
-            statusTone={security.statusTone}
+            status={rooms.washingLabel}
+            statusTone={rooms.washingTone}
           />
 
           <div class="cols" style={{ gridTemplateColumns: "296px 1fr" }}>

@@ -74,6 +74,16 @@ describe("rooms store", () => {
     expect(kitchen.media!.playing).toBe(true);
   });
 
+  it("switches the washing reminder on the drying-weather flag", () => {
+    const rooms = useRoomsStore();
+    expect(rooms.washingLabel).toBe("DO NOT PUT OUT THE WASHING");
+    expect(rooms.washingTone).toBe("alert");
+
+    rooms.setWashingWeather(true);
+    expect(rooms.washingLabel).toBe("PUT OUT THE WASHING");
+    expect(rooms.washingTone).toBe("ok");
+  });
+
   it("ignores selecting a room that does not exist", () => {
     const rooms = useRoomsStore();
     rooms.selectRoom("garage-gym");

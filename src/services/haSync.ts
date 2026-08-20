@@ -8,6 +8,7 @@ import {
   personBindings,
   roomBindings,
   securityPageBindings,
+  washingBinding,
   watchedEntityIds,
   type AlarmArmState,
 } from "@/services/haBindings";
@@ -42,6 +43,19 @@ export function numericPropertyFrom(
   return Number.isFinite(number) ? number : null;
 }
 
+// Home Assistant states that read as "yes" for a boolean-ish property.
+const truthyStates = ["on", "true", "yes", "1"];
+
+export function booleanPropertyFrom(entity: HassEntity | undefined, attribute: string): boolean {
+  if (!entity) return false;
+  const value = attribute === "" ? entity.state : entity.attributes[attribute];
+  return truthyStates.includes(
+    String(value ?? "")
+      .trim()
+      .toLowerCase(),
+  );
+}
+
 const consumedAttributes = [
   entityProperties.lightBrightness,
   entityProperties.coverPosition,
@@ -51,6 +65,7 @@ const consumedAttributes = [
   entityProperties.mediaTitle,
   ...entityProperties.mediaOutput,
   entityProperties.cameraAccessToken,
+  washingBinding.attribute,
 ] as const;
 
 let lastApplyKey = "";
@@ -124,6 +139,10 @@ export function applyEntities(entities: HassEntities): void {
       entities[homePageBindings.houseTarget.entityId],
       homePageBindings.houseTarget.attribute,
     ),
+  );
+
+  rooms.setWashingWeather(
+    booleanPropertyFrom(entities[washingBinding.entityId], washingBinding.attribute),
   );
 
   for (const binding of roomBindings) {

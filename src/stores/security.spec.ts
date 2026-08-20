@@ -43,26 +43,4 @@ describe("security store", () => {
     const security = useSecurityStore();
     expect(security.peopleHome).toBe(4);
   });
-
-  it("derives the status label from the perimeter state", () => {
-    const security = useSecurityStore();
-    expect(security.statusLabel).toBe("PUT OUT THE WASHING");
-    expect(security.statusTone).toBe("ok");
-
-    security.setLocked("jaicobs-room-window", true);
-    expect(security.statusLabel).toBe("ALL SYSTEMS OK");
-    expect(security.statusTone).toBe("ok");
-
-    security.setLocked("front-door", false);
-    expect(security.statusLabel).toBe("FRONT DOOR UNLOCKED");
-    expect(security.statusTone).toBe("alert");
-  });
-
-  it("flags an open door as an alert", () => {
-    const security = useSecurityStore();
-    const frontDoor = security.entries.find((e) => e.id === "front-door")!;
-    frontDoor.open = true;
-    expect(security.statusLabel).toBe("FRONT DOOR OPEN");
-    expect(security.statusTone).toBe("alert");
-  });
 });

@@ -2,10 +2,16 @@ import type { HassEntities, HassEntity } from "home-assistant-js-websocket";
 import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { homePageBindings, roomBindingFor, securityPageBindings } from "@/services/haBindings";
+import {
+  homePageBindings,
+  roomBindingFor,
+  securityPageBindings,
+  washingBinding,
+} from "@/services/haBindings";
 import {
   applyEntities,
   blindClosedFrom,
+  booleanPropertyFrom,
   cameraSnapshotUrlFrom,
   cameraStreamUrlFrom,
   lightLevelFrom,
@@ -60,6 +66,14 @@ describe("entity conversion", () => {
     expect(numericPropertyFrom(climate, "temperature")).toBe(21.5);
     expect(numericPropertyFrom(climate, "missing")).toBeNull();
     expect(numericPropertyFrom(entity("sensor.unavailable", "unavailable"), "")).toBeNull();
+  });
+
+  it("reads a boolean property from an entity state or attribute", () => {
+    expect(booleanPropertyFrom(entity("binary_sensor.drying", "on"), "")).toBe(true);
+    expect(booleanPropertyFrom(entity("binary_sensor.drying", "off"), "")).toBe(false);
+    expect(booleanPropertyFrom(entity("weather.home", "sunny", { dry: "True" }), "dry")).toBe(true);
+    expect(booleanPropertyFrom(entity("weather.home", "sunny", { dry: "no" }), "dry")).toBe(false);
+    expect(booleanPropertyFrom(undefined, "")).toBe(false);
   });
 
   it("builds camera snapshot and stream URLs from the per-camera access token", () => {
@@ -189,6 +203,29 @@ describe("applyEntities", () => {
 
     expect(security.armState).toBe("away");
     expect(security.secureSince).toMatch(/\d/);
+  });
+
+  it("maps the washing weather property into the drying reminder", () => {
+    const rooms = useRoomsStore();
+    expect(rooms.washingLabel).toBe("DO NOT PUT OUT THE WASHING");
+    expect(rooms.washingTone).toBe("alert");
+
+    applyEntities(asEntities([entity(washingBinding.entityId, "on")]));
+    expect(rooms.washingWeatherOk).toBe(true);
+    expect(rooms.washingLabel).toBe("PUT OUT THE WASHING");
+    expect(rooms.washingTone).toBe("ok");
+
+    resetApplyEntitiesCache();
+    applyEntities(asEntities([entity(washingBinding.entityId, "off")]));
+    expect(rooms.washingWeatherOk).toBe(false);
+    expect(rooms.washingLabel).toBe("DO NOT PUT OUT THE WASHING");
+    expect(rooms.washingTone).toBe("alert");
+  });
+
+  it("treats a missing washing entity as unsuitable weather", () => {
+    const rooms = useRoomsStore();
+    applyEntities(asEntities([entity("sensor.house_temperature", "20.5")]));
+    expect(rooms.washingWeatherOk).toBe(false);
   });
 
   it("maps locks and door/window sensors into security entries", () => {

@@ -77,8 +77,8 @@ export default defineComponent({
         <TopBar
           left={[`OUTSIDE ${rooms.outsideTemp.toFixed(0)}°`]}
           showPeople
-          status={security.statusLabel}
-          statusTone={security.statusTone}
+          status={rooms.washingLabel}
+          statusTone={rooms.washingTone}
         />
 
         <div class="hero">

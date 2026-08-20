@@ -178,6 +178,10 @@ a {
   color: var(--success);
 }
 
+.topbar__status--alert {
+  color: var(--danger);
+}
+
 .topbar__theme {
   font: inherit;
   letter-spacing: inherit;

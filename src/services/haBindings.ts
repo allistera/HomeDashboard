@@ -114,6 +114,14 @@ export const homePageBindings = {
   actions: Record<"goodNight" | "movie" | "away", EntityActionBinding>;
 };
 
+// Drying-weather signal behind the top-bar washing reminder. `attribute: ""`
+// reads the entity state itself ("on"/"true" means hang it out); name an
+// attribute to read that instead.
+export const washingBinding: EntityPropertyBinding = {
+  entityId: "binary_sensor.good_drying_weather",
+  attribute: "",
+};
+
 export const roomBindings: RoomBinding[] = [
   {
     roomId: "living-room",
@@ -245,6 +253,7 @@ export function watchedEntityIds(): string[] {
   addEntityId(ids, homePageBindings.houseTemperature.entityId);
   addEntityId(ids, homePageBindings.houseTarget.entityId);
   addEntityId(ids, securityPageBindings.alarmControlPanel.entityId);
+  addEntityId(ids, washingBinding.entityId);
 
   for (const room of roomBindings) {
     for (const light of room.lights) addEntityId(ids, light.entityId);

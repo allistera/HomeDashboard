@@ -265,8 +265,8 @@ export default defineComponent({
         <TopBar
           left={[`2 STOREYS · ${deviceCount.value} DEVICES`]}
           showPeople
-          status={security.statusLabel}
-          statusTone={security.statusTone}
+          status={rooms.washingLabel}
+          statusTone={rooms.washingTone}
         />
 
         <div class="hero" style={{ padding: "36px 40px 26px" }}>

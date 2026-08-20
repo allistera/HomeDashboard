@@ -45,6 +45,7 @@ interface RoomsState {
   rooms: Room[];
   selectedRoomId: string;
   activity: RoomEvent[];
+  washingWeatherOk: boolean;
   outsideTempFromHa: number | null;
   houseTempFromHa: number | null;
   houseTargetFromHa: number | null;
@@ -205,6 +206,7 @@ export const useRoomsStore = defineStore("rooms", {
     rooms: seedRooms,
     selectedRoomId: "living-room",
     activity: seedActivity,
+    washingWeatherOk: false,
     outsideTempFromHa: null,
     houseTempFromHa: null,
     houseTargetFromHa: null,
@@ -218,6 +220,12 @@ export const useRoomsStore = defineStore("rooms", {
     },
     anyLightOn(state): boolean {
       return state.rooms.some((r) => r.lights.some((l) => l.level > 0));
+    },
+    washingLabel(state): string {
+      return state.washingWeatherOk ? "PUT OUT THE WASHING" : "DO NOT PUT OUT THE WASHING";
+    },
+    washingTone(state): "ok" | "alert" {
+      return state.washingWeatherOk ? "ok" : "alert";
     },
     outsideTemp(state): number {
       if (state.outsideTempFromHa !== null) return state.outsideTempFromHa;
@@ -244,6 +252,9 @@ export const useRoomsStore = defineStore("rooms", {
       this.outsideTempFromHa = outsideTemperature;
       this.houseTempFromHa = temperature;
       this.houseTargetFromHa = target;
+    },
+    setWashingWeather(ok: boolean) {
+      this.washingWeatherOk = ok;
     },
     selectRoom(id: string) {
       if (this.rooms.some((r) => r.id === id)) {
