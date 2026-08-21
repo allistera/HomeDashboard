@@ -216,6 +216,7 @@ export const floorsPageBindings = {
   livingRoomId: "living-room",
   hallwayRoomId: "hallway",
   bedroomRoomIds: ["bedroom", "elsies-room"],
+  jaicobsRoomId: "jaicobs-room",
 } as const;
 
 export const securityPageBindings = {
@@ -246,8 +247,13 @@ function addEntityId(ids: Set<string>, entityId: string | undefined): void {
 }
 
 // Entity IDs whose state this dashboard actually reads. Used to subscribe
-// without pulling every Home Assistant entity over the websocket.
+// without pulling every Home Assistant entity over the websocket. Bindings
+// are static config, so the result is computed once and reused.
+let watchedIdsCache: string[] | null = null;
+
 export function watchedEntityIds(): string[] {
+  if (watchedIdsCache !== null) return watchedIdsCache;
+
   const ids = new Set<string>();
   addEntityId(ids, homePageBindings.outsideTemperature.entityId);
   addEntityId(ids, homePageBindings.houseTemperature.entityId);
@@ -272,5 +278,6 @@ export function watchedEntityIds(): string[] {
   for (const person of personBindings) addEntityId(ids, person.entityId);
   for (const camera of cameraBindings) addEntityId(ids, camera.entityId);
 
-  return [...ids];
+  watchedIdsCache = [...ids];
+  return watchedIdsCache;
 }

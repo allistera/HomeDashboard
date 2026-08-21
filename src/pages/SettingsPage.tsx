@@ -60,7 +60,7 @@ export default defineComponent({
               id="ha-url"
               class="field__input"
               type="text"
-              placeholder="http://homeassistant.local:8123"
+              placeholder="https://homeassistant.local:8123"
               v-model={url.value}
             />
           </div>

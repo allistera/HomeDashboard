@@ -15,6 +15,9 @@ import { useSettingsStore } from "@/stores/settings";
 
 let connection: Connection | null = null;
 let unsubscribe: (() => void) | null = null;
+// Bumped on every connect/disconnect so a slow in-flight connect can detect
+// that it was superseded and discard its connection instead of leaking it.
+let connectGeneration = 0;
 
 export async function connectHa(onEntities: (entities: HassEntities) => void): Promise<boolean> {
   const settings = useSettingsStore();
@@ -22,13 +25,16 @@ export async function connectHa(onEntities: (entities: HassEntities) => void): P
   if (!settings.configured) return false;
 
   disconnectHa();
+  const generation = connectGeneration;
   ha.status = "connecting";
   ha.message = "";
 
+  let conn: Connection;
   try {
     const auth = createLongLivedTokenAuth(settings.url, settings.token);
-    connection = await createConnection({ auth });
+    conn = await createConnection({ auth });
   } catch (error) {
+    if (generation !== connectGeneration) return false;
     ha.status = "error";
     if (error === ERR_INVALID_AUTH) {
       ha.message = "Home Assistant rejected the token.";
@@ -42,25 +48,48 @@ export async function connectHa(onEntities: (entities: HassEntities) => void): P
     return false;
   }
 
+  if (generation !== connectGeneration) {
+    conn.close();
+    return false;
+  }
+
+  connection = conn;
   ha.status = "connected";
-  connection.addEventListener("disconnected", () => {
+  conn.addEventListener("disconnected", () => {
     ha.status = "connecting";
     ha.message = "Connection lost — retrying…";
   });
-  connection.addEventListener("ready", () => {
+  conn.addEventListener("ready", () => {
     ha.status = "connected";
     ha.message = "";
   });
 
-  unsubscribe = await subscribeWatchedEntities(connection, watchedEntityIds(), (entities) => {
-    ha.entityCount = Object.keys(entities).length;
-    onEntities(entities);
-  });
+  try {
+    unsubscribe = await subscribeWatchedEntities(conn, watchedEntityIds(), (entities) => {
+      ha.entityCount = Object.keys(entities).length;
+      onEntities(entities);
+    });
+  } catch {
+    if (generation !== connectGeneration) return false;
+    conn.close();
+    connection = null;
+    ha.status = "error";
+    ha.message = "Connected, but could not subscribe to entity updates.";
+    return false;
+  }
+
+  if (generation !== connectGeneration) {
+    unsubscribe?.();
+    unsubscribe = null;
+    conn.close();
+    return false;
+  }
   return true;
 }
 
 export function disconnectHa(): void {
   const ha = useHaStore();
+  connectGeneration++;
   unsubscribe?.();
   unsubscribe = null;
   connection?.close();
@@ -74,16 +103,20 @@ export function haConnected(): boolean {
   return connection !== null;
 }
 
+export type ServiceCallResult = "sent" | "failed" | "offline";
+
 export async function haCallService(
   domain: string,
   service: string,
   serviceData?: Record<string, string | number | boolean>,
   target?: { entity_id: string },
-): Promise<void> {
-  if (!connection) return;
+): Promise<ServiceCallResult> {
+  if (!connection) return "offline";
   try {
     await callService(connection, domain, service, serviceData, target);
+    return "sent";
   } catch {
     useHaStore().message = `Service call ${domain}.${service} failed.`;
+    return "failed";
   }
 }

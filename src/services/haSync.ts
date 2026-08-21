@@ -65,7 +65,8 @@ const consumedAttributes = [
   entityProperties.mediaTitle,
   ...entityProperties.mediaOutput,
   entityProperties.cameraAccessToken,
-  washingBinding.attribute,
+  // An empty attribute means "read the state itself", so nothing to consume.
+  ...(washingBinding.attribute === "" ? [] : [washingBinding.attribute]),
 ] as const;
 
 let lastApplyKey = "";

@@ -38,6 +38,37 @@ export default defineComponent({
       void nextTick(() => previouslyFocused?.focus());
     };
 
+    // Keeps Tab cycling inside the dialog while the camera view is open.
+    const onDialogKeydown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeCamera();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const dialog = cameraDialog.value;
+      if (!dialog) return;
+      const focusables = [
+        ...dialog.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      ].filter((element) => !element.hasAttribute("disabled"));
+      if (focusables.length === 0) return;
+
+      const first = focusables[0]!;
+      const last = focusables[focusables.length - 1]!;
+      const current = document.activeElement;
+      if (!(current instanceof HTMLElement) || !dialog.contains(current)) {
+        event.preventDefault();
+        first.focus();
+      } else if (event.shiftKey && current === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && current === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
     watch(selectedCamera, (camera) => {
       document.body.style.overflow = camera ? "hidden" : "";
     });
@@ -53,11 +84,12 @@ export default defineComponent({
     );
     const subline = computed(() => {
       const open = security.openEntries;
+      const locks = `All ${security.entries.length} locks engaged`;
       if (open.length === 0) {
-        return "All five locks engaged and every window closed. Motion sensors are live downstairs only while people are home.";
+        return `${locks} and every window closed. Motion sensors are live downstairs only while people are home.`;
       }
       const names = open.map((e) => e.name.toLowerCase()).join(", ");
-      return `All five locks engaged and every window closed except the ${names}, which is open by choice. Motion sensors are live downstairs only while people are home.`;
+      return `${locks} and every window closed except the ${names}, which is open by choice. Motion sensors are live downstairs only while people are home.`;
     });
 
     return () => (
@@ -223,9 +255,7 @@ export default defineComponent({
             onClick={(event) => {
               if (event.target === event.currentTarget) closeCamera();
             }}
-            onKeydown={(event) => {
-              if (event.key === "Escape") closeCamera();
-            }}
+            onKeydown={onDialogKeydown}
           >
             <div class="camera-modal__panel">
               <div class="camera-modal__head">

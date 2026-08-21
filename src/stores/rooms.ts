@@ -202,15 +202,17 @@ function pushLight(roomId: string, lightId: string, level: number): void {
 }
 
 export const useRoomsStore = defineStore("rooms", {
-  state: (): RoomsState => ({
-    rooms: seedRooms,
-    selectedRoomId: "living-room",
-    activity: seedActivity,
-    washingWeatherOk: false,
-    outsideTempFromHa: null,
-    houseTempFromHa: null,
-    houseTargetFromHa: null,
-  }),
+  // Clone the module-level seeds so store instances never share mutable state.
+  state: (): RoomsState =>
+    structuredClone({
+      rooms: seedRooms,
+      selectedRoomId: "living-room",
+      activity: seedActivity,
+      washingWeatherOk: false,
+      outsideTempFromHa: null,
+      houseTempFromHa: null,
+      houseTargetFromHa: null,
+    }),
   getters: {
     selectedRoom(state): Room {
       return state.rooms.find((r) => r.id === state.selectedRoomId) ?? state.rooms[0];

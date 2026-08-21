@@ -238,7 +238,7 @@ export default defineComponent({
           }
           break;
         }
-        case "jaicobs-room": {
+        case floorsPageBindings.jaicobsRoomId: {
           const window = security.entries.find((e) => e.id === "jaicobs-room-window");
           if (window) {
             chips.push(
@@ -318,8 +318,8 @@ export default defineComponent({
               <polygon points={floor.value.stairs} class="plan__stairs" />
               <polygon points={floor.value.stairs} fill="url(#stair-hatch)" stroke="none" />
 
-              {floor.value.labels.map((label) => (
-                <text key={label.text} x={label.x} y={label.y} class="plan__label">
+              {floor.value.labels.map((label, index) => (
+                <text key={index} x={label.x} y={label.y} class="plan__label">
                   {label.text}
                 </text>
               ))}

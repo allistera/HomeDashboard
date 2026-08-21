@@ -15,7 +15,9 @@ interface SettingsState {
 export function normalizeUrl(input: string): string {
   const trimmed = input.trim().replace(/\/+$/, "");
   if (trimmed === "") return "";
-  return /^https?:\/\//.test(trimmed) ? trimmed : `http://${trimmed}`;
+  // Default to https so a long-lived token is never sent in plaintext by
+  // accident; an explicit http:// prefix is still honored for LAN setups.
+  return /^https?:\/\//.test(trimmed) ? trimmed : `https://${trimmed}`;
 }
 
 export const useSettingsStore = defineStore("settings", {

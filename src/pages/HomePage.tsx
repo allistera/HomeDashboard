@@ -9,8 +9,6 @@ import { haCallService } from "@/services/haClient";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
 
-const tempTrend = [38, 52, 44, 66, 80, 72, 90];
-
 export default defineComponent({
   name: "HomePage",
   setup() {
@@ -151,15 +149,6 @@ export default defineComponent({
                 <div class="big-number big-number--accent" style={{ fontSize: "54px" }}>
                   {rooms.houseTarget.toFixed(1)}°
                 </div>
-              </div>
-              <div class="bars" style={{ flex: 1, gap: "4px", height: "56px" }}>
-                {tempTrend.map((height, index) => (
-                  <div
-                    key={index}
-                    class={["bars__bar", { "bars__bar--accent": index === tempTrend.length - 1 }]}
-                    style={{ height: `${height}%` }}
-                  />
-                ))}
               </div>
             </div>
           </div>

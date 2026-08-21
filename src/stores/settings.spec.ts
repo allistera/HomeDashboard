@@ -5,8 +5,8 @@ import { HA_TOKEN_KEY, HA_URL_KEY, normalizeUrl, useSettingsStore } from "@/stor
 
 describe("normalizeUrl", () => {
   it("adds a protocol when missing and strips trailing slashes", () => {
-    expect(normalizeUrl("homeassistant.local:8123/")).toBe("http://homeassistant.local:8123");
-    expect(normalizeUrl("https://ha.example.com//")).toBe("https://ha.example.com");
+    expect(normalizeUrl("homeassistant.local:8123/")).toBe("https://homeassistant.local:8123");
+    expect(normalizeUrl("http://ha.local:8123//")).toBe("http://ha.local:8123");
     expect(normalizeUrl("  ")).toBe("");
   });
 });
@@ -40,11 +40,11 @@ describe("settings store", () => {
     const saved = await settings.validateAndSave("ha.local:8123/", " token-123 ");
 
     expect(saved).toBe(true);
-    expect(fetchMock).toHaveBeenCalledWith("http://ha.local:8123/api/", {
+    expect(fetchMock).toHaveBeenCalledWith("https://ha.local:8123/api/", {
       headers: { Authorization: "Bearer token-123" },
     });
     expect(settings.validation).toBe("valid");
-    expect(localStorage.getItem(HA_URL_KEY)).toBe("http://ha.local:8123");
+    expect(localStorage.getItem(HA_URL_KEY)).toBe("https://ha.local:8123");
     expect(localStorage.getItem(HA_TOKEN_KEY)).toBe("token-123");
   });
 

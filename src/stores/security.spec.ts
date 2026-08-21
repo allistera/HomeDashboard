@@ -24,11 +24,13 @@ describe("security store", () => {
     expect(security.armLabel).toBe("DISARMED");
   });
 
-  it("locking an open entry also closes it", () => {
+  it("locking an open entry does not claim it closed", () => {
     const security = useSecurityStore();
     security.setLocked("jaicobs-room-window", true);
-    expect(security.openEntries).toHaveLength(0);
-    expect(security.allSecure).toBe(true);
+    const window = security.entries.find((e) => e.id === "jaicobs-room-window")!;
+    expect(window.locked).toBe(true);
+    expect(window.open).toBe(true);
+    expect(security.allSecure).toBe(false);
   });
 
   it("unlocking an entry updates its detail line", () => {

@@ -142,30 +142,42 @@ export const useSecurityStore = defineStore("security", {
     },
   },
   actions: {
-    arm(state: ArmState) {
+    async arm(state: ArmState) {
+      const previous = this.armState;
       this.armState = state;
       const alarm = securityPageBindings.alarmControlPanel;
-      void haCallService("alarm_control_panel", alarm.services[state], undefined, {
+      const result = await haCallService("alarm_control_panel", alarm.services[state], undefined, {
         entity_id: alarm.entityId,
       });
+      if (result === "failed") this.armState = previous;
     },
     setArmStateFromHa(state: ArmState, changedAt: string) {
       this.armState = state;
       this.secureSince = changedAt;
     },
-    setLocked(id: string, locked: boolean) {
+    async setLocked(id: string, locked: boolean) {
       const entry = this.entries.find((e) => e.id === id);
       if (!entry) return;
       const lock = entryBindings.find((b) => b.entryId === id)?.lock;
-      if (lock) {
-        void haCallService("lock", locked ? "lock" : "unlock", undefined, { entity_id: lock });
-      }
+      const previousLocked = entry.locked;
+      const previousDetail = entry.detail;
+
+      // Optimistic update. Locking does not close a physically open
+      // door/window — the sensor entity corrects `open` on the next sync.
       entry.locked = locked;
-      if (locked) {
-        entry.open = false;
-        entry.detail = entry.kind === "garage" ? "CLOSED · LOCKED" : "LOCKED · JUST NOW";
-      } else {
-        entry.detail = "UNLOCKED · JUST NOW";
+      entry.detail = locked
+        ? entry.kind === "garage"
+          ? "CLOSED · LOCKED"
+          : "LOCKED · JUST NOW"
+        : "UNLOCKED · JUST NOW";
+
+      if (!lock) return;
+      const result = await haCallService("lock", locked ? "lock" : "unlock", undefined, {
+        entity_id: lock,
+      });
+      if (result === "failed") {
+        entry.locked = previousLocked;
+        entry.detail = previousDetail;
       }
     },
   },

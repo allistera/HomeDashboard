@@ -9,6 +9,10 @@ interface ThemeState {
 
 const MODES: ThemeMode[] = ["light", "dark", "system"];
 
+// Guards against stacking duplicate OS-theme listeners if watchSystem is
+// ever called more than once (e.g. App remounting).
+let systemWatcherAttached = false;
+
 function systemPrefersDark(): boolean {
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
 }
@@ -32,6 +36,8 @@ export const useThemeStore = defineStore("theme", {
     },
     // Keeps "system" mode in sync with OS-level theme changes made while the app is open.
     watchSystem() {
+      if (systemWatcherAttached) return;
+      systemWatcherAttached = true;
       window.matchMedia?.("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
         this.systemDark = event.matches;
       });
