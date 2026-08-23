@@ -24,7 +24,7 @@
     "@types/node": "^26.2.0",
     "@vitejs/plugin-vue-jsx": "^5.1.6",
     "@vue/test-utils": "^2.4.11",
-    "jsdom": "^26.1.0",
+    "jsdom": "^30.0.1",
     "oxfmt": "^0.64.0",
     "oxlint": "^1.79.0",
     "prettier": "^3.9.6",
