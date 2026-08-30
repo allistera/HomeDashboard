@@ -92,7 +92,7 @@ export const homePageBindings = {
   },
   camera: {
     cameraId: "front-door",
-    entityId: "camera.g5_turret_ultra",
+    entityId: "camera.kitchen_garden_camera",
   },
   mediaPlayer: {
     roomId: "living-room",
