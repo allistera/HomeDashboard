@@ -11,7 +11,7 @@ describe("rooms store", () => {
   it("counts lights that are on in a room", () => {
     const rooms = useRoomsStore();
     const livingRoom = rooms.rooms.find((r) => r.id === "living-room")!;
-    expect(rooms.lightsOn(livingRoom)).toBe(3);
+    expect(rooms.lightsOn(livingRoom)).toBe(2);
   });
 
   it("turns a whole room on and off", () => {

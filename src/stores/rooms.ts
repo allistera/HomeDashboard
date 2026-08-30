@@ -57,10 +57,8 @@ const seedRooms: Room[] = [
     name: "Living room",
     floor: "Ground floor",
     lights: [
-      { id: "ceiling", name: "Ceiling", level: 72 },
-      { id: "floor-lamp", name: "Floor lamp", level: 40 },
-      { id: "shelf-strip", name: "Shelf strip", level: 15 },
-      { id: "reading-lamp", name: "Reading lamp", level: 0 },
+      { id: "livingroom-light", name: "Livingroom Light", level: 72 },
+      { id: "livingroom-light-2", name: "Livingroom Light 2", level: 40 },
     ],
     blinds: [
       { id: "south-window", name: "South window", closed: 75 },
@@ -79,7 +77,7 @@ const seedRooms: Room[] = [
       { time: "6:30", text: "Blinds lowered · sunset" },
       { time: "2:15", text: "Vacuum cleaned living room" },
     ],
-    deviceCount: 6,
+    deviceCount: 4,
     offlineCount: 1,
   },
   {

@@ -126,10 +126,8 @@ export const roomBindings: RoomBinding[] = [
   {
     roomId: "living-room",
     lights: [
-      { lightId: "ceiling", entityId: "light.living_room_ceiling" },
-      { lightId: "floor-lamp", entityId: "light.living_room_floor_lamp" },
-      { lightId: "shelf-strip", entityId: "light.living_room_shelf_strip" },
-      { lightId: "reading-lamp", entityId: "light.living_room_reading_lamp" },
+      { lightId: "livingroom-light", entityId: "light.living_room_livingroom_light_2" },
+      { lightId: "livingroom-light-2", entityId: "light.livingroom_light_2" },
     ],
     covers: [
       { blindId: "south-window", entityId: "cover.living_room_south_window" },

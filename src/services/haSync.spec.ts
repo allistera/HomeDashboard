@@ -101,16 +101,21 @@ describe("applyEntities", () => {
 
   it("maps bound light entities into the rooms store", () => {
     const rooms = useRoomsStore();
+    const livingRoomBinding = roomBindingFor("living-room")!;
     applyEntities(
       asEntities([
-        entity("light.living_room_ceiling", "on", { brightness: 128 }),
-        entity("light.living_room_floor_lamp", "off"),
+        entity(livingRoomBinding.lights[0].entityId, "on", { brightness: 128 }),
+        entity(livingRoomBinding.lights[1].entityId, "off"),
       ]),
     );
 
     const livingRoom = rooms.rooms.find((r) => r.id === "living-room")!;
-    expect(livingRoom.lights.find((l) => l.id === "ceiling")!.level).toBe(50);
-    expect(livingRoom.lights.find((l) => l.id === "floor-lamp")!.level).toBe(0);
+    expect(livingRoom.lights.find((l) => l.id === livingRoomBinding.lights[0].lightId)!.level).toBe(
+      50,
+    );
+    expect(livingRoom.lights.find((l) => l.id === livingRoomBinding.lights[1].lightId)!.level).toBe(
+      0,
+    );
   });
 
   it("maps configured house climate properties into dashboard values", () => {
