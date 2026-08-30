@@ -1,5 +1,6 @@
-import { computed, defineComponent } from "vue";
+import { computed, defineComponent, ref } from "vue";
 
+import CameraModal from "@/components/CameraModal";
 import CameraTile from "@/components/CameraTile";
 import EventFeed from "@/components/EventFeed";
 import ToggleSwitch from "@/components/ToggleSwitch";
@@ -7,13 +8,14 @@ import TopBar from "@/components/TopBar";
 import { homePageBindings, type EntityActionBinding } from "@/services/haBindings";
 import { haCallService } from "@/services/haClient";
 import { useRoomsStore } from "@/stores/rooms";
-import { useSecurityStore } from "@/stores/security";
+import { useSecurityStore, type Camera } from "@/stores/security";
 
 export default defineComponent({
   name: "HomePage",
   setup() {
     const rooms = useRoomsStore();
     const security = useSecurityStore();
+    const selectedCamera = ref<Camera | null>(null);
     const homeCamera = computed(() =>
       security.cameras.find((camera) => camera.id === homePageBindings.camera.cameraId),
     );
@@ -164,6 +166,9 @@ export default defineComponent({
                 note={homeCamera.value?.note}
                 imageUrl={homeCamera.value?.snapshotUrl ?? ""}
                 height={250}
+                onSelect={() => {
+                  if (homeCamera.value) selectedCamera.value = homeCamera.value;
+                }}
               />
             </div>
             <div class="section-head" style={{ padding: "20px 40px 8px" }}>
@@ -219,6 +224,15 @@ export default defineComponent({
             </div>
           </div>
         </div>
+
+        {selectedCamera.value && (
+          <CameraModal
+            camera={selectedCamera.value}
+            onClose={() => {
+              selectedCamera.value = null;
+            }}
+          />
+        )}
       </main>
     );
   },

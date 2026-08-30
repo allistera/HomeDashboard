@@ -14,7 +14,7 @@ describe("HomePage bindings", () => {
     setActivePinia(pinia);
   });
 
-  it("renders the bound climate, camera and media-player state", () => {
+  it("renders the bound climate, camera and media-player state", async () => {
     const rooms = useRoomsStore();
     rooms.setHomeClimateValues(8.4, 20.7, 21.5);
     const livingRoom = rooms.rooms.find((room) => room.id === "living-room")!;
@@ -37,6 +37,16 @@ describe("HomePage bindings", () => {
       "http://ha.local/front-door-snap",
     );
     expect(wrapper.get(".camera__stream").attributes("src")).not.toContain("front-door-stream");
+
+    await wrapper.get(".camera").trigger("click");
+    expect(wrapper.get('[role="dialog"] .camera-modal__stream').attributes("src")).toBe(
+      "http://ha.local/front-door-stream",
+    );
+    expect(document.body.style.overflow).toBe("hidden");
+
+    await wrapper.get('[aria-label="Close camera view"]').trigger("click");
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
+    expect(document.body.style.overflow).toBe("");
     wrapper.unmount();
   });
 

@@ -1,7 +1,6 @@
-import { computed, defineComponent, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { computed, defineComponent, ref } from "vue";
 
-import { useDocumentVisible } from "@/composables/useDocumentVisible";
-
+import CameraModal from "@/components/CameraModal";
 import CameraTile from "@/components/CameraTile";
 import EventFeed from "@/components/EventFeed";
 import ToggleSwitch from "@/components/ToggleSwitch";
@@ -19,63 +18,15 @@ export default defineComponent({
   name: "SecurityPage",
   setup() {
     const security = useSecurityStore();
-    const pageVisible = useDocumentVisible();
     const selectedCamera = ref<Camera | null>(null);
-    const cameraDialog = ref<HTMLElement | null>(null);
-    const modalStreamFailed = ref(false);
-    let previouslyFocused: HTMLElement | null = null;
 
     const openCamera = (camera: Camera) => {
-      previouslyFocused =
-        document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      modalStreamFailed.value = false;
       selectedCamera.value = camera;
-      void nextTick(() => cameraDialog.value?.focus());
     };
 
     const closeCamera = () => {
       selectedCamera.value = null;
-      void nextTick(() => previouslyFocused?.focus());
     };
-
-    // Keeps Tab cycling inside the dialog while the camera view is open.
-    const onDialogKeydown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        closeCamera();
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const dialog = cameraDialog.value;
-      if (!dialog) return;
-      const focusables = [
-        ...dialog.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-        ),
-      ].filter((element) => !element.hasAttribute("disabled"));
-      if (focusables.length === 0) return;
-
-      const first = focusables[0]!;
-      const last = focusables[focusables.length - 1]!;
-      const current = document.activeElement;
-      if (!(current instanceof HTMLElement) || !dialog.contains(current)) {
-        event.preventDefault();
-        first.focus();
-      } else if (event.shiftKey && current === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && current === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    watch(selectedCamera, (camera) => {
-      document.body.style.overflow = camera ? "hidden" : "";
-    });
-
-    onBeforeUnmount(() => {
-      document.body.style.overflow = "";
-    });
 
     const headline = computed(() =>
       security.armState === "disarmed"
@@ -245,68 +196,7 @@ export default defineComponent({
         </div>
 
         {selectedCamera.value && (
-          <div
-            class="camera-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="camera-modal-title"
-            tabindex={-1}
-            ref={cameraDialog}
-            onClick={(event) => {
-              if (event.target === event.currentTarget) closeCamera();
-            }}
-            onKeydown={onDialogKeydown}
-          >
-            <div class="camera-modal__panel">
-              <div class="camera-modal__head">
-                <div>
-                  <div class="label">
-                    Camera ·{" "}
-                    {selectedCamera.value.streamUrl && !modalStreamFailed.value && pageVisible.value
-                      ? "Live"
-                      : "Unavailable"}
-                  </div>
-                  <h2 id="camera-modal-title" class="camera-modal__title">
-                    {selectedCamera.value.name}
-                  </h2>
-                </div>
-                <button
-                  type="button"
-                  class="camera-modal__close"
-                  aria-label="Close camera view"
-                  onClick={closeCamera}
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M5 5l14 14M19 5 5 19" />
-                  </svg>
-                </button>
-              </div>
-              <div class="camera-modal__viewport">
-                {selectedCamera.value.streamUrl && !modalStreamFailed.value && pageVisible.value ? (
-                  <img
-                    class="camera-modal__stream"
-                    src={selectedCamera.value.streamUrl}
-                    alt={`${selectedCamera.value.name} live camera enlarged`}
-                    decoding="async"
-                    referrerpolicy="no-referrer"
-                    onError={() => {
-                      modalStreamFailed.value = true;
-                    }}
-                  />
-                ) : (
-                  <div class="camera-modal__empty">
-                    <span class="label">Live stream unavailable for this camera</span>
-                  </div>
-                )}
-                {selectedCamera.value.live &&
-                  selectedCamera.value.streamUrl &&
-                  !modalStreamFailed.value &&
-                  pageVisible.value && (
-                    <span class="camera__tag camera__tag--live camera-modal__live">LIVE</span>
-                  )}
-              </div>
-            </div>
-          </div>
+          <CameraModal camera={selectedCamera.value} onClose={closeCamera} />
         )}
       </main>
     );
