@@ -24,6 +24,17 @@ describe("rooms store", () => {
     expect(rooms.lightsOn(livingRoom)).toBe(livingRoom.lights.length);
   });
 
+  it("turns an individual light on and off", () => {
+    const rooms = useRoomsStore();
+    const light = rooms.selectedRoom.lights[0]!;
+
+    rooms.setLightPower("living-room", light.id, false);
+    expect(light.level).toBe(0);
+
+    rooms.setLightPower("living-room", light.id, true);
+    expect(light.level).toBe(70);
+  });
+
   it("turns every light in the house off", () => {
     const rooms = useRoomsStore();
     expect(rooms.anyLightOn).toBe(true);

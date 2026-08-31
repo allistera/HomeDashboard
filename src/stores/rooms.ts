@@ -274,6 +274,13 @@ export const useRoomsStore = defineStore("rooms", {
         this.setRoomLights(room.id, on);
       }
     },
+    setLightPower(roomId: string, lightId: string, on: boolean) {
+      const light = this.rooms
+        .find((room) => room.id === roomId)
+        ?.lights.find((item) => item.id === lightId);
+      if (!light) return;
+      this.setLightLevel(roomId, lightId, on ? Math.max(light.level, 70) : 0);
+    },
     setLightLevel(roomId: string, lightId: string, level: number) {
       const light = this.rooms.find((r) => r.id === roomId)?.lights.find((l) => l.id === lightId);
       if (light) {

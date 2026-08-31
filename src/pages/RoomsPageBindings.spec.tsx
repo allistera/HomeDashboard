@@ -29,4 +29,26 @@ describe("RoomsPage bindings", () => {
     expect(rooms.selectedRoom.media?.playing).toBe(false);
     expect(wrapper.get('[aria-label="Play"]').text()).toBe("▶");
   });
+
+  it("turns individual lights on and off and adjusts their brightness", async () => {
+    const rooms = useRoomsStore();
+    const wrapper = mount(RoomsPage);
+    const light = rooms.selectedRoom.lights[0]!;
+    const power = wrapper.get(`[aria-label="${light.name} power"]`);
+    const brightness = wrapper.get<HTMLInputElement>(`[aria-label="${light.name} brightness"]`);
+
+    expect(power.attributes("aria-checked")).toBe("true");
+    await power.trigger("click");
+    expect(light.level).toBe(0);
+    expect(power.attributes("aria-checked")).toBe("false");
+    expect(brightness.element.value).toBe("0");
+
+    await power.trigger("click");
+    expect(light.level).toBe(70);
+
+    await brightness.setValue(35);
+    expect(light.level).toBe(35);
+    expect(brightness.attributes("aria-valuetext")).toBe("35%");
+    expect(wrapper.text()).toContain("35%");
+  });
 });
