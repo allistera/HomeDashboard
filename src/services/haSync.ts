@@ -239,6 +239,7 @@ export function applyEntities(entities: HassEntities): void {
     const camera = security.cameras.find((item) => item.id === binding.cameraId);
     const entity = entities[binding.entityId];
     if (!camera) continue;
+    camera.entityId = binding.entityId;
     if (!entity) {
       camera.live = false;
       camera.snapshotUrl = undefined;

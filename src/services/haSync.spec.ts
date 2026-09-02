@@ -285,6 +285,7 @@ describe("applyEntities", () => {
     const encodedId = encodeURIComponent(homePageBindings.camera.entityId);
     const frontDoor = security.cameras.find((camera) => camera.id === "front-door")!;
     expect(frontDoor.live).toBe(true);
+    expect(frontDoor.entityId).toBe(homePageBindings.camera.entityId);
     expect(frontDoor.note).toBeUndefined();
     expect(frontDoor.snapshotUrl).toBe(
       `http://ha.local:8123/api/camera_proxy/${encodedId}?token=front-token`,
@@ -295,6 +296,7 @@ describe("applyEntities", () => {
 
     const driveway = security.cameras.find((camera) => camera.id === "driveway")!;
     expect(driveway.live).toBe(false);
+    expect(driveway.entityId).toBe("camera.driveway");
     expect(driveway.snapshotUrl).toBeUndefined();
     expect(driveway.streamUrl).toBeUndefined();
     expect(driveway.note).toBe("STREAM UNAVAILABLE");
