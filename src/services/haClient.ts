@@ -103,6 +103,10 @@ export function haConnected(): boolean {
   return connection !== null;
 }
 
+export function haConnection(): Connection | null {
+  return connection;
+}
+
 export type ServiceCallResult = "sent" | "failed" | "offline";
 
 export async function haCallService(
