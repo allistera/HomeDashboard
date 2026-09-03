@@ -64,4 +64,27 @@ describe("HomePage bindings", () => {
     expect(wrapper.get('[aria-label="Play"]').text()).toBe("▶");
     expect(wrapper.text()).toContain("Paused · Living room");
   });
+
+  it("shows only binding-backed room details and highlights rooms with lights on", () => {
+    const rooms = useRoomsStore();
+    const hallway = rooms.rooms.find((room) => room.id === "hallway")!;
+    hallway.motion!.lastChangedAt = Date.now() - 6 * 60_000;
+    const kitchen = rooms.rooms.find((room) => room.id === "kitchen")!;
+    kitchen.media!.playing = false;
+    kitchen.media!.active = false;
+
+    const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
+    const rows = wrapper.findAll(".row");
+    const rowFor = (name: string) => rows.find((row) => row.get(".row__name").text() === name)!;
+
+    expect(rowFor("Living room").get(".row__meta").text()).toBe("21.5° · MEDIA ON");
+    expect(rowFor("Kitchen").get(".row__meta").text()).toBe("21.0°");
+    expect(rowFor("Hallway").get(".row__meta").text()).toBe("MOTION 6M AGO");
+    expect(rowFor("Bedroom").get(".row__meta").text()).toBe("19.5°");
+    expect(rowFor("Living room").classes()).not.toContain("row--dim");
+    expect(rowFor("Elsies Room").classes()).not.toContain("row--dim");
+    expect(rowFor("Bedroom").classes()).toContain("row--dim");
+
+    wrapper.unmount();
+  });
 });

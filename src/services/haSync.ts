@@ -1,6 +1,7 @@
 import type { HassEntities, HassEntity } from "home-assistant-js-websocket";
 
 import {
+  activeMediaPlayerStates,
   cameraBindings,
   entityProperties,
   entryBindings,
@@ -178,6 +179,7 @@ export function applyEntities(entities: HassEntities): void {
       const entity = entities[binding.media];
       if (entity) {
         room.media.playing = entity.state === "playing";
+        room.media.active = activeMediaPlayerStates.has(entity.state);
         const title = entity.attributes[entityProperties.mediaTitle];
         if (title) room.media.title = String(title);
         const output = entityProperties.mediaOutput
@@ -192,6 +194,8 @@ export function applyEntities(entities: HassEntities): void {
       if (entity) {
         room.motion.active = entity.state === "on";
         room.motion.lastChanged = timeOf(entity);
+        const lastChangedAt = Date.parse(entity.last_changed);
+        if (Number.isFinite(lastChangedAt)) room.motion.lastChangedAt = lastChangedAt;
       }
     }
 

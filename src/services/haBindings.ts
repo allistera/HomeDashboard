@@ -75,6 +75,15 @@ export const entityProperties = {
   cameraAccessToken: "access_token",
 } as const;
 
+// Home Assistant media-player states that represent a powered, active device.
+export const activeMediaPlayerStates: ReadonlySet<string> = new Set([
+  "on",
+  "idle",
+  "playing",
+  "paused",
+  "buffering",
+]);
+
 // Home-page entity selections live here. Display copy and other presentation-only
 // values stay in HomePage; room lights, entries and people use the bindings below.
 export const homePageBindings = {
@@ -92,7 +101,7 @@ export const homePageBindings = {
   },
   camera: {
     cameraId: "front-door",
-    entityId: "camera.garden_garden_camera_medium_quality",
+    entityId: "camera.g5_turret_ultra_high_resolution_channel",
   },
   mediaPlayer: {
     roomId: "living-room",
@@ -105,6 +114,7 @@ export const homePageBindings = {
     "binary_sensor.back_door_contact",
     "binary_sensor.downstairs_hallway_movement_occupancy",
     "camera.garden_garden_camera_medium_quality",
+    "camera.g5_turret_ultra_high_resolution_channel",
   ],
   excludedRoomIds: ["garden"],
   actions: {

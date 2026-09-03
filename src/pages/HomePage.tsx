@@ -1,11 +1,11 @@
-import { computed, defineComponent, ref } from "vue";
+import { computed, defineComponent, onScopeDispose, ref } from "vue";
 
 import CameraModal from "@/components/CameraModal";
 import CameraTile from "@/components/CameraTile";
 import EventFeed from "@/components/EventFeed";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
-import { homePageBindings, type EntityActionBinding } from "@/services/haBindings";
+import { homePageBindings, roomBindingFor, type EntityActionBinding } from "@/services/haBindings";
 import { haCallService } from "@/services/haClient";
 import { useActivityStore } from "@/stores/activity";
 import { useRoomsStore } from "@/stores/rooms";
@@ -18,6 +18,11 @@ export default defineComponent({
     const activity = useActivityStore();
     const security = useSecurityStore();
     const selectedCamera = ref<Camera | null>(null);
+    const now = ref(Date.now());
+    const motionAgeTimer = setInterval(() => {
+      now.value = Date.now();
+    }, 60_000);
+    onScopeDispose(() => clearInterval(motionAgeTimer));
     const homeCamera = computed(() =>
       security.cameras.find((camera) => camera.id === homePageBindings.camera.cameraId),
     );
@@ -68,10 +73,20 @@ export default defineComponent({
 
     const roomMeta = (roomId: string) => {
       const room = rooms.rooms.find((r) => r.id === roomId);
-      if (!room) return "";
-      const on = rooms.lightsOn(room);
-      const lights = on === 0 ? "OFF" : `${on} LIGHT${on === 1 ? "" : "S"}`;
-      return [lights, `${room.temp.toFixed(1)}°`, room.meta].filter(Boolean).join(" · ");
+      const binding = roomBindingFor(roomId);
+      if (!room || !binding) return "";
+
+      const details: string[] = [];
+      if (binding.climate) details.push(`${room.temp.toFixed(1)}°`);
+      if (binding.motion && room.motion) {
+        const motionAge =
+          room.motion.lastChangedAt === undefined
+            ? room.motion.lastChanged.toUpperCase()
+            : `${Math.max(0, Math.floor((now.value - room.motion.lastChangedAt) / 60_000))}M AGO`;
+        details.push(`MOTION ${motionAge}`);
+      }
+      if (binding.media && room.media?.active) details.push("MEDIA ON");
+      return details.join(" · ");
     };
 
     return () => (
@@ -143,9 +158,9 @@ export default defineComponent({
 
             <div class="col-foot" style={{ padding: "20px 40px", gap: "34px" }}>
               <div>
-                <div class="label">House temp</div>
+                <div class="label">Outdoor Temp</div>
                 <div class="big-number" style={{ fontSize: "54px" }}>
-                  {rooms.houseTemp.toFixed(1)}°
+                  {rooms.outsideTemp.toFixed(1)}°
                 </div>
               </div>
               <div>

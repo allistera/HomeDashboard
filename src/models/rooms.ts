@@ -24,8 +24,8 @@ export interface Room {
   temp: number;
   target: number;
   meta: string;
-  media?: { title: string; output: string; playing: boolean };
-  motion?: { active: boolean; lastChanged: string };
+  media?: { title: string; output: string; playing: boolean; active: boolean };
+  motion?: { active: boolean; lastChanged: string; lastChangedAt?: number };
   vacuum?: { state: string };
   climateMode?: string;
   events: RoomEvent[];

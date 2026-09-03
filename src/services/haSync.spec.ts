@@ -175,8 +175,22 @@ describe("applyEntities", () => {
     expect(livingRoom.target).toBe(22);
     expect(livingRoom.climateMode).toBe("Eco");
     expect(livingRoom.media!.playing).toBe(true);
+    expect(livingRoom.media!.active).toBe(true);
     expect(livingRoom.media!.title).toBe("Night Jazz");
     expect(livingRoom.media!.output).toBe("Apple TV");
+  });
+
+  it("tracks whether a bound media player is active independently of playback", () => {
+    const rooms = useRoomsStore();
+    const livingRoomBinding = roomBindingFor("living-room")!;
+    const livingRoom = rooms.rooms.find((room) => room.id === "living-room")!;
+
+    applyEntities(asEntities([entity(livingRoomBinding.media!, "paused")]));
+    expect(livingRoom.media!.playing).toBe(false);
+    expect(livingRoom.media!.active).toBe(true);
+
+    applyEntities(asEntities([entity(livingRoomBinding.media!, "off")]));
+    expect(livingRoom.media!.active).toBe(false);
   });
 
   it("maps floor-page motion and vacuum bindings into room state", () => {
@@ -195,6 +209,7 @@ describe("applyEntities", () => {
     const kitchen = rooms.rooms.find((room) => room.id === "kitchen")!;
     expect(hallway.motion?.active).toBe(true);
     expect(hallway.motion?.lastChanged).toMatch(/\d/);
+    expect(hallway.motion?.lastChangedAt).toBe(new Date("2026-08-17T18:42:00Z").getTime());
     expect(kitchen.vacuum?.state).toBe("Cleaning");
   });
 

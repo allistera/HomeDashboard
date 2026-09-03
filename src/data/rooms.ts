@@ -20,6 +20,7 @@ export const seedRooms: Room[] = [
       title: "Evening Acoustic",
       output: "Soundbar · grouped with kitchen",
       playing: true,
+      active: true,
     },
     events: [
       { time: "7:10", text: "Relax scene started" },
@@ -45,6 +46,7 @@ export const seedRooms: Room[] = [
       title: "Evening Acoustic",
       output: "Kitchen speaker",
       playing: true,
+      active: true,
     },
     vacuum: { state: "Ready" },
     events: [{ time: "6:58", text: "Vacuum returned to dock" }],
