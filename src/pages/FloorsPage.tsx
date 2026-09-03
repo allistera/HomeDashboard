@@ -1,7 +1,7 @@
 import { computed, defineComponent, ref } from "vue";
 
 import TopBar from "@/components/TopBar";
-import { floorsPageBindings } from "@/services/haBindings";
+import { floorsPageBindings } from "@/services/haBindings/haFloorsBindings";
 import { useRoomsStore, type Room } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
 

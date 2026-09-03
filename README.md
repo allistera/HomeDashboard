@@ -30,7 +30,8 @@ type carries the hierarchy.
 ## Home Assistant activity
 
 The homepage subscribes to the previous 24 hours of Home Assistant logbook activity and keeps the
-feed live. The `homePageBindings.activityEntityIds` allowlist in `src/services/haBindings.ts`
+feed live. The `homePageBindings.activityEntityIds` allowlist in
+`src/services/haBindings/haHomeBindings.ts`
 controls which entity events Home Assistant sends; edit that list to change the feed without adding
 a UI filter.
 

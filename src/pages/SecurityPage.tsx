@@ -5,7 +5,7 @@ import CameraTile from "@/components/CameraTile";
 import EventFeed from "@/components/EventFeed";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
-import { securityPageBindings } from "@/services/haBindings";
+import { securityPageBindings } from "@/services/haBindings/haSecurityBindings";
 import { useSecurityStore, type ArmState, type Camera } from "@/stores/security";
 
 const armOptions: { id: ArmState; name: string }[] = [

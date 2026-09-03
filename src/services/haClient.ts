@@ -8,7 +8,8 @@ import {
   type HassEntities,
 } from "home-assistant-js-websocket";
 
-import { homePageBindings, watchedEntityIds } from "@/services/haBindings";
+import { watchedEntityIds } from "@/services/haBindings/haGlobalBindings";
+import { homePageBindings } from "@/services/haBindings/haHomeBindings";
 import { subscribeHaActivity } from "@/services/haActivity";
 import { subscribeWatchedEntities } from "@/services/haSubscribe";
 import { useActivityStore } from "@/stores/activity";

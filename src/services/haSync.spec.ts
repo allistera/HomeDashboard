@@ -2,12 +2,10 @@ import type { HassEntities, HassEntity } from "home-assistant-js-websocket";
 import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import {
-  homePageBindings,
-  roomBindingFor,
-  securityPageBindings,
-  washingBinding,
-} from "@/services/haBindings";
+import { washingBinding } from "@/services/haBindings/haGlobalBindings";
+import { homePageBindings } from "@/services/haBindings/haHomeBindings";
+import { roomBindingFor } from "@/services/haBindings/haRoomsBindings";
+import { securityPageBindings } from "@/services/haBindings/haSecurityBindings";
 import {
   applyEntities,
   blindClosedFrom,

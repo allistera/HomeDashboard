@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 
 import { seedRooms } from "@/data/rooms";
 import type { MediaCommand, Room, Scene } from "@/models/rooms";
-import { roomBindingFor } from "@/services/haBindings";
+import { roomBindingFor } from "@/services/haBindings/haRoomsBindings";
 import { haCallService } from "@/services/haClient";
 
 export type { MediaCommand, Room, Scene } from "@/models/rooms";

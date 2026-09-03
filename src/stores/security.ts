@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 
-import { entryBindings, securityPageBindings, type AlarmArmState } from "@/services/haBindings";
+import type { AlarmArmState } from "@/services/haBindings/haGlobalBindings";
+import { entryBindings, securityPageBindings } from "@/services/haBindings/haSecurityBindings";
 import { haCallService } from "@/services/haClient";
 
 export type ArmState = AlarmArmState;

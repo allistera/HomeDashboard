@@ -2,17 +2,19 @@ import type { HassEntities, HassEntity } from "home-assistant-js-websocket";
 
 import {
   activeMediaPlayerStates,
-  cameraBindings,
   entityProperties,
-  entryBindings,
-  homePageBindings,
-  personBindings,
-  roomBindings,
-  securityPageBindings,
   washingBinding,
   watchedEntityIds,
   type AlarmArmState,
-} from "@/services/haBindings";
+} from "@/services/haBindings/haGlobalBindings";
+import { homePageBindings } from "@/services/haBindings/haHomeBindings";
+import { roomBindings } from "@/services/haBindings/haRoomsBindings";
+import {
+  cameraBindings,
+  entryBindings,
+  personBindings,
+  securityPageBindings,
+} from "@/services/haBindings/haSecurityBindings";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
 import { useSettingsStore } from "@/stores/settings";

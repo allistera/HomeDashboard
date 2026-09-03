@@ -1,16 +1,16 @@
 import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { watchedEntityIds } from "@/services/haBindings/haGlobalBindings";
+import { floorsPageBindings } from "@/services/haBindings/haFloorsBindings";
+import { homePageBindings } from "@/services/haBindings/haHomeBindings";
+import { roomBindings } from "@/services/haBindings/haRoomsBindings";
 import {
   cameraBindings,
   entryBindings,
-  floorsPageBindings,
-  homePageBindings,
   personBindings,
-  roomBindings,
   securityPageBindings,
-  watchedEntityIds,
-} from "@/services/haBindings";
+} from "@/services/haBindings/haSecurityBindings";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
 
