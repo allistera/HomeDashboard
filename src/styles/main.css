@@ -589,6 +589,10 @@ a {
   color: var(--accent);
 }
 
+.event--empty .event__text {
+  color: var(--label);
+}
+
 /* ── Bar charts ─────────────────────────────────────── */
 
 .bars {

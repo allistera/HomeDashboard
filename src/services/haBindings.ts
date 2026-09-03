@@ -98,6 +98,15 @@ export const homePageBindings = {
     roomId: "living-room",
     entityId: "media_player.apple_tv",
   },
+  // Only these entity events are requested from Home Assistant's logbook for
+  // the homepage activity feed. Add or remove entity IDs here to change it.
+  activityEntityIds: [
+    "lock.front_door",
+    "binary_sensor.front_door",
+    "vacuum.kitchen",
+    "cover.living_room_south_window",
+    "camera.kitchen_garden_camera",
+  ],
   excludedRoomIds: ["garden"],
   actions: {
     goodNight: { domain: "scene", service: "turn_on", entityId: "scene.good_night" },
@@ -110,6 +119,7 @@ export const homePageBindings = {
   houseTarget: EntityPropertyBinding;
   camera: CameraBinding;
   mediaPlayer: MediaPlayerBinding;
+  activityEntityIds: string[];
   excludedRoomIds: string[];
   actions: Record<"goodNight" | "movie" | "away", EntityActionBinding>;
 };

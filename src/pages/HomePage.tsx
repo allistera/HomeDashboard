@@ -7,6 +7,7 @@ import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
 import { homePageBindings, type EntityActionBinding } from "@/services/haBindings";
 import { haCallService } from "@/services/haClient";
+import { useActivityStore } from "@/stores/activity";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore, type Camera } from "@/stores/security";
 
@@ -14,6 +15,7 @@ export default defineComponent({
   name: "HomePage",
   setup() {
     const rooms = useRoomsStore();
+    const activity = useActivityStore();
     const security = useSecurityStore();
     const selectedCamera = ref<Camera | null>(null);
     const homeCamera = computed(() =>
@@ -25,7 +27,7 @@ export default defineComponent({
 
     const headline = computed(() => {
       if (!rooms.anyLightOn) return "Lights out.";
-      const latest = rooms.activity[0];
+      const latest = activity.events[0];
       if (!latest) return "Everything's quiet.";
       return latest.text.endsWith(".") ? latest.text : `${latest.text}.`;
     });
@@ -172,10 +174,12 @@ export default defineComponent({
               />
             </div>
             <div class="section-head" style={{ padding: "20px 40px 8px" }}>
-              <span class="label">Activity</span>
+              <span class="label">
+                Activity{activity.status === "live" ? " · Home Assistant" : ""}
+              </span>
             </div>
             <div style={{ padding: "0 40px" }}>
-              <EventFeed events={rooms.activity} />
+              <EventFeed events={activity.events.slice(0, 4)} />
             </div>
             <div class="col-foot" style={{ padding: "18px 40px", alignItems: "center" }}>
               <div>
