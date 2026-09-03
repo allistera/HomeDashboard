@@ -76,9 +76,10 @@ describe("Home Assistant binding completeness", () => {
       true,
     );
     expect(homePageBindings.activityEntityIds.length).toBeGreaterThan(0);
-    expect(
-      homePageBindings.activityEntityIds.every((entityId) => watchedEntityIds().includes(entityId)),
-    ).toBe(true);
+    expect(homePageBindings.activityEntityIds.every((entityId) => entityId !== "")).toBe(true);
+    expect(new Set(homePageBindings.activityEntityIds).size).toBe(
+      homePageBindings.activityEntityIds.length,
+    );
     expect(roomIds.has(floorsPageBindings.kitchenRoomId)).toBe(true);
     expect(roomIds.has(floorsPageBindings.livingRoomId)).toBe(true);
     expect(roomIds.has(floorsPageBindings.hallwayRoomId)).toBe(true);

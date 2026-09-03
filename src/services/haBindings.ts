@@ -104,7 +104,6 @@ export const homePageBindings = {
     "binary_sensor.front_door_contact",
     "binary_sensor.back_door_contact",
     "binary_sensor.downstairs_hallway_movement_occupancy",
-    "binary_sensor.downstairs_hallway_movement_occupancy",
     "camera.garden_garden_camera_medium_quality",
   ],
   excludedRoomIds: ["garden"],

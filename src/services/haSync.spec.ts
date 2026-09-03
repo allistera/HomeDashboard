@@ -123,15 +123,14 @@ describe("applyEntities", () => {
 
     applyEntities(
       asEntities([
-        entity("sensor.outside_temperature", "8.4"),
-        entity("sensor.house_temperature", "20.7"),
-        entity("input_number.house_target_temperature", "21.5"),
+        entity(homePageBindings.outsideTemperature.entityId, "8.4"),
+        entity(homePageBindings.houseTemperature.entityId, "20.7"),
       ]),
     );
 
     expect(rooms.outsideTemp).toBe(8.4);
     expect(rooms.houseTemp).toBe(20.7);
-    expect(rooms.houseTarget).toBe(21.5);
+    expect(rooms.houseTarget).toBe(20.7);
   });
 
   it("falls back to room values when configured house properties are unavailable", () => {
@@ -139,9 +138,8 @@ describe("applyEntities", () => {
 
     applyEntities(
       asEntities([
-        entity("sensor.outside_temperature", "unknown"),
-        entity("sensor.house_temperature", "unavailable"),
-        entity("input_number.house_target_temperature", "unknown"),
+        entity(homePageBindings.outsideTemperature.entityId, "unknown"),
+        entity(homePageBindings.houseTemperature.entityId, "unavailable"),
       ]),
     );
 
