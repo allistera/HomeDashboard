@@ -115,6 +115,7 @@ export const homePageBindings = {
     "binary_sensor.downstairs_hallway_movement_occupancy",
     "camera.garden_garden_camera_medium_quality",
     "camera.g5_turret_ultra_high_resolution_channel",
+    "binary_sensor.fire_alarm_smoke",
   ],
   excludedRoomIds: ["garden"],
   actions: {
