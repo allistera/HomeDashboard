@@ -8,13 +8,16 @@ import {
   type HassEntities,
 } from "home-assistant-js-websocket";
 
-import { watchedEntityIds } from "@/services/haBindings";
+import { homePageBindings, watchedEntityIds } from "@/services/haBindings";
+import { subscribeHaActivity } from "@/services/haActivity";
 import { subscribeWatchedEntities } from "@/services/haSubscribe";
+import { useActivityStore } from "@/stores/activity";
 import { useHaStore } from "@/stores/ha";
 import { useSettingsStore } from "@/stores/settings";
 
 let connection: Connection | null = null;
-let unsubscribe: (() => void) | null = null;
+let unsubscribeEntities: (() => void) | null = null;
+let unsubscribeActivity: (() => void) | null = null;
 // Bumped on every connect/disconnect so a slow in-flight connect can detect
 // that it was superseded and discard its connection instead of leaking it.
 let connectGeneration = 0;
@@ -22,6 +25,7 @@ let connectGeneration = 0;
 export async function connectHa(onEntities: (entities: HassEntities) => void): Promise<boolean> {
   const settings = useSettingsStore();
   const ha = useHaStore();
+  const activity = useActivityStore();
   if (!settings.configured) return false;
 
   disconnectHa();
@@ -65,7 +69,7 @@ export async function connectHa(onEntities: (entities: HassEntities) => void): P
   });
 
   try {
-    unsubscribe = await subscribeWatchedEntities(conn, watchedEntityIds(), (entities) => {
+    unsubscribeEntities = await subscribeWatchedEntities(conn, watchedEntityIds(), (entities) => {
       ha.entityCount = Object.keys(entities).length;
       onEntities(entities);
     });
@@ -78,9 +82,22 @@ export async function connectHa(onEntities: (entities: HassEntities) => void): P
     return false;
   }
 
+  activity.beginLoading();
+  try {
+    unsubscribeActivity = await subscribeHaActivity(
+      conn,
+      (events) => activity.receive(events),
+      homePageBindings.activityEntityIds,
+    );
+  } catch {
+    if (generation === connectGeneration) activity.fail();
+  }
+
   if (generation !== connectGeneration) {
-    unsubscribe?.();
-    unsubscribe = null;
+    unsubscribeEntities?.();
+    unsubscribeEntities = null;
+    unsubscribeActivity?.();
+    unsubscribeActivity = null;
     conn.close();
     return false;
   }
@@ -89,11 +106,15 @@ export async function connectHa(onEntities: (entities: HassEntities) => void): P
 
 export function disconnectHa(): void {
   const ha = useHaStore();
+  const activity = useActivityStore();
   connectGeneration++;
-  unsubscribe?.();
-  unsubscribe = null;
+  unsubscribeEntities?.();
+  unsubscribeEntities = null;
+  unsubscribeActivity?.();
+  unsubscribeActivity = null;
   connection?.close();
   connection = null;
+  activity.disconnect();
   ha.status = "disconnected";
   ha.message = "";
   ha.entityCount = 0;

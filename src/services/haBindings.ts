@@ -79,25 +79,34 @@ export const entityProperties = {
 // values stay in HomePage; room lights, entries and people use the bindings below.
 export const homePageBindings = {
   outsideTemperature: {
-    entityId: "sensor.outside_temperature",
+    entityId: "sensor.livingston_realfeel_temperature",
     attribute: "",
   },
   houseTemperature: {
-    entityId: "sensor.house_temperature",
+    entityId: "sensor.kitchen_temperature_temperature",
     attribute: "",
   },
   houseTarget: {
-    entityId: "input_number.house_target_temperature",
+    entityId: "sensor.kitchen_temperature_temperature",
     attribute: "",
   },
   camera: {
     cameraId: "front-door",
-    entityId: "camera.kitchen_garden_camera",
+    entityId: "camera.garden_garden_camera_medium_quality",
   },
   mediaPlayer: {
     roomId: "living-room",
     entityId: "media_player.apple_tv",
   },
+  // Only these entity events are requested from Home Assistant's logbook for
+  // the homepage activity feed. Add or remove entity IDs here to change it.
+  activityEntityIds: [
+    "binary_sensor.front_door_contact",
+    "binary_sensor.back_door_contact",
+    "binary_sensor.downstairs_hallway_movement_occupancy",
+    "binary_sensor.downstairs_hallway_movement_occupancy",
+    "camera.garden_garden_camera_medium_quality",
+  ],
   excludedRoomIds: ["garden"],
   actions: {
     goodNight: { domain: "scene", service: "turn_on", entityId: "scene.good_night" },
@@ -110,6 +119,7 @@ export const homePageBindings = {
   houseTarget: EntityPropertyBinding;
   camera: CameraBinding;
   mediaPlayer: MediaPlayerBinding;
+  activityEntityIds: string[];
   excludedRoomIds: string[];
   actions: Record<"goodNight" | "movie" | "away", EntityActionBinding>;
 };
@@ -149,9 +159,9 @@ export const roomBindings: RoomBinding[] = [
   },
   {
     roomId: "hallway",
-    lights: [{ lightId: "ceiling", entityId: "light.hallway_ceiling" }],
+    lights: [{ lightId: "ceiling", entityId: "light.hallway" }],
     covers: [],
-    motion: "binary_sensor.hallway_motion",
+    motion: "binary_sensor.downstairs_hallway_movement_occupancy",
   },
   {
     roomId: "bedroom",

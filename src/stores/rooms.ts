@@ -1,192 +1,20 @@
 import { defineStore } from "pinia";
 
+import { seedRooms } from "@/data/rooms";
+import type { MediaCommand, Room, Scene } from "@/models/rooms";
 import { roomBindingFor } from "@/services/haBindings";
 import { haCallService } from "@/services/haClient";
 
-export interface Light {
-  id: string;
-  name: string;
-  level: number;
-}
-
-export interface Blind {
-  id: string;
-  name: string;
-  closed: number;
-}
-
-export interface RoomEvent {
-  time: string;
-  text: string;
-}
-
-export interface Room {
-  id: string;
-  name: string;
-  floor: string;
-  lights: Light[];
-  blinds: Blind[];
-  temp: number;
-  target: number;
-  meta: string;
-  media?: { title: string; output: string; playing: boolean };
-  motion?: { active: boolean; lastChanged: string };
-  vacuum?: { state: string };
-  climateMode?: string;
-  events: RoomEvent[];
-  deviceCount: number;
-  offlineCount: number;
-}
-
-export type Scene = "relax" | "bright" | "all-off";
-export type MediaCommand = "previous" | "toggle" | "next";
+export type { MediaCommand, Room, Scene } from "@/models/rooms";
 
 interface RoomsState {
   rooms: Room[];
   selectedRoomId: string;
-  activity: RoomEvent[];
   washingWeatherOk: boolean;
   outsideTempFromHa: number | null;
   houseTempFromHa: number | null;
   houseTargetFromHa: number | null;
 }
-
-const seedRooms: Room[] = [
-  {
-    id: "living-room",
-    name: "Living room",
-    floor: "Ground floor",
-    lights: [
-      { id: "livingroom-light", name: "Livingroom Light", level: 72 },
-      { id: "livingroom-light-2", name: "Livingroom Light 2", level: 40 },
-    ],
-    blinds: [
-      { id: "south-window", name: "South window", closed: 75 },
-      { id: "patio-door", name: "Patio door", closed: 100 },
-    ],
-    temp: 21.5,
-    target: 21.5,
-    meta: "TV ON",
-    media: {
-      title: "Evening Acoustic",
-      output: "Soundbar · grouped with kitchen",
-      playing: true,
-    },
-    events: [
-      { time: "7:10", text: "Relax scene started" },
-      { time: "6:30", text: "Blinds lowered · sunset" },
-      { time: "2:15", text: "Vacuum cleaned living room" },
-    ],
-    deviceCount: 4,
-    offlineCount: 1,
-  },
-  {
-    id: "kitchen",
-    name: "Kitchen",
-    floor: "Ground floor",
-    lights: [
-      { id: "ceiling", name: "Ceiling", level: 85 },
-      { id: "counter-strip", name: "Counter strip", level: 60 },
-    ],
-    blinds: [],
-    temp: 21.0,
-    target: 21.0,
-    meta: "MUSIC",
-    media: {
-      title: "Evening Acoustic",
-      output: "Kitchen speaker",
-      playing: true,
-    },
-    vacuum: { state: "Ready" },
-    events: [{ time: "6:58", text: "Vacuum returned to dock" }],
-    deviceCount: 5,
-    offlineCount: 0,
-  },
-  {
-    id: "hallway",
-    name: "Hallway",
-    floor: "Ground floor",
-    lights: [{ id: "ceiling", name: "Ceiling", level: 55 }],
-    blinds: [],
-    temp: 20.5,
-    target: 20.5,
-    meta: "MOTION 6M AGO",
-    motion: { active: false, lastChanged: "6m ago" },
-    events: [],
-    deviceCount: 2,
-    offlineCount: 0,
-  },
-  {
-    id: "bedroom",
-    name: "Bedroom",
-    floor: "First floor",
-    lights: [
-      { id: "ceiling", name: "Ceiling", level: 0 },
-      { id: "bedside", name: "Bedside lamp", level: 0 },
-    ],
-    blinds: [{ id: "window", name: "Window", closed: 100 }],
-    temp: 19.5,
-    target: 19.5,
-    meta: "BLINDS DOWN",
-    climateMode: "Eco",
-    events: [{ time: "6:30", text: "Blinds lowered · sunset" }],
-    deviceCount: 4,
-    offlineCount: 0,
-  },
-  {
-    id: "jaicobs-room",
-    name: "Jaicobs Room",
-    floor: "First floor",
-    lights: [
-      { id: "ceiling", name: "Ceiling", level: 0 },
-      { id: "desk", name: "Desk lamp", level: 0 },
-    ],
-    blinds: [{ id: "window", name: "Window", closed: 0 }],
-    temp: 20.0,
-    target: 20.0,
-    meta: "WINDOW OPEN",
-    events: [],
-    deviceCount: 4,
-    offlineCount: 0,
-  },
-  {
-    id: "elsies-room",
-    name: "Elsies Room",
-    floor: "First floor",
-    lights: [
-      { id: "ceiling", name: "Ceiling", level: 0 },
-      { id: "night-light", name: "Night light", level: 20 },
-    ],
-    blinds: [{ id: "window", name: "Window", closed: 100 }],
-    temp: 20.0,
-    target: 20.0,
-    meta: "NIGHT LIGHT",
-    climateMode: "Eco",
-    events: [{ time: "7:30", text: "Night light on · bedtime" }],
-    deviceCount: 4,
-    offlineCount: 0,
-  },
-  {
-    id: "garden",
-    name: "Garden",
-    floor: "Outside",
-    lights: [{ id: "path", name: "Path lights", level: 0 }],
-    blinds: [],
-    temp: 12.0,
-    target: 12.0,
-    meta: "CAMERA ON",
-    events: [],
-    deviceCount: 2,
-    offlineCount: 0,
-  },
-];
-
-const seedActivity: RoomEvent[] = [
-  { time: "7:02", text: "Front door unlocked by Allister" },
-  { time: "6:58", text: "Vacuum returned to dock" },
-  { time: "6:30", text: "Blinds lowered · sunset" },
-  { time: "5:47", text: "Package detected at front door" },
-];
 
 // Mirrors a dashboard light change out to Home Assistant (no-op offline).
 function pushLight(roomId: string, lightId: string, level: number): void {
@@ -205,7 +33,6 @@ export const useRoomsStore = defineStore("rooms", {
     structuredClone({
       rooms: seedRooms,
       selectedRoomId: "living-room",
-      activity: seedActivity,
       washingWeatherOk: false,
       outsideTempFromHa: null,
       houseTempFromHa: null,

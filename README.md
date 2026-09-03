@@ -21,11 +21,18 @@ type carries the hierarchy.
 - [Vue 3](https://vuejs.org) with TSX components (`@vitejs/plugin-vue-jsx`)
 - TypeScript (strict)
 - [Vue Router](https://router.vuejs.org) for the four pages
-- [Pinia](https://pinia.vuejs.org) stores: `rooms`, `security`, `settings`, `theme`
+- [Pinia](https://pinia.vuejs.org) stores: `activity`, `rooms`, `security`, `settings`, `theme`
 - [Vitest](https://vitest.dev) + Vue Test Utils
 - [oxlint](https://oxc.rs) for linting
 - [oxfmt](https://oxc.rs) formats TypeScript/TSX; [Prettier](https://prettier.io)
   formats CSS, HTML, JSON, and Markdown
+
+## Home Assistant activity
+
+The homepage subscribes to the previous 24 hours of Home Assistant logbook activity and keeps the
+feed live. The `homePageBindings.activityEntityIds` allowlist in `src/services/haBindings.ts`
+controls which entity events Home Assistant sends; edit that list to change the feed without adding
+a UI filter.
 
 ## Commands
 
