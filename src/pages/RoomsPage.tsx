@@ -19,8 +19,7 @@ export default defineComponent({
       const room = rooms.selectedRoom;
       const on = rooms.lightsOn(room);
       const lights = on === 0 ? "No lights on" : `${on === 1 ? "One light" : `${on} lights`} on`;
-      const blinds = room.blinds.length > 0 ? ", blinds set" : "";
-      return `${lights}${blinds}, holding ${room.temp.toFixed(1)}°.`;
+      return `${lights}, holding ${room.temp.toFixed(1)}°.`;
     });
 
     const scenes: { id: Scene; name: string }[] = [
@@ -162,39 +161,6 @@ export default defineComponent({
                       </div>
                     ))}
                   </div>
-
-                  {room.blinds.length > 0 && (
-                    <>
-                      <div class="section-head" style={{ padding: "22px 40px 10px" }}>
-                        <span class="label">Blinds</span>
-                      </div>
-                      <div class="rows">
-                        {room.blinds.map((blind) => (
-                          <div
-                            key={blind.id}
-                            class="row"
-                            style={{
-                              gridTemplateColumns: "1fr 120px 56px",
-                              gap: "20px",
-                            }}
-                          >
-                            <span class="row__name" style={{ fontSize: "19px" }}>
-                              {blind.name}
-                            </span>
-                            <div class="meter">
-                              <div
-                                class="meter__fill meter__fill--accent"
-                                style={{ width: `${blind.closed}%` }}
-                              />
-                            </div>
-                            <span class="row__meta" style={{ textAlign: "right" }}>
-                              {blind.closed}%
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
 
                   <div class="col-foot" style={{ padding: "20px 40px", gap: "34px" }}>
                     <div>

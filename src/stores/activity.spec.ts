@@ -20,6 +20,12 @@ function event(overrides: Partial<ActivityEvent> = {}): ActivityEvent {
 describe("activity store", () => {
   beforeEach(() => setActivePinia(createPinia()));
 
+  it("does not seed activity for devices that are not in the home", () => {
+    const activity = useActivityStore();
+
+    expect(activity.events.some((item) => item.domain === "cover")).toBe(false);
+  });
+
   it("replaces offline examples with Home Assistant activity", () => {
     const activity = useActivityStore();
     activity.beginLoading();

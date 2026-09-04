@@ -27,13 +27,6 @@ export function lightLevelFrom(entity: HassEntity): number {
   return Number.isFinite(brightness) ? Math.round(Number(brightness) / 2.55) : 100;
 }
 
-// HA cover position is % open; the dashboard shows % closed.
-export function blindClosedFrom(entity: HassEntity): number {
-  const position = entity.attributes[entityProperties.coverPosition];
-  if (Number.isFinite(position)) return 100 - Number(position);
-  return entity.state === "open" ? 0 : 100;
-}
-
 export function numericPropertyFrom(
   entity: HassEntity | undefined,
   attribute: string,
@@ -61,7 +54,6 @@ export function booleanPropertyFrom(entity: HassEntity | undefined, attribute: s
 
 const consumedAttributes = [
   entityProperties.lightBrightness,
-  entityProperties.coverPosition,
   entityProperties.climateCurrentTemperature,
   entityProperties.climateTargetTemperature,
   entityProperties.climatePreset,
@@ -160,12 +152,6 @@ export function applyEntities(entities: HassEntities): void {
       const entity = entities[lightBinding.entityId];
       const light = room.lights.find((l) => l.id === lightBinding.lightId);
       if (entity && light) light.level = lightLevelFrom(entity);
-    }
-
-    for (const coverBinding of binding.covers) {
-      const entity = entities[coverBinding.entityId];
-      const blind = room.blinds.find((b) => b.id === coverBinding.blindId);
-      if (entity && blind) blind.closed = blindClosedFrom(entity);
     }
 
     if (binding.climate) {

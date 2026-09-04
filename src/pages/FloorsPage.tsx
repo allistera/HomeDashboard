@@ -175,15 +175,6 @@ export default defineComponent({
 
     const deviceCount = computed(() => rooms.rooms.reduce((sum, r) => sum + r.deviceCount, 0));
 
-    const blindsChip = (room: Room): Chip | null => {
-      if (room.blinds.length === 0) return null;
-      const avg = Math.round(
-        room.blinds.reduce((sum, b) => sum + b.closed, 0) / room.blinds.length,
-      );
-      const value = avg === 0 ? "Up" : avg === 100 ? "Down" : `${avg}%`;
-      return { label: "Blinds", value };
-    };
-
     const chipsFor = (room: Room): Chip[] => {
       const on = rooms.lightsOn(room);
       const chips: Chip[] = [
@@ -195,7 +186,6 @@ export default defineComponent({
         },
       ];
 
-      const blinds = blindsChip(room);
       switch (room.id) {
         case floorsPageBindings.kitchenRoomId:
           if (room.media?.playing) chips.push({ label: "Music", value: "On", tone: "active" });
@@ -208,7 +198,6 @@ export default defineComponent({
           }
           break;
         case floorsPageBindings.livingRoomId:
-          if (blinds) chips.push(blinds);
           if (room.media?.playing) chips.push({ label: "TV", value: "On", tone: "active" });
           break;
         case floorsPageBindings.hallwayRoomId: {
@@ -251,7 +240,6 @@ export default defineComponent({
         }
         case floorsPageBindings.bedroomRoomIds[0]:
         case floorsPageBindings.bedroomRoomIds[1]:
-          if (blinds) chips.push(blinds);
           if (room.climateMode) chips.push({ label: "Heat", value: room.climateMode });
           break;
       }

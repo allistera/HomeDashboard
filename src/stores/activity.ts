@@ -31,15 +31,6 @@ const seedActivity: ActivityEvent[] = [
     domain: "vacuum",
   },
   {
-    id: "seed-blinds-lowered",
-    occurredAt: 2,
-    time: "6:30",
-    text: "Blinds lowered · sunset",
-    sourceId: "cover.living_room_blinds",
-    sourceName: "Living room blinds",
-    domain: "cover",
-  },
-  {
     id: "seed-package-detected",
     occurredAt: 1,
     time: "5:47",

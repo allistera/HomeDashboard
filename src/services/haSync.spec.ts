@@ -8,7 +8,6 @@ import { roomBindingFor } from "@/services/haBindings/haRoomsBindings";
 import { securityPageBindings } from "@/services/haBindings/haSecurityBindings";
 import {
   applyEntities,
-  blindClosedFrom,
   booleanPropertyFrom,
   cameraSnapshotUrlFrom,
   cameraStreamUrlFrom,
@@ -46,12 +45,6 @@ describe("entity conversion", () => {
     expect(lightLevelFrom(entity("light.x", "on", { brightness: 128 }))).toBe(50);
     expect(lightLevelFrom(entity("light.x", "on"))).toBe(100);
     expect(lightLevelFrom(entity("light.x", "off", { brightness: 128 }))).toBe(0);
-  });
-
-  it("converts cover position (% open) to blind closed %", () => {
-    expect(blindClosedFrom(entity("cover.x", "open", { current_position: 25 }))).toBe(75);
-    expect(blindClosedFrom(entity("cover.x", "open"))).toBe(0);
-    expect(blindClosedFrom(entity("cover.x", "closed"))).toBe(100);
   });
 
   it("reads a numeric entity state or attribute", () => {
@@ -146,11 +139,10 @@ describe("applyEntities", () => {
     expect(rooms.houseTarget).toBe(21.5);
   });
 
-  it("maps covers, climate, and media into a room", () => {
+  it("maps climate and media into a room", () => {
     const rooms = useRoomsStore();
     applyEntities(
       asEntities([
-        entity("cover.living_room_south_window", "open", { current_position: 40 }),
         entity("climate.living_room", "heat", {
           current_temperature: 20.5,
           temperature: 22,
@@ -168,7 +160,6 @@ describe("applyEntities", () => {
     );
 
     const livingRoom = rooms.rooms.find((r) => r.id === "living-room")!;
-    expect(livingRoom.blinds.find((b) => b.id === "south-window")!.closed).toBe(60);
     expect(livingRoom.temp).toBe(20.5);
     expect(livingRoom.target).toBe(22);
     expect(livingRoom.climateMode).toBe("Eco");

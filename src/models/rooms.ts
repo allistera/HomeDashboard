@@ -4,12 +4,6 @@ export interface Light {
   level: number;
 }
 
-export interface Blind {
-  id: string;
-  name: string;
-  closed: number;
-}
-
 export interface RoomEvent {
   time: string;
   text: string;
@@ -20,7 +14,6 @@ export interface Room {
   name: string;
   floor: string;
   lights: Light[];
-  blinds: Blind[];
   temp: number;
   target: number;
   meta: string;

@@ -9,9 +9,9 @@ type carries the hierarchy.
 - **Home** (`/`) — headline status, room list with light toggles, house temp,
   front-door camera, activity feed, and scene shortcuts (Good night / Movie / Away).
 - **Rooms** (`/rooms`) — room list on the left, the selected room's lights,
-  blinds, climate, media, and activity as ruled rows on the right.
+  climate, media, and activity as ruled rows on the right.
 - **Floors** (`/floors`) — the "God View": isometric floor plans of the ground
-  and first floors with live room callouts (lights, blinds, media, windows),
+  and first floors with live room callouts (lights, media, windows),
   a floor switcher, and a stairs shortcut. `/energy` redirects here.
 - **Security** (`/security`) — arm state, camera wall, every door and window as
   a ruled row, presence, and today's events.

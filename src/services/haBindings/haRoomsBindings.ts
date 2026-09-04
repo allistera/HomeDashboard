@@ -12,10 +12,6 @@ export const roomBindings: RoomBinding[] = [
       { lightId: "livingroom-light", entityId: "light.living_room_livingroom_light_2" },
       { lightId: "livingroom-light-2", entityId: "light.livingroom_light_2" },
     ],
-    covers: [
-      { blindId: "south-window", entityId: "cover.living_room_south_window" },
-      { blindId: "patio-door", entityId: "cover.living_room_patio_door" },
-    ],
     climate: "climate.living_room",
     media: livingRoomMediaBinding.entityId,
   },
@@ -25,7 +21,6 @@ export const roomBindings: RoomBinding[] = [
       { lightId: "ceiling", entityId: "light.kitchen_ceiling" },
       { lightId: "counter-strip", entityId: "light.kitchen_counter_strip" },
     ],
-    covers: [],
     climate: "climate.kitchen",
     temperature: { entityId: "sensor.kitchen_temperature_temperature", attribute: "" },
     media: "media_player.kitchen",
@@ -34,13 +29,11 @@ export const roomBindings: RoomBinding[] = [
   {
     roomId: "hallway",
     lights: [{ lightId: "ceiling", entityId: "light.hallway" }],
-    covers: [],
     motion: "binary_sensor.downstairs_hallway_movement_occupancy",
   },
   {
     roomId: "bedroom",
     lights: [{ lightId: "ceiling", entityId: "light.bedroom_bedroom" }],
-    covers: [{ blindId: "window", entityId: "cover.bedroom_window" }],
     temperature: { entityId: "sensor.bedroom_temperature_temperature", attribute: "" },
   },
   {
@@ -49,7 +42,6 @@ export const roomBindings: RoomBinding[] = [
       { lightId: "ceiling", entityId: "light.jaicobs_room_ceiling" },
       { lightId: "desk", entityId: "light.jaicobs_room_desk" },
     ],
-    covers: [{ blindId: "window", entityId: "cover.jaicobs_room_window" }],
     climate: "climate.jaicobs_room",
   },
   {
@@ -58,13 +50,11 @@ export const roomBindings: RoomBinding[] = [
       { lightId: "ceiling", entityId: "light.elsies_room_ceiling" },
       { lightId: "night-light", entityId: "light.elsies_room_night_light" },
     ],
-    covers: [{ blindId: "window", entityId: "cover.elsies_room_window" }],
     climate: "climate.elsies_room",
   },
   {
     roomId: "garden",
     lights: [{ lightId: "path", entityId: "light.garden_path" }],
-    covers: [],
   },
 ];
 

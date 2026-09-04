@@ -19,6 +19,12 @@ describe("RoomsPage bindings", () => {
     expect(wrapper.text()).toContain("OUTSIDE 8°");
   });
 
+  it("does not show controls for devices that are not in the home", () => {
+    const wrapper = mount(RoomsPage);
+
+    expect(wrapper.text()).not.toContain("Blinds");
+  });
+
   it("controls the selected room's configured media player", async () => {
     const rooms = useRoomsStore();
     const wrapper = mount(RoomsPage);

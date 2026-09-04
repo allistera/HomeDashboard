@@ -28,9 +28,6 @@ describe("Home Assistant binding completeness", () => {
       expect(binding!.lights.map((item) => item.lightId).sort()).toEqual(
         room.lights.map((item) => item.id).sort(),
       );
-      expect(binding!.covers.map((item) => item.blindId).sort()).toEqual(
-        room.blinds.map((item) => item.id).sort(),
-      );
       if (room.media) expect(binding!.media).toBeTruthy();
       if (room.motion) expect(binding!.motion).toBeTruthy();
       if (room.vacuum) expect(binding!.vacuum).toBeTruthy();
@@ -60,6 +57,7 @@ describe("Home Assistant binding completeness", () => {
     const ids = watchedEntityIds();
 
     expect(new Set(ids).size).toBe(ids.length);
+    expect(ids.some((id) => id.startsWith("cover."))).toBe(false);
     expect(ids).toContain("light.living_room_livingroom_light_2");
     expect(ids).toContain(homePageBindings.camera.entityId);
     expect(ids).toContain(

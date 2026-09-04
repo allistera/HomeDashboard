@@ -12,15 +12,9 @@ export interface LightBinding {
   entityId: string;
 }
 
-export interface CoverBinding {
-  blindId: string;
-  entityId: string;
-}
-
 export interface RoomBinding {
   roomId: string;
   lights: LightBinding[];
-  covers: CoverBinding[];
   climate?: string;
   // Standalone sensor holding the room temperature, for rooms without a
   // climate entity or where the sensor reads truer than the thermostat.
@@ -74,7 +68,6 @@ export interface AlarmControlPanelBinding {
 // Home Assistant attributes consumed by more than one page.
 export const entityProperties = {
   lightBrightness: "brightness",
-  coverPosition: "current_position",
   climateCurrentTemperature: "current_temperature",
   climateTargetTemperature: "temperature",
   climatePreset: "preset_mode",
@@ -118,7 +111,6 @@ export function watchedEntityIds(): string[] {
 
   for (const room of roomBindings) {
     for (const light of room.lights) addEntityId(ids, light.entityId);
-    for (const cover of room.covers) addEntityId(ids, cover.entityId);
     addEntityId(ids, room.climate);
     addEntityId(ids, room.temperature?.entityId);
     addEntityId(ids, room.media);
