@@ -35,6 +35,13 @@ feed live. The `homePageBindings.activityEntityIds` allowlist in
 controls which entity events Home Assistant sends; edit that list to change the feed without adding
 a UI filter.
 
+## Home Assistant bindings
+
+Dashboard entity IDs are owned by the page modules in `src/services/haBindings/`. Bindings marked
+with `// TODO` have no confident match in the current Home Assistant inventory and are intentionally
+left in place for a future device or entity. Room light controls are only defined for light entities
+that currently exist in Home Assistant.
+
 ## Commands
 
 ```sh

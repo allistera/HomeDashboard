@@ -78,12 +78,15 @@ describe("HomePage bindings", () => {
     const rowFor = (name: string) => rows.find((row) => row.get(".row__name").text() === name)!;
 
     expect(rowFor("Living room").get(".row__meta").text()).toBe("21.5° · MEDIA ON");
-    expect(rowFor("Kitchen").get(".row__meta").text()).toBe("21.0°");
+    expect(rowFor("Kitchen").get(".row__meta").text()).toBe("21.0° · MOTION 6M AGO");
     expect(rowFor("Hallway").get(".row__meta").text()).toBe("MOTION 6M AGO");
     expect(rowFor("Bedroom").get(".row__meta").text()).toBe("19.5°");
     expect(rowFor("Living room").classes()).not.toContain("row--dim");
-    expect(rowFor("Elsies Room").classes()).not.toContain("row--dim");
+    expect(rowFor("Elsies Room").classes()).toContain("row--dim");
     expect(rowFor("Bedroom").classes()).toContain("row--dim");
+    expect(rowFor("Kitchen").find('[role="switch"]').exists()).toBe(false);
+    expect(rowFor("Jaicobs Room").find('[role="switch"]').exists()).toBe(false);
+    expect(rowFor("Elsies Room").find('[role="switch"]').exists()).toBe(false);
 
     wrapper.unmount();
   });

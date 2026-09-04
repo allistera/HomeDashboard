@@ -20,9 +20,13 @@ describe("RoomsPage bindings", () => {
   });
 
   it("does not show controls for devices that are not in the home", () => {
+    useRoomsStore().selectRoom("kitchen");
     const wrapper = mount(RoomsPage);
 
     expect(wrapper.text()).not.toContain("Blinds");
+    expect(wrapper.find(".brightness-slider").exists()).toBe(false);
+    expect(wrapper.text()).not.toContain("Relax");
+    expect(wrapper.text()).not.toContain("Bright");
   });
 
   it("controls the selected room's configured media player", async () => {

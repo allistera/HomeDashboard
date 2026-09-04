@@ -34,6 +34,15 @@ describe("Home Assistant binding completeness", () => {
     }
   });
 
+  it("omits placeholder lights from rooms with no Home Assistant lights", () => {
+    const rooms = useRoomsStore();
+
+    for (const roomId of ["kitchen", "jaicobs-room", "elsies-room", "garden"]) {
+      expect(rooms.rooms.find((room) => room.id === roomId)?.lights).toEqual([]);
+      expect(roomBindings.find((binding) => binding.roomId === roomId)?.lights).toEqual([]);
+    }
+  });
+
   it("binds every rendered security entry, camera, and resident", () => {
     const security = useSecurityStore();
 
@@ -84,5 +93,33 @@ describe("Home Assistant binding completeness", () => {
     expect(roomIds.has(floorsPageBindings.livingRoomId)).toBe(true);
     expect(roomIds.has(floorsPageBindings.hallwayRoomId)).toBe(true);
     expect(floorsPageBindings.bedroomRoomIds.every((roomId) => roomIds.has(roomId))).toBe(true);
+  });
+
+  it("uses the live Home Assistant entities with confident dashboard matches", () => {
+    const kitchen = roomBindings.find((binding) => binding.roomId === "kitchen");
+    const jaicobsRoom = roomBindings.find((binding) => binding.roomId === "jaicobs-room");
+
+    expect(homePageBindings.houseTarget.entityId).toBe("input_number.heating_target_temperature");
+    expect(homePageBindings.actions.goodNight.entityId).toBe("scene.night_time_mode");
+    expect(homePageBindings.actions.movie).toEqual({
+      domain: "input_boolean",
+      service: "turn_on",
+      entityId: "input_boolean.movie_mode",
+    });
+    expect(kitchen?.media).toBe("media_player.kitchen_pod");
+    expect(kitchen?.motion).toBe("binary_sensor.kitchen_movement_occupancy");
+    expect(jaicobsRoom?.media).toBe("media_player.jaicobs_xbox");
+    expect(entryBindings.find((binding) => binding.entryId === "front-door")?.sensor).toBe(
+      "binary_sensor.front_door_contact",
+    );
+    expect(entryBindings.find((binding) => binding.entryId === "back-door")?.sensor).toBe(
+      "binary_sensor.back_door_contact",
+    );
+    expect(personBindings.find((binding) => binding.personId === "allister")?.entityId).toBe(
+      "person.allister_antosik",
+    );
+    expect(securityPageBindings.alarmControlPanel.entityId).toBe(
+      "alarm_control_panel.udm_se_colliery_lane_alarm_manager",
+    );
   });
 });

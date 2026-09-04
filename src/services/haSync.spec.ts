@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { washingBinding } from "@/services/haBindings/haGlobalBindings";
 import { homePageBindings } from "@/services/haBindings/haHomeBindings";
 import { roomBindingFor } from "@/services/haBindings/haRoomsBindings";
-import { securityPageBindings } from "@/services/haBindings/haSecurityBindings";
+import { entryBindings, securityPageBindings } from "@/services/haBindings/haSecurityBindings";
 import {
   applyEntities,
   booleanPropertyFrom,
@@ -116,12 +116,13 @@ describe("applyEntities", () => {
       asEntities([
         entity(homePageBindings.outsideTemperature.entityId, "8.4"),
         entity(homePageBindings.houseTemperature.entityId, "20.7"),
+        entity(homePageBindings.houseTarget.entityId, "21.5"),
       ]),
     );
 
     expect(rooms.outsideTemp).toBe(8.4);
     expect(rooms.houseTemp).toBe(20.7);
-    expect(rooms.houseTarget).toBe(20.7);
+    expect(rooms.houseTarget).toBe(21.5);
   });
 
   it("falls back to room values when configured house properties are unavailable", () => {
@@ -271,10 +272,11 @@ describe("applyEntities", () => {
 
   it("maps locks and door/window sensors into security entries", () => {
     const security = useSecurityStore();
+    const frontDoorBinding = entryBindings.find((binding) => binding.entryId === "front-door")!;
     applyEntities(
       asEntities([
-        entity("lock.front_door", "unlocked"),
-        entity("binary_sensor.front_door", "on"),
+        entity(frontDoorBinding.lock!, "unlocked"),
+        entity(frontDoorBinding.sensor!, "on"),
         entity("binary_sensor.jaicobs_room_window", "off"),
       ]),
     );

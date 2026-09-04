@@ -177,14 +177,15 @@ export default defineComponent({
 
     const chipsFor = (room: Room): Chip[] => {
       const on = rooms.lightsOn(room);
-      const chips: Chip[] = [
-        {
+      const chips: Chip[] = [];
+      if (room.lights.length > 0) {
+        chips.push({
           label: "Lights",
           value: on > 0 ? `${on} on` : "Off",
           tone: on > 0 ? "active" : undefined,
           onClick: () => rooms.setRoomLights(room.id, on === 0),
-        },
-      ];
+        });
+      }
 
       switch (room.id) {
         case floorsPageBindings.kitchenRoomId:

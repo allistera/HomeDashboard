@@ -146,13 +146,15 @@ export default defineComponent({
                         {room.name}
                       </span>
                       <span class="row__meta">{roomMeta(room.id)}</span>
-                      <ToggleSwitch
-                        modelValue={on}
-                        label={`${room.name} lights`}
-                        onUpdate:modelValue={(value: boolean) =>
-                          rooms.setRoomLights(room.id, value)
-                        }
-                      />
+                      {room.lights.length > 0 && (
+                        <ToggleSwitch
+                          modelValue={on}
+                          label={`${room.name} lights`}
+                          onUpdate:modelValue={(value: boolean) =>
+                            rooms.setRoomLights(room.id, value)
+                          }
+                        />
+                      )}
                     </div>
                   );
                 })}

@@ -87,7 +87,7 @@ export const activeMediaPlayerStates: ReadonlySet<string> = new Set([
 // Drying weather is rendered in the shared top bar across multiple pages.
 // `attribute: ""` reads the entity state itself.
 export const washingBinding: EntityPropertyBinding = {
-  entityId: "binary_sensor.good_drying_weather",
+  entityId: "binary_sensor.good_drying_weather", // TODO: no matching Home Assistant entity.
   attribute: "",
 };
 

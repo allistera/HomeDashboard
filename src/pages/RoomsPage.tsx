@@ -103,16 +103,17 @@ export default defineComponent({
                   </p>
                 </div>
                 <div class="hero__actions">
-                  {scenes.map((scene) => (
-                    <button
-                      type="button"
-                      key={scene.id}
-                      class={["btn", "btn--small", { "btn--primary": scene.id === "relax" }]}
-                      onClick={() => rooms.applyScene(room.id, scene.id)}
-                    >
-                      {scene.name}
-                    </button>
-                  ))}
+                  {room.lights.length > 0 &&
+                    scenes.map((scene) => (
+                      <button
+                        type="button"
+                        key={scene.id}
+                        class={["btn", "btn--small", { "btn--primary": scene.id === "relax" }]}
+                        onClick={() => rooms.applyScene(room.id, scene.id)}
+                      >
+                        {scene.name}
+                      </button>
+                    ))}
                 </div>
               </div>
 

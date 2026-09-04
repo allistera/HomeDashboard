@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "add-diagnostic": {
+      "source": "nostics",
+      "sourceType": "node_modules",
+      "computedHash": "bffe858a73515c6dcd391644a6c5ac494f0ef56454fa713156f093f7241544f6"
+    },
+    "nostics": {
+      "source": "nostics",
+      "sourceType": "node_modules",
+      "computedHash": "07db3216d541cb51221ad4ad2af8e0581a73abe14ea0c0c685f5c3d4a586d3ad"
+    }
+  }
+}

@@ -17,7 +17,7 @@ export const homePageBindings = {
     attribute: "",
   },
   houseTarget: {
-    entityId: "sensor.kitchen_temperature_temperature",
+    entityId: "input_number.heating_target_temperature",
     attribute: "",
   },
   camera: frontDoorCameraBinding,
@@ -34,9 +34,13 @@ export const homePageBindings = {
   ],
   excludedRoomIds: ["garden"],
   actions: {
-    goodNight: { domain: "scene", service: "turn_on", entityId: "scene.good_night" },
-    movie: { domain: "scene", service: "turn_on", entityId: "scene.movie" },
-    away: { domain: "scene", service: "turn_on", entityId: "scene.away" },
+    goodNight: { domain: "scene", service: "turn_on", entityId: "scene.night_time_mode" },
+    movie: {
+      domain: "input_boolean",
+      service: "turn_on",
+      entityId: "input_boolean.movie_mode",
+    },
+    away: { domain: "scene", service: "turn_on", entityId: "scene.away" }, // TODO: no matching Home Assistant entity.
   },
 } satisfies {
   outsideTemperature: EntityPropertyBinding;

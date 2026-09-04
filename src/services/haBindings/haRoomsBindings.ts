@@ -12,19 +12,17 @@ export const roomBindings: RoomBinding[] = [
       { lightId: "livingroom-light", entityId: "light.living_room_livingroom_light_2" },
       { lightId: "livingroom-light-2", entityId: "light.livingroom_light_2" },
     ],
-    climate: "climate.living_room",
+    climate: "climate.living_room", // TODO: no matching Home Assistant entity.
     media: livingRoomMediaBinding.entityId,
   },
   {
     roomId: "kitchen",
-    lights: [
-      { lightId: "ceiling", entityId: "light.kitchen_ceiling" },
-      { lightId: "counter-strip", entityId: "light.kitchen_counter_strip" },
-    ],
-    climate: "climate.kitchen",
+    lights: [],
+    climate: "climate.kitchen", // TODO: no matching Home Assistant entity.
     temperature: { entityId: "sensor.kitchen_temperature_temperature", attribute: "" },
-    media: "media_player.kitchen",
-    vacuum: "vacuum.kitchen",
+    media: "media_player.kitchen_pod",
+    motion: "binary_sensor.kitchen_movement_occupancy",
+    vacuum: "vacuum.kitchen", // TODO: no matching Home Assistant entity.
   },
   {
     roomId: "hallway",
@@ -38,23 +36,18 @@ export const roomBindings: RoomBinding[] = [
   },
   {
     roomId: "jaicobs-room",
-    lights: [
-      { lightId: "ceiling", entityId: "light.jaicobs_room_ceiling" },
-      { lightId: "desk", entityId: "light.jaicobs_room_desk" },
-    ],
-    climate: "climate.jaicobs_room",
+    lights: [],
+    climate: "climate.jaicobs_room", // TODO: no matching Home Assistant entity.
+    media: "media_player.jaicobs_xbox",
   },
   {
     roomId: "elsies-room",
-    lights: [
-      { lightId: "ceiling", entityId: "light.elsies_room_ceiling" },
-      { lightId: "night-light", entityId: "light.elsies_room_night_light" },
-    ],
-    climate: "climate.elsies_room",
+    lights: [],
+    climate: "climate.elsies_room", // TODO: no matching Home Assistant entity.
   },
   {
     roomId: "garden",
-    lights: [{ lightId: "path", entityId: "light.garden_path" }],
+    lights: [],
   },
 ];
 

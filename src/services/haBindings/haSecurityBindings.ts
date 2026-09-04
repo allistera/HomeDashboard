@@ -7,18 +7,37 @@ import type {
 import { roomBindings } from "@/services/haBindings/haRoomsBindings";
 
 export const entryBindings: EntryBinding[] = [
-  { entryId: "front-door", lock: "lock.front_door", sensor: "binary_sensor.front_door" },
-  { entryId: "back-door", lock: "lock.back_door", sensor: "binary_sensor.back_door" },
-  { entryId: "patio-door", lock: "lock.patio_door", sensor: "binary_sensor.patio_door" },
-  { entryId: "jaicobs-room-window", sensor: "binary_sensor.jaicobs_room_window" },
-  { entryId: "garage", lock: "lock.garage", sensor: "binary_sensor.garage_door" },
+  {
+    entryId: "front-door",
+    lock: "lock.front_door", // TODO: no matching Home Assistant entity.
+    sensor: "binary_sensor.front_door_contact",
+  },
+  {
+    entryId: "back-door",
+    lock: "lock.back_door", // TODO: no matching Home Assistant entity.
+    sensor: "binary_sensor.back_door_contact",
+  },
+  {
+    entryId: "patio-door",
+    lock: "lock.patio_door", // TODO: no matching Home Assistant entity.
+    sensor: "binary_sensor.patio_door", // TODO: no matching Home Assistant entity.
+  },
+  {
+    entryId: "jaicobs-room-window",
+    sensor: "binary_sensor.jaicobs_room_window", // TODO: no matching Home Assistant entity.
+  },
+  {
+    entryId: "garage",
+    lock: "lock.garage", // TODO: no matching Home Assistant entity.
+    sensor: "binary_sensor.garage_door", // TODO: no matching Home Assistant entity.
+  },
 ];
 
 export const personBindings: PersonBinding[] = [
-  { personId: "allister", entityId: "person.allister" },
-  { personId: "tonnii", entityId: "person.tonnii" },
-  { personId: "elsie", entityId: "person.elsie" },
-  { personId: "jaicob", entityId: "person.jaicob" },
+  { personId: "allister", entityId: "person.allister_antosik" },
+  { personId: "tonnii", entityId: "person.tonnii" }, // TODO: no matching Home Assistant entity.
+  { personId: "elsie", entityId: "person.elsie" }, // TODO: no matching Home Assistant entity.
+  { personId: "jaicob", entityId: "person.jaicob" }, // TODO: no matching Home Assistant entity.
 ];
 
 export const frontDoorCameraBinding: CameraBinding = {
@@ -28,14 +47,14 @@ export const frontDoorCameraBinding: CameraBinding = {
 
 export const cameraBindings: CameraBinding[] = [
   frontDoorCameraBinding,
-  { cameraId: "driveway", entityId: "camera.driveway" },
+  { cameraId: "driveway", entityId: "camera.driveway" }, // TODO: no matching Home Assistant entity.
   { cameraId: "back-garden", entityId: "camera.back_garden_high_resolution_channel" },
-  { cameraId: "hallway", entityId: "camera.hallway" },
+  { cameraId: "hallway", entityId: "camera.hallway" }, // TODO: no matching Home Assistant entity.
 ];
 
 export const securityPageBindings = {
   alarmControlPanel: {
-    entityId: "alarm_control_panel.home",
+    entityId: "alarm_control_panel.udm_se_colliery_lane_alarm_manager",
     states: {
       home: "armed_home",
       away: "armed_away",
