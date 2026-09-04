@@ -22,6 +22,10 @@ export interface RoomBinding {
   lights: LightBinding[];
   covers: CoverBinding[];
   climate?: string;
+  // Standalone sensor holding the room temperature, for rooms without a
+  // climate entity or where the sensor reads truer than the thermostat.
+  // Takes precedence over the climate entity's current temperature.
+  temperature?: EntityPropertyBinding;
   media?: string;
   motion?: string;
   vacuum?: string;
@@ -116,6 +120,7 @@ export function watchedEntityIds(): string[] {
     for (const light of room.lights) addEntityId(ids, light.entityId);
     for (const cover of room.covers) addEntityId(ids, cover.entityId);
     addEntityId(ids, room.climate);
+    addEntityId(ids, room.temperature?.entityId);
     addEntityId(ids, room.media);
     addEntityId(ids, room.motion);
     addEntityId(ids, room.vacuum);

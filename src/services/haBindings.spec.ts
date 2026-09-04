@@ -62,7 +62,9 @@ describe("Home Assistant binding completeness", () => {
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids).toContain("light.living_room_livingroom_light_2");
     expect(ids).toContain(homePageBindings.camera.entityId);
-    expect(ids).toContain("camera.back_garden");
+    expect(ids).toContain(
+      cameraBindings.find((camera) => camera.cameraId === "back-garden")!.entityId,
+    );
     expect(ids).toContain(securityPageBindings.alarmControlPanel.entityId);
     expect(ids).not.toContain(homePageBindings.actions.goodNight.entityId);
   });

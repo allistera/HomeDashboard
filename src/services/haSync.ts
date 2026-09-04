@@ -70,6 +70,9 @@ const consumedAttributes = [
   entityProperties.cameraAccessToken,
   // An empty attribute means "read the state itself", so nothing to consume.
   ...(washingBinding.attribute === "" ? [] : [washingBinding.attribute]),
+  ...roomBindings.flatMap((room) =>
+    room.temperature && room.temperature.attribute !== "" ? [room.temperature.attribute] : [],
+  ),
 ] as const;
 
 let lastApplyKey = "";
@@ -175,6 +178,14 @@ export function applyEntities(entities: HassEntities): void {
         if (Number.isFinite(target)) room.target = Number(target);
         if (preset) room.climateMode = stateLabel(String(preset));
       }
+    }
+
+    if (binding.temperature) {
+      const temperature = numericPropertyFrom(
+        entities[binding.temperature.entityId],
+        binding.temperature.attribute,
+      );
+      if (temperature !== null) room.temp = temperature;
     }
 
     if (binding.media && room.media) {

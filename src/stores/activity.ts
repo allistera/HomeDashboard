@@ -70,8 +70,14 @@ export const useActivityStore = defineStore("activity", {
 
       const byId = new Map(this.events.map((event) => [event.id, event]));
       for (const event of events) byId.set(event.id, event);
+      const seenText = new Set<string>();
       this.events = [...byId.values()]
         .sort((left, right) => right.occurredAt - left.occurredAt)
+        .filter((event) => {
+          if (seenText.has(event.text)) return false;
+          seenText.add(event.text);
+          return true;
+        })
         .slice(0, 50);
       this.status = "live";
     },

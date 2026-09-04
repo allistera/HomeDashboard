@@ -79,7 +79,7 @@ export default defineComponent({
       if (!room || !binding) return "";
 
       const details: string[] = [];
-      if (binding.climate) details.push(`${room.temp.toFixed(1)}°`);
+      if (binding.climate || binding.temperature) details.push(`${room.temp.toFixed(1)}°`);
       if (binding.motion && room.motion) {
         const motionAge =
           room.motion.lastChangedAt === undefined

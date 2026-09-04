@@ -38,4 +38,13 @@ describe("activity store", () => {
     expect(activity.events.map((item) => item.id)).toEqual(["event-2", "event-1"]);
     expect(activity.events[1]?.text).toBe("Kitchen light turned off");
   });
+
+  it("keeps only the newest event for duplicate feed text", () => {
+    const activity = useActivityStore();
+    activity.beginLoading();
+    activity.receive([event(), event({ id: "event-2", occurredAt: 200, time: "10:05" })]);
+    activity.receive([event({ id: "event-3", occurredAt: 300, time: "10:10" })]);
+
+    expect(activity.events).toEqual([event({ id: "event-3", occurredAt: 300, time: "10:10" })]);
+  });
 });

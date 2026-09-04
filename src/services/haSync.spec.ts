@@ -178,6 +178,40 @@ describe("applyEntities", () => {
     expect(livingRoom.media!.output).toBe("Apple TV");
   });
 
+  it("maps a bound temperature sensor into a room without a climate entity", () => {
+    const rooms = useRoomsStore();
+    const bedroomBinding = roomBindingFor("bedroom")!;
+
+    applyEntities(asEntities([entity(bedroomBinding.temperature!.entityId, "18.2")]));
+
+    expect(rooms.rooms.find((room) => room.id === "bedroom")!.temp).toBe(18.2);
+  });
+
+  it("prefers a bound temperature sensor over the climate entity reading", () => {
+    const rooms = useRoomsStore();
+    const kitchenBinding = roomBindingFor("kitchen")!;
+
+    applyEntities(
+      asEntities([
+        entity(kitchenBinding.climate!, "heat", { current_temperature: 19, temperature: 22 }),
+        entity(kitchenBinding.temperature!.entityId, "21.4"),
+      ]),
+    );
+
+    const kitchen = rooms.rooms.find((room) => room.id === "kitchen")!;
+    expect(kitchen.temp).toBe(21.4);
+    expect(kitchen.target).toBe(22);
+  });
+
+  it("keeps the seeded room temperature when the sensor is unavailable", () => {
+    const rooms = useRoomsStore();
+    const bedroomBinding = roomBindingFor("bedroom")!;
+
+    applyEntities(asEntities([entity(bedroomBinding.temperature!.entityId, "unavailable")]));
+
+    expect(rooms.rooms.find((room) => room.id === "bedroom")!.temp).toBe(19.5);
+  });
+
   it("tracks whether a bound media player is active independently of playback", () => {
     const rooms = useRoomsStore();
     const livingRoomBinding = roomBindingFor("living-room")!;

@@ -27,6 +27,7 @@ export const roomBindings: RoomBinding[] = [
     ],
     covers: [],
     climate: "climate.kitchen",
+    temperature: { entityId: "sensor.kitchen_temperature_temperature", attribute: "" },
     media: "media_player.kitchen",
     vacuum: "vacuum.kitchen",
   },
@@ -38,12 +39,9 @@ export const roomBindings: RoomBinding[] = [
   },
   {
     roomId: "bedroom",
-    lights: [
-      { lightId: "ceiling", entityId: "light.bedroom_ceiling" },
-      { lightId: "bedside", entityId: "light.bedroom_bedside" },
-    ],
+    lights: [{ lightId: "ceiling", entityId: "light.bedroom_bedroom" }],
     covers: [{ blindId: "window", entityId: "cover.bedroom_window" }],
-    climate: "climate.bedroom",
+    temperature: { entityId: "sensor.bedroom_temperature_temperature", attribute: "" },
   },
   {
     roomId: "jaicobs-room",
