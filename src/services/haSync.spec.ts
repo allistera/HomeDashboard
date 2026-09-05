@@ -5,7 +5,11 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { washingBinding } from "@/services/haBindings/haGlobalBindings";
 import { homePageBindings } from "@/services/haBindings/haHomeBindings";
 import { roomBindingFor } from "@/services/haBindings/haRoomsBindings";
-import { entryBindings, securityPageBindings } from "@/services/haBindings/haSecurityBindings";
+import {
+  cameraBindings,
+  entryBindings,
+  securityPageBindings,
+} from "@/services/haBindings/haSecurityBindings";
 import {
   applyEntities,
   booleanPropertyFrom,
@@ -312,11 +316,12 @@ describe("applyEntities", () => {
     const security = useSecurityStore();
     const settings = useSettingsStore();
     settings.url = "http://ha.local:8123";
+    const drivewayEntityId = cameraBindings.find((b) => b.cameraId === "driveway")!.entityId;
 
     applyEntities(
       asEntities([
         entity(homePageBindings.camera.entityId, "idle", { access_token: "front-token" }),
-        entity("camera.driveway", "unavailable", { access_token: "drive-token" }),
+        entity(drivewayEntityId, "unavailable", { access_token: "drive-token" }),
       ]),
     );
 
@@ -334,7 +339,7 @@ describe("applyEntities", () => {
 
     const driveway = security.cameras.find((camera) => camera.id === "driveway")!;
     expect(driveway.live).toBe(false);
-    expect(driveway.entityId).toBe("camera.driveway");
+    expect(driveway.entityId).toBe(drivewayEntityId);
     expect(driveway.snapshotUrl).toBeUndefined();
     expect(driveway.streamUrl).toBeUndefined();
     expect(driveway.note).toBe("STREAM UNAVAILABLE");
