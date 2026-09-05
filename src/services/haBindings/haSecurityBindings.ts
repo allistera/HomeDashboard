@@ -47,8 +47,8 @@ export const frontDoorCameraBinding: CameraBinding = {
 
 export const cameraBindings: CameraBinding[] = [
   frontDoorCameraBinding,
-  { cameraId: "driveway", entityId: "camera.driveway" }, // TODO: no matching Home Assistant entity.
-  { cameraId: "back-garden", entityId: "camera.back_garden_high_resolution_channel" },
+  { cameraId: "back-garden", entityId: "camera.garden_garden_camera_medium_quality" },
+  { cameraId: "driveway", entityId: "camera.foo" },
   { cameraId: "hallway", entityId: "camera.hallway" }, // TODO: no matching Home Assistant entity.
 ];
 
