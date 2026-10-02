@@ -6,6 +6,7 @@ import EventFeed from "@/components/EventFeed";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
 import { securityPageBindings } from "@/services/homeyBindings/homeySecurityBindings";
+import { useActivityStore } from "@/stores/activity";
 import { useSecurityStore, type ArmState, type Camera } from "@/stores/security";
 
 const armOptions: { id: ArmState; name: string }[] = [
@@ -18,6 +19,7 @@ export default defineComponent({
   name: "SecurityPage",
   setup() {
     const security = useSecurityStore();
+    const activity = useActivityStore();
     const selectedCamera = ref<Camera | null>(null);
 
     const openCamera = (camera: Camera) => {
@@ -174,10 +176,16 @@ export default defineComponent({
             </div>
 
             <div class="section-head" style={{ padding: "22px 36px 8px" }}>
-              <span class="label">Events · Today</span>
+              <span class="label">Events · {security.dataFromHomey ? "Live" : "Today"}</span>
             </div>
             <div style={{ padding: "0 36px" }}>
-              <EventFeed events={security.events} />
+              <EventFeed
+                events={
+                  security.dataFromHomey
+                    ? activity.events.filter((event) => event.accent)
+                    : security.events
+                }
+              />
             </div>
 
             <div class="col-foot">

@@ -7,6 +7,22 @@ import {
   securityPageBindings,
 } from "@/services/homeyBindings/homeySecurityBindings";
 
+export function roomDeviceIds(roomId: string): string[] {
+  const binding = roomBindings.find((room) => room.roomId === roomId);
+  return [
+    ...new Set(
+      [
+        ...(binding?.lights.map((light) => light.deviceId) ?? []),
+        binding?.media,
+        binding?.temperature?.deviceId,
+        binding?.climate?.deviceId,
+        binding?.motion?.deviceId,
+        binding?.vacuum?.deviceId,
+      ].filter((id): id is string => !!id),
+    ),
+  ];
+}
+
 export function watchedDeviceIds(): string[] {
   const ids = new Set(homePageBindings.activityDeviceIds);
   for (const binding of [
@@ -19,11 +35,7 @@ export function watchedDeviceIds(): string[] {
     if (binding) ids.add(binding.deviceId);
   }
   for (const room of roomBindings) {
-    for (const light of room.lights) ids.add(light.deviceId);
-    if (room.media) ids.add(room.media);
-    for (const binding of [room.temperature, room.climate, room.motion, room.vacuum]) {
-      if (binding) ids.add(binding.deviceId);
-    }
+    for (const id of roomDeviceIds(room.roomId)) ids.add(id);
   }
   for (const entry of entryBindings) {
     if (entry.lock) ids.add(entry.lock.deviceId);

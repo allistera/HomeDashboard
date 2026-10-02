@@ -2,13 +2,21 @@ import { computed, defineComponent } from "vue";
 
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
+import { roomDeviceIds } from "@/services/homeyBindings/homeyGlobalBindings";
 import { temperatureText } from "@/services/homeySync";
+import { useActivityStore } from "@/stores/activity";
 import { useRoomsStore, type Room, type Scene } from "@/stores/rooms";
 
 export default defineComponent({
   name: "RoomsPage",
   setup() {
     const rooms = useRoomsStore();
+    const activity = useActivityStore();
+    const roomEvents = computed(() => {
+      if (!rooms.dataFromHomey) return rooms.selectedRoom.events;
+      const ids = new Set(roomDeviceIds(rooms.selectedRoomId));
+      return activity.events.filter((event) => ids.has(event.sourceId));
+    });
 
     const listMeta = (room: Room) => {
       const on = rooms.lightsOn(room);
@@ -286,18 +294,20 @@ export default defineComponent({
                   )}
 
                   <div class="section-head" style={{ padding: "18px 36px 8px" }}>
-                    <span class="label">In this room today</span>
+                    <span class="label">
+                      {rooms.dataFromHomey ? "In this room · Live" : "In this room today"}
+                    </span>
                   </div>
                   <div style={{ padding: "0 36px" }}>
                     <div class="events">
-                      {room.events.length === 0 && (
+                      {roomEvents.value.length === 0 && (
                         <div class="event">
                           <span class="event__text" style={{ color: "var(--label)" }}>
                             Nothing yet today.
                           </span>
                         </div>
                       )}
-                      {room.events.map((event) => (
+                      {roomEvents.value.map((event) => (
                         <div key={`${event.time}-${event.text}`} class="event">
                           <span class="event__time">{event.time}</span>
                           <span class="event__text">{event.text}</span>

@@ -52,6 +52,7 @@ export const useActivityStore = defineStore("activity", {
     beginLoading() {
       this.status = "loading";
       this.hydratedFromHomey = false;
+      this.events = [];
     },
     receive(events: ActivityEvent[]) {
       if (!this.hydratedFromHomey) {
