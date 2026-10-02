@@ -27,20 +27,49 @@ type carries the hierarchy.
 - [oxfmt](https://oxc.rs) formats TypeScript/TSX; [Prettier](https://prettier.io)
   formats CSS, HTML, JSON, and Markdown
 
-## Home Assistant activity
+## Homey connection
 
-The homepage subscribes to the previous 24 hours of Home Assistant logbook activity and keeps the
-feed live. The `homePageBindings.activityEntityIds` allowlist in
-`src/services/haBindings/haHomeBindings.ts`
-controls which entity events Home Assistant sends; edit that list to change the feed without adding
-a UI filter.
+Settings connects directly to the [Homey Web API](https://athombv.github.io/node-homey-api/HomeyAPI.html)
+using a Homey address and personal access token (API key). Create the key in the Homey Web App's
+Settings → API Keys and grant `homey.device.readonly` and `homey.device.control` permissions.
+Use a browser-reachable Homey address; an HTTPS dashboard requires HTTPS to avoid mixed-content
+blocking. Check LAN reachability, TLS and browser access if connection validation fails.
+The address and token are saved only in this browser under `dedridge.homey.*` keys. Existing
+Home Assistant settings are not reused. No token belongs in source code or build-time variables.
 
-## Home Assistant bindings
+## Homey device bindings
 
-Dashboard entity IDs are owned by the page modules in `src/services/haBindings/`. Bindings marked
-with `// TODO` have no confident match in the current Home Assistant inventory and are intentionally
-left in place for a future device or entity. Room light controls are only defined for light entities
-that currently exist in Home Assistant.
+Page modules in `src/services/homeyBindings/` link dashboard items to exact Homey **device IDs**.
+A property binding is `{ deviceId, capabilityId }`, for example:
+
+```ts
+motion: {
+  deviceId: "4afb514a-cf25-4bb3-b465-7a8866fcf927",
+  capabilityId: "alarm_motion",
+}
+```
+
+The current inventory binds the living-room Sonos speaker, hallway motion sensor, and toilet
+motion sensor. Add devices to the corresponding page module after verifying their IDs and
+capabilities in Homey; names are display labels and never lookup keys. Lights use `onoff` and
+`dim` (0–1), temperatures use `measure_temperature` / `target_temperature`, and media controls
+use `speaker_playing`, `speaker_prev`, and `speaker_next`.
+
+The dashboard subscribes to device capability updates, reconciles device changes/deletions,
+and destroys listeners on disconnect. Unbound or unavailable readings show as unavailable once
+connected. The initial disconnected view remains a demonstration, not live home state.
+
+## Activity and cameras
+
+The live activity feed is generated from capability changes for
+`homePageBindings.activityDeviceIds`. It starts with an empty feed on connection and collects
+events while the page is connected; Home Assistant's previous 24-hour logbook is not retained.
+
+Homey does not supply the old HA camera proxy or WebRTC signalling. No camera is bound in the
+current inventory. Camera bindings may supply independent, browser-compatible snapshot and
+MJPEG stream URLs; an integration can inject a WebRTC starter into `CameraModal`. Unbound cameras
+show unavailable. Alarm, presence, weather, and scene helpers must be explicitly mapped to real
+Homey devices/capabilities before use; no old HA entity IDs are kept as substitute device IDs.
 
 ## Commands
 

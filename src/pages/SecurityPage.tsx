@@ -5,7 +5,7 @@ import CameraTile from "@/components/CameraTile";
 import EventFeed from "@/components/EventFeed";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
-import { securityPageBindings } from "@/services/haBindings/haSecurityBindings";
+import { securityPageBindings } from "@/services/homeyBindings/homeySecurityBindings";
 import { useSecurityStore, type ArmState, type Camera } from "@/stores/security";
 
 const armOptions: { id: ArmState; name: string }[] = [
@@ -29,11 +29,15 @@ export default defineComponent({
     };
 
     const headline = computed(() =>
-      security.armState === "disarmed"
-        ? "Perimeter disarmed"
-        : `Secure since ${security.secureSince}`,
+      security.dataFromHomey && !security.alarmAvailable
+        ? "Alarm unavailable"
+        : security.armState === "disarmed"
+          ? "Perimeter disarmed"
+          : `Secure since ${security.secureSince}`,
     );
     const subline = computed(() => {
+      if (security.dataFromHomey && security.entries.length === 0)
+        return "No door or lock devices are linked in Homey.";
       const open = security.openEntries;
       const locks = `All ${security.entries.length} locks engaged`;
       if (open.length === 0) {
@@ -47,7 +51,7 @@ export default defineComponent({
       <main class="main">
         <TopBar
           left={[
-            `${security.cameras.length} CAMERAS · ${securityPageBindings.sensorCount} SENSORS`,
+            `${security.dataFromHomey ? security.cameras.filter((camera) => camera.deviceId).length : security.cameras.length} CAMERAS · ${securityPageBindings.sensorCount} SENSORS`,
           ]}
           showPeople
           status={security.armLabel}
@@ -69,6 +73,7 @@ export default defineComponent({
                 type="button"
                 key={option.id}
                 class={["btn", { "btn--primary": security.armState === option.id }]}
+                disabled={security.dataFromHomey && !security.alarmAvailable}
                 onClick={() => security.arm(option.id)}
               >
                 {option.name}
@@ -82,7 +87,7 @@ export default defineComponent({
             <div class="section-head">
               <span class="label">Cameras · Live</span>
               <span class="label" style={{ letterSpacing: "normal" }}>
-                RECORDING ON MOTION
+                {security.dataFromHomey ? "NO CAMERAS LINKED" : "RECORDING ON MOTION"}
               </span>
             </div>
             <div

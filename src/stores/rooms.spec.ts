@@ -60,7 +60,7 @@ describe("rooms store", () => {
     expect(rooms.selectedRoom.target).toBe(21.5);
   });
 
-  it("uses Home Assistant house climate values when available", () => {
+  it("uses configured house climate values when available", () => {
     const rooms = useRoomsStore();
     rooms.setHomeClimateValues(8.4, 20.7, 21.5);
     expect(rooms.outsideTemp).toBe(8.4);
@@ -69,20 +69,22 @@ describe("rooms store", () => {
 
     rooms.setHomeClimateValues(null, null, null);
     expect(rooms.outsideTemp).toBe(12);
-    expect(rooms.houseTemp).toBe(20.5);
+    const inside = rooms.rooms.filter((room) => room.id !== "garden");
+    const average = inside.reduce((sum, room) => sum + (room.temp ?? 0), 0) / inside.length;
+    expect(rooms.houseTemp).toBe(Math.round(average * 2) / 2);
     expect(rooms.houseTarget).toBe(21.5);
   });
 
   it("controls the configured room media player optimistically", () => {
     const rooms = useRoomsStore();
-    const kitchen = rooms.rooms.find((room) => room.id === "kitchen")!;
-    expect(kitchen.media!.playing).toBe(true);
+    const livingRoom = rooms.rooms.find((room) => room.id === "living-room")!;
+    expect(livingRoom.media!.playing).toBe(true);
 
-    rooms.controlMedia("kitchen", "toggle");
-    expect(kitchen.media!.playing).toBe(false);
+    rooms.controlMedia("living-room", "toggle");
+    expect(livingRoom.media!.playing).toBe(false);
 
-    rooms.controlMedia("kitchen", "toggle");
-    expect(kitchen.media!.playing).toBe(true);
+    rooms.controlMedia("living-room", "toggle");
+    expect(livingRoom.media!.playing).toBe(true);
   });
 
   it("switches the washing reminder on the drying-weather flag", () => {

@@ -1,8 +1,11 @@
 import { defineStore } from "pinia";
 
-import type { AlarmArmState } from "@/services/haBindings/haGlobalBindings";
-import { entryBindings, securityPageBindings } from "@/services/haBindings/haSecurityBindings";
-import { haCallService } from "@/services/haClient";
+import type { AlarmArmState } from "@/services/homeyTypes";
+import {
+  entryBindings,
+  securityPageBindings,
+} from "@/services/homeyBindings/homeySecurityBindings";
+import { setHomeyCapability } from "@/services/homeyClient";
 
 export type ArmState = AlarmArmState;
 
@@ -20,7 +23,7 @@ export interface Camera {
   name: string;
   live: boolean;
   note?: string;
-  entityId?: string;
+  deviceId?: string;
   snapshotUrl?: string;
   streamUrl?: string;
 }
@@ -41,6 +44,8 @@ export interface SecurityEvent {
 }
 
 interface SecurityState {
+  dataFromHomey: boolean;
+  alarmAvailable: boolean;
   armState: ArmState;
   secureSince: string;
   entries: Entry[];
@@ -50,6 +55,8 @@ interface SecurityState {
 }
 
 const seedState: SecurityState = {
+  dataFromHomey: false,
+  alarmAvailable: false,
   armState: "home",
   secureSince: "7:02 PM",
   entries: [
@@ -130,9 +137,11 @@ export const useSecurityStore = defineStore("security", {
       return state.entries.filter((e) => e.open);
     },
     allSecure(state): boolean {
+      if (state.dataFromHomey && state.entries.length === 0) return false;
       return state.entries.every((e) => e.locked && !e.open);
     },
     armLabel(state): string {
+      if (state.dataFromHomey && !state.alarmAvailable) return "ALARM UNAVAILABLE";
       switch (state.armState) {
         case "home":
           return "ARMED — HOME";
@@ -145,15 +154,19 @@ export const useSecurityStore = defineStore("security", {
   },
   actions: {
     async arm(state: ArmState) {
+      const alarm = securityPageBindings.alarmControlPanel;
+      if (this.dataFromHomey && (!alarm || !this.alarmAvailable)) return;
       const previous = this.armState;
       this.armState = state;
-      const alarm = securityPageBindings.alarmControlPanel;
-      const result = await haCallService("alarm_control_panel", alarm.services[state], undefined, {
-        entity_id: alarm.entityId,
-      });
-      if (result === "failed") this.armState = previous;
+      if (!alarm) return;
+      const result = await setHomeyCapability(
+        alarm.deviceId,
+        alarm.capabilityId,
+        alarm.states[state],
+      );
+      if (result !== "sent") this.armState = previous;
     },
-    setArmStateFromHa(state: ArmState, changedAt: string) {
+    setArmStateFromHomey(state: ArmState, changedAt: string) {
       this.armState = state;
       this.secureSince = changedAt;
     },
@@ -161,6 +174,7 @@ export const useSecurityStore = defineStore("security", {
       const entry = this.entries.find((e) => e.id === id);
       if (!entry) return;
       const lock = entryBindings.find((b) => b.entryId === id)?.lock;
+      if (this.dataFromHomey && !lock) return;
       const previousLocked = entry.locked;
       const previousDetail = entry.detail;
 
@@ -174,10 +188,8 @@ export const useSecurityStore = defineStore("security", {
         : "UNLOCKED · JUST NOW";
 
       if (!lock) return;
-      const result = await haCallService("lock", locked ? "lock" : "unlock", undefined, {
-        entity_id: lock,
-      });
-      if (result === "failed") {
+      const result = await setHomeyCapability(lock.deviceId, lock.capabilityId, locked);
+      if (result !== "sent") {
         entry.locked = previousLocked;
         entry.detail = previousDetail;
       }

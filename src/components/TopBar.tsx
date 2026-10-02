@@ -39,7 +39,10 @@ export default defineComponent({
           ))}
           {props.showPeople && (
             <span class="topbar__people" tabindex={0}>
-              {security.peopleHome} PEOPLE HOME
+              {security.dataFromHomey &&
+              security.people.every((person) => person.status === "UNAVAILABLE")
+                ? "PRESENCE UNAVAILABLE"
+                : `${security.peopleHome} PEOPLE HOME`}
               <span class="topbar__popover" role="tooltip">
                 <span class="topbar__popover-box">
                   {security.people

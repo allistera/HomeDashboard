@@ -1,7 +1,8 @@
 import { computed, defineComponent, ref } from "vue";
 
 import TopBar from "@/components/TopBar";
-import { floorsPageBindings } from "@/services/haBindings/haFloorsBindings";
+import { floorsPageBindings } from "@/services/homeyBindings/homeyFloorsBindings";
+import { temperatureText } from "@/services/homeySync";
 import { useRoomsStore, type Room } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
 
@@ -339,7 +340,7 @@ export default defineComponent({
                 >
                   <div class="callout__head">
                     <span class="callout__name">{room.name}</span>
-                    <span class="callout__temp">{room.temp.toFixed(1)}°</span>
+                    <span class="callout__temp">{temperatureText(room.temp)}</span>
                   </div>
                   <div class="callout__chips">
                     {chipsFor(room).map((chip) => {

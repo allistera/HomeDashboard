@@ -1,7 +1,7 @@
 import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import type { ActivityEvent } from "@/services/haActivity";
+import type { ActivityEvent } from "@/services/homeyActivity";
 import { useActivityStore } from "@/stores/activity";
 
 function event(overrides: Partial<ActivityEvent> = {}): ActivityEvent {
@@ -26,7 +26,7 @@ describe("activity store", () => {
     expect(activity.events.some((item) => item.domain === "cover")).toBe(false);
   });
 
-  it("replaces offline examples with Home Assistant activity", () => {
+  it("replaces offline examples with Homey activity", () => {
     const activity = useActivityStore();
     activity.beginLoading();
     activity.receive([event()]);

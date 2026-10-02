@@ -2,7 +2,7 @@ import { mount } from "@vue/test-utils";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import CameraModal from "@/components/CameraModal";
-import type { WebRtcSession, WebRtcStreamHandlers } from "@/services/haWebRtc";
+import type { WebRtcSession, WebRtcStreamHandlers } from "@/services/cameraStream";
 import type { Camera } from "@/stores/security";
 
 function setVisibility(state: DocumentVisibilityState): void {
@@ -23,17 +23,17 @@ const camera: Camera = {
   id: "front-door",
   name: "front door",
   live: true,
-  entityId: "camera.front_door",
-  snapshotUrl: "http://ha.local/front-door-snap",
-  streamUrl: "http://ha.local/front-door-stream",
+  deviceId: "11111111-1111-4111-8111-111111111111",
+  snapshotUrl: "http://camera.local/front-door-snap",
+  streamUrl: "http://camera.local/front-door-stream",
 };
 
 function fakeStarter() {
   const calls: string[] = [];
   const handlers: WebRtcStreamHandlers[] = [];
   let stopped = 0;
-  const start = (entityId: string, streamHandlers: WebRtcStreamHandlers): WebRtcSession => {
-    calls.push(entityId);
+  const start = (deviceId: string, streamHandlers: WebRtcStreamHandlers): WebRtcSession => {
+    calls.push(deviceId);
     handlers.push(streamHandlers);
     return {
       stop: () => {
@@ -53,11 +53,11 @@ describe("CameraModal", () => {
     const starter = fakeStarter();
     const wrapper = mount(CameraModal, { props: { camera, startStream: starter.start } });
 
-    expect(starter.calls).toEqual(["camera.front_door"]);
+    expect(starter.calls).toEqual(["11111111-1111-4111-8111-111111111111"]);
     expect(wrapper.text()).toContain("Connecting");
     expect(wrapper.find("img.camera-modal__stream").exists()).toBe(false);
     const video = wrapper.get<HTMLVideoElement>("video.camera-modal__stream");
-    expect(video.attributes("poster")).toBe("http://ha.local/front-door-snap");
+    expect(video.attributes("poster")).toBe("http://camera.local/front-door-snap");
     expect(video.attributes("autoplay")).toBeDefined();
     expect(video.attributes("playsinline")).toBeDefined();
 
@@ -80,7 +80,7 @@ describe("CameraModal", () => {
 
     expect(wrapper.find("video").exists()).toBe(false);
     expect(wrapper.get("img.camera-modal__stream").attributes("src")).toBe(
-      "http://ha.local/front-door-stream",
+      "http://camera.local/front-door-stream",
     );
     expect(starter.stopCount()).toBe(1);
     wrapper.unmount();
@@ -93,20 +93,20 @@ describe("CameraModal", () => {
 
     expect(wrapper.find("video").exists()).toBe(false);
     expect(wrapper.get("img.camera-modal__stream").attributes("src")).toBe(
-      "http://ha.local/front-door-stream",
+      "http://camera.local/front-door-stream",
     );
     wrapper.unmount();
   });
 
-  it("does not try WebRTC for a camera without a bound entity", () => {
+  it("does not try WebRTC for a camera without a bound device", () => {
     const starter = fakeStarter();
     const wrapper = mount(CameraModal, {
-      props: { camera: { ...camera, entityId: undefined }, startStream: starter.start },
+      props: { camera: { ...camera, deviceId: undefined }, startStream: starter.start },
     });
 
     expect(starter.calls).toEqual([]);
     expect(wrapper.get("img.camera-modal__stream").attributes("src")).toBe(
-      "http://ha.local/front-door-stream",
+      "http://camera.local/front-door-stream",
     );
     wrapper.unmount();
   });
@@ -122,7 +122,10 @@ describe("CameraModal", () => {
 
     setVisibility("visible");
     await wrapper.vm.$nextTick();
-    expect(starter.calls).toEqual(["camera.front_door", "camera.front_door"]);
+    expect(starter.calls).toEqual([
+      "11111111-1111-4111-8111-111111111111",
+      "11111111-1111-4111-8111-111111111111",
+    ]);
     expect(wrapper.find("video").exists()).toBe(true);
     wrapper.unmount();
   });

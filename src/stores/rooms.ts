@@ -2,29 +2,37 @@ import { defineStore } from "pinia";
 
 import { seedRooms } from "@/data/rooms";
 import type { MediaCommand, Room, Scene } from "@/models/rooms";
-import { roomBindingFor } from "@/services/haBindings/haRoomsBindings";
-import { haCallService } from "@/services/haClient";
+import { roomBindingFor } from "@/services/homeyBindings/homeyRoomsBindings";
+import { setHomeyCapability, setHomeyLight } from "@/services/homeyClient";
 
 export type { MediaCommand, Room, Scene } from "@/models/rooms";
 
 interface RoomsState {
   rooms: Room[];
   selectedRoomId: string;
-  washingWeatherOk: boolean;
-  outsideTempFromHa: number | null;
-  houseTempFromHa: number | null;
-  houseTargetFromHa: number | null;
+  washingWeatherOk: boolean | null;
+  outsideTempFromHomey: number | null;
+  houseTempFromHomey: number | null;
+  houseTargetFromHomey: number | null;
+  dataFromHomey: boolean;
 }
 
-// Mirrors a dashboard light change out to Home Assistant (no-op offline).
+// Homey links are stable device IDs; UI light IDs stay page-owned.
 function pushLight(roomId: string, lightId: string, level: number): void {
-  const entityId = roomBindingFor(roomId)?.lights.find((l) => l.lightId === lightId)?.entityId;
-  if (!entityId) return;
-  if (level > 0) {
-    void haCallService("light", "turn_on", { brightness_pct: level }, { entity_id: entityId });
-  } else {
-    void haCallService("light", "turn_off", undefined, { entity_id: entityId });
-  }
+  const rooms = useRoomsStore();
+  const light = rooms.rooms
+    .find((room) => room.id === roomId)
+    ?.lights.find((item) => item.id === lightId);
+  const previous = light?.level ?? 0;
+  if (light) light.level = level;
+  const deviceId = roomBindingFor(roomId)?.lights.find(
+    (light) => light.lightId === lightId,
+  )?.deviceId;
+  if (deviceId)
+    void setHomeyLight(deviceId, level).then((result) => {
+      if (rooms.dataFromHomey && result !== "sent" && light?.level === level)
+        light.level = previous;
+    });
 }
 
 export const useRoomsStore = defineStore("rooms", {
@@ -34,9 +42,10 @@ export const useRoomsStore = defineStore("rooms", {
       rooms: seedRooms,
       selectedRoomId: "living-room",
       washingWeatherOk: false,
-      outsideTempFromHa: null,
-      houseTempFromHa: null,
-      houseTargetFromHa: null,
+      outsideTempFromHomey: null,
+      houseTempFromHomey: null,
+      houseTargetFromHomey: null,
+      dataFromHomey: false,
     }),
   getters: {
     selectedRoom(state): Room {
@@ -49,24 +58,28 @@ export const useRoomsStore = defineStore("rooms", {
       return state.rooms.some((r) => r.lights.some((l) => l.level > 0));
     },
     washingLabel(state): string {
+      if (state.washingWeatherOk === null) return "DRYING WEATHER UNAVAILABLE";
       return state.washingWeatherOk ? "PUT OUT THE WASHING" : "DO NOT PUT OUT THE WASHING";
     },
-    washingTone(state): "ok" | "alert" {
+    washingTone(state): "ok" | "alert" | "neutral" {
+      if (state.washingWeatherOk === null) return "neutral";
       return state.washingWeatherOk ? "ok" : "alert";
     },
-    outsideTemp(state): number {
-      if (state.outsideTempFromHa !== null) return state.outsideTempFromHa;
+    outsideTemp(state): number | null {
+      if (state.dataFromHomey || state.outsideTempFromHomey !== null)
+        return state.outsideTempFromHomey;
       return state.rooms.find((room) => room.id === "garden")?.temp ?? 0;
     },
-    houseTemp(state): number {
-      if (state.houseTempFromHa !== null) return state.houseTempFromHa;
+    houseTemp(state): number | null {
+      if (state.dataFromHomey || state.houseTempFromHomey !== null) return state.houseTempFromHomey;
       const inside = state.rooms.filter((r) => r.id !== "garden");
-      const avg = inside.reduce((sum, r) => sum + r.temp, 0) / inside.length;
+      const avg = inside.reduce((sum, r) => sum + (r.temp ?? 0), 0) / inside.length;
       return Math.round(avg * 2) / 2;
     },
-    houseTarget(state): number {
-      if (state.houseTargetFromHa !== null) return state.houseTargetFromHa;
-      const targets = state.rooms.filter((r) => r.id !== "garden").map((r) => r.target);
+    houseTarget(state): number | null {
+      if (state.dataFromHomey || state.houseTargetFromHomey !== null)
+        return state.houseTargetFromHomey;
+      const targets = state.rooms.filter((r) => r.id !== "garden").map((r) => r.target ?? 0);
       return Math.max(...targets);
     },
   },
@@ -76,9 +89,9 @@ export const useRoomsStore = defineStore("rooms", {
       temperature: number | null,
       target: number | null,
     ) {
-      this.outsideTempFromHa = outsideTemperature;
-      this.houseTempFromHa = temperature;
-      this.houseTargetFromHa = target;
+      this.outsideTempFromHomey = outsideTemperature;
+      this.houseTempFromHomey = temperature;
+      this.houseTargetFromHomey = target;
     },
     setWashingWeather(ok: boolean) {
       this.washingWeatherOk = ok;
@@ -92,8 +105,7 @@ export const useRoomsStore = defineStore("rooms", {
       const room = this.rooms.find((r) => r.id === id);
       if (!room) return;
       for (const light of room.lights) {
-        light.level = on ? 70 : 0;
-        pushLight(room.id, light.id, light.level);
+        pushLight(room.id, light.id, on ? 70 : 0);
       }
     },
     setAllLights(on: boolean) {
@@ -111,22 +123,22 @@ export const useRoomsStore = defineStore("rooms", {
     setLightLevel(roomId: string, lightId: string, level: number) {
       const light = this.rooms.find((r) => r.id === roomId)?.lights.find((l) => l.id === lightId);
       if (light) {
-        light.level = Math.min(100, Math.max(0, level));
-        pushLight(roomId, lightId, light.level);
+        pushLight(roomId, lightId, Math.min(100, Math.max(0, level)));
       }
     },
-    adjustTarget(roomId: string, delta: number) {
+    async adjustTarget(roomId: string, delta: number) {
       const room = this.rooms.find((r) => r.id === roomId);
-      if (room) {
+      if (room && room.target !== null) {
+        const previous = room.target;
         room.target = Math.round((room.target + delta) * 2) / 2;
         const climate = roomBindingFor(roomId)?.climate;
         if (climate) {
-          void haCallService(
-            "climate",
-            "set_temperature",
-            { temperature: room.target },
-            { entity_id: climate },
+          const result = await setHomeyCapability(
+            climate.deviceId,
+            climate.capabilityId,
+            room.target,
           );
+          if (result !== "sent") room.target = previous;
         }
       }
     },
@@ -139,22 +151,27 @@ export const useRoomsStore = defineStore("rooms", {
         "all-off": 0,
       } satisfies Record<Scene, number>;
       for (const light of room.lights) {
-        light.level = levels[scene];
-        pushLight(room.id, light.id, light.level);
+        pushLight(room.id, light.id, levels[scene]);
       }
     },
-    controlMedia(roomId: string, command: MediaCommand) {
+    async controlMedia(roomId: string, command: MediaCommand) {
       const room = this.rooms.find((item) => item.id === roomId);
-      const entityId = roomBindingFor(roomId)?.media;
-      if (!room?.media || !entityId) return;
+      const deviceId = roomBindingFor(roomId)?.media;
+      if (!room?.media || !deviceId) return;
 
-      const service = {
-        previous: "media_previous_track",
-        toggle: "media_play_pause",
-        next: "media_next_track",
+      const capability = {
+        previous: "speaker_prev",
+        toggle: "speaker_playing",
+        next: "speaker_next",
       } satisfies Record<MediaCommand, string>;
-      void haCallService("media_player", service[command], undefined, { entity_id: entityId });
+      const previous = room.media.playing;
       if (command === "toggle") room.media.playing = !room.media.playing;
+      const result = await setHomeyCapability(
+        deviceId,
+        capability[command],
+        command === "toggle" ? room.media.playing : true,
+      );
+      if (this.dataFromHomey && result !== "sent") room.media.playing = previous;
     },
   },
 });
