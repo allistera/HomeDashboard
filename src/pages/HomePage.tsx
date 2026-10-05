@@ -5,10 +5,9 @@ import CameraTile from "@/components/CameraTile";
 import EventFeed from "@/components/EventFeed";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
-import type { EntityActionBinding } from "@/services/haBindings/haGlobalBindings";
-import { homePageBindings } from "@/services/haBindings/haHomeBindings";
-import { roomBindingFor } from "@/services/haBindings/haRoomsBindings";
-import { haCallService } from "@/services/haClient";
+import { homePageBindings } from "@/services/homeyBindings/homeyHomeBindings";
+import { roomBindingFor } from "@/services/homeyBindings/homeyRoomsBindings";
+import { temperatureText } from "@/services/homeySync";
 import { useActivityStore } from "@/stores/activity";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore, type Camera } from "@/stores/security";
@@ -48,29 +47,25 @@ export default defineComponent({
     });
     const summary = computed(() => {
       const lightsOn = rooms.rooms.reduce((sum, room) => sum + rooms.lightsOn(room), 0);
-      const doors = security.allSecure ? "Doors locked" : "A window is open";
-      return `${doors}, ${lightsOn} lights on, heating holding ${rooms.houseTemp}°.`;
+      const doors =
+        security.dataFromHomey && security.entries.length === 0
+          ? "Door status unavailable"
+          : security.allSecure
+            ? "Doors locked"
+            : "A window is open";
+      return `${doors}, ${lightsOn} lights on, temperature ${temperatureText(rooms.houseTemp)}.`;
     });
-
-    const runBoundAction = (binding: EntityActionBinding) => {
-      void haCallService(binding.domain, binding.service, undefined, {
-        entity_id: binding.entityId,
-      });
-    };
 
     const goodNight = () => {
       rooms.setAllLights(false);
       security.arm("home");
-      runBoundAction(homePageBindings.actions.goodNight);
     };
     const movie = () => {
       rooms.applyScene(homePageBindings.mediaPlayer.roomId, "relax");
-      runBoundAction(homePageBindings.actions.movie);
     };
     const away = () => {
       rooms.setAllLights(false);
       security.arm("away");
-      runBoundAction(homePageBindings.actions.away);
     };
 
     const roomMeta = (roomId: string) => {
@@ -79,7 +74,7 @@ export default defineComponent({
       if (!room || !binding) return "";
 
       const details: string[] = [];
-      if (binding.climate || binding.temperature) details.push(`${room.temp.toFixed(1)}°`);
+      if (binding.climate || binding.temperature) details.push(temperatureText(room.temp));
       if (binding.motion && room.motion) {
         const motionAge =
           room.motion.lastChangedAt === undefined
@@ -94,7 +89,7 @@ export default defineComponent({
     return () => (
       <main class="main">
         <TopBar
-          left={[`OUTSIDE ${rooms.outsideTemp.toFixed(0)}°`]}
+          left={[`OUTSIDE ${temperatureText(rooms.outsideTemp, 0)}`]}
           showPeople
           status={rooms.washingLabel}
           statusTone={rooms.washingTone}
@@ -108,13 +103,32 @@ export default defineComponent({
             <p class="hero__sub">{summary.value}</p>
           </div>
           <div class="hero__actions">
-            <button type="button" class="btn btn--primary" onClick={goodNight}>
-              Get Jaicob
+            <button
+              type="button"
+              class="btn btn--primary"
+              disabled={rooms.dataFromHomey && !rooms.rooms.some((room) => room.lights.length > 0)}
+              onClick={goodNight}
+            >
+              Good night
             </button>
-            <button type="button" class="btn" onClick={movie}>
+            <button
+              type="button"
+              class="btn"
+              disabled={rooms.dataFromHomey && !mediaRoom.value?.lights.length}
+              onClick={movie}
+            >
               Movie
             </button>
-            <button type="button" class="btn" onClick={away}>
+            <button
+              type="button"
+              class="btn"
+              disabled={
+                rooms.dataFromHomey &&
+                !security.alarmAvailable &&
+                !rooms.rooms.some((room) => room.lights.length > 0)
+              }
+              onClick={away}
+            >
               Away
             </button>
           </div>
@@ -164,13 +178,13 @@ export default defineComponent({
               <div>
                 <div class="label">Outdoor Temp</div>
                 <div class="big-number" style={{ fontSize: "54px" }}>
-                  {rooms.outsideTemp.toFixed(1)}°
+                  {temperatureText(rooms.outsideTemp)}
                 </div>
               </div>
               <div>
                 <div class="label">Target</div>
                 <div class="big-number big-number--accent" style={{ fontSize: "54px" }}>
-                  {rooms.houseTarget.toFixed(1)}°
+                  {temperatureText(rooms.houseTarget)}
                 </div>
               </div>
             </div>
@@ -178,7 +192,9 @@ export default defineComponent({
 
           <div class="col">
             <div class="section-head" style={{ padding: "16px 40px 12px" }}>
-              <span class="label">Front door · Live</span>
+              <span class="label">
+                Front door · {homeCamera.value?.live ? "Live" : "Unavailable"}
+              </span>
             </div>
             <div style={{ padding: "0 40px" }}>
               <CameraTile
@@ -193,9 +209,7 @@ export default defineComponent({
               />
             </div>
             <div class="section-head" style={{ padding: "20px 40px 8px" }}>
-              <span class="label">
-                Activity{activity.status === "live" ? " · Home Assistant" : ""}
-              </span>
+              <span class="label">Activity{activity.status === "live" ? " · Homey" : ""}</span>
             </div>
             <div style={{ padding: "0 40px" }}>
               <EventFeed events={activity.events.slice(0, 4)} />
@@ -221,6 +235,7 @@ export default defineComponent({
                   type="button"
                   class="media-controls__btn"
                   aria-label="Previous track"
+                  disabled={rooms.dataFromHomey && !mediaRoom.value?.media}
                   onClick={() =>
                     rooms.controlMedia(homePageBindings.mediaPlayer.roomId, "previous")
                   }
@@ -231,6 +246,7 @@ export default defineComponent({
                   type="button"
                   class="media-controls__btn media-controls__btn--primary"
                   aria-label={mediaRoom.value?.media?.playing ? "Pause" : "Play"}
+                  disabled={rooms.dataFromHomey && !mediaRoom.value?.media}
                   onClick={() => rooms.controlMedia(homePageBindings.mediaPlayer.roomId, "toggle")}
                 >
                   {mediaRoom.value?.media?.playing ? "❚❚" : "▶"}
@@ -239,6 +255,7 @@ export default defineComponent({
                   type="button"
                   class="media-controls__btn"
                   aria-label="Next track"
+                  disabled={rooms.dataFromHomey && !mediaRoom.value?.media}
                   onClick={() => rooms.controlMedia(homePageBindings.mediaPlayer.roomId, "next")}
                 >
                   ▶

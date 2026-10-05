@@ -1,35 +1,35 @@
 import { computed, defineComponent, ref } from "vue";
 
 import TopBar from "@/components/TopBar";
-import { connectHa, disconnectHa } from "@/services/haClient";
-import { applyEntities } from "@/services/haSync";
-import { useHaStore } from "@/stores/ha";
+import { connectHomey, disconnectHomey } from "@/services/homeyClient";
+import { applyDevices } from "@/services/homeySync";
+import { useHomeyStore } from "@/stores/homey";
 import { useSettingsStore } from "@/stores/settings";
 
 export default defineComponent({
   name: "SettingsPage",
   setup() {
     const settings = useSettingsStore();
-    const ha = useHaStore();
+    const homey = useHomeyStore();
     const url = ref(settings.url);
     const token = ref(settings.token);
 
     const submit = async (event: Event) => {
       event.preventDefault();
       const saved = await settings.validateAndSave(url.value, token.value);
-      if (saved) await connectHa(applyEntities);
+      if (saved) await connectHomey(applyDevices);
     };
 
     const clear = () => {
-      disconnectHa();
+      disconnectHomey();
       settings.clear();
       url.value = "";
       token.value = "";
     };
 
     const connectionLine = computed(() => {
-      const parts = [ha.status.toUpperCase()];
-      if (ha.entityCount > 0) parts.push(`${ha.entityCount} ENTITIES`);
+      const parts = [homey.status.toUpperCase()];
+      if (homey.deviceCount > 0) parts.push(`${homey.deviceCount} DEVICES`);
       return parts.join(" · ");
     });
 
@@ -37,7 +37,7 @@ export default defineComponent({
       <main class="main">
         <TopBar
           left={["INTEGRATIONS"]}
-          status={settings.configured ? "HOME ASSISTANT LINKED" : "NOT CONNECTED"}
+          status={homey.status === "connected" ? "HOMEY CONNECTED" : "NOT CONNECTED"}
         />
 
         <div class="hero">
@@ -45,32 +45,32 @@ export default defineComponent({
             <div class="label">Integrations</div>
             <h1 class="hero__title">Settings</h1>
             <p class="hero__sub">
-              Point the dashboard at your Home Assistant instance. The URL and token are validated
-              against its API and stored only in this browser.
+              Point the dashboard at your Homey instance. The URL and token are validated against
+              its API and stored only in this browser.
             </p>
           </div>
         </div>
 
         <form class="settings-form" onSubmit={submit}>
           <div class="field">
-            <label class="label" for="ha-url">
-              Home Assistant URL
+            <label class="label" for="homey-url">
+              Homey URL
             </label>
             <input
-              id="ha-url"
+              id="homey-url"
               class="field__input"
               type="text"
-              placeholder="https://homeassistant.local:8123"
+              placeholder="https://your-homey-address"
               v-model={url.value}
             />
           </div>
 
           <div class="field">
-            <label class="label" for="ha-token">
-              Long-lived access token
+            <label class="label" for="homey-token">
+              Personal access token
             </label>
             <input
-              id="ha-token"
+              id="homey-token"
               class="field__input"
               type="password"
               placeholder="eyJhbGciOi…"
@@ -78,7 +78,8 @@ export default defineComponent({
               v-model={token.value}
             />
             <p class="field__hint">
-              Create one in Home Assistant under your profile → Security → Long-lived access tokens.
+              Create one in the Homey Web App under Settings → API Keys. Grant device read and
+              control permissions.
             </p>
           </div>
 
@@ -120,21 +121,21 @@ export default defineComponent({
                 "settings-form__status",
                 "mono",
                 {
-                  "settings-form__status--ok": ha.status === "connected",
-                  "settings-form__status--error": ha.status === "error",
+                  "settings-form__status--ok": homey.status === "connected",
+                  "settings-form__status--error": homey.status === "error",
                 },
               ]}
               role="status"
             >
               {connectionLine.value}
-              {ha.message !== "" && ` — ${ha.message}`}
+              {homey.message !== "" && ` — ${homey.message}`}
             </p>
-            {settings.configured && ha.status !== "connected" && (
+            {settings.configured && homey.status !== "connected" && (
               <button
                 type="button"
                 class="btn btn--small"
                 style={{ alignSelf: "flex-start" }}
-                onClick={() => void connectHa(applyEntities)}
+                onClick={() => void connectHomey(applyDevices)}
               >
                 Reconnect
               </button>

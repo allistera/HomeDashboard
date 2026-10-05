@@ -23,8 +23,8 @@ describe("HomePage bindings", () => {
 
     const frontDoor = useSecurityStore().cameras.find((camera) => camera.id === "front-door")!;
     frontDoor.live = true;
-    frontDoor.snapshotUrl = "http://ha.local/front-door-snap";
-    frontDoor.streamUrl = "http://ha.local/front-door-stream";
+    frontDoor.snapshotUrl = "http://camera.local/front-door-snap";
+    frontDoor.streamUrl = "http://camera.local/front-door-stream";
 
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
 
@@ -34,13 +34,13 @@ describe("HomePage bindings", () => {
     expect(wrapper.text()).toContain("Playing · Living room");
     expect(wrapper.text()).toContain("Night Jazz");
     expect(wrapper.get(".camera__stream").attributes("src")).toContain(
-      "http://ha.local/front-door-snap",
+      "http://camera.local/front-door-snap",
     );
     expect(wrapper.get(".camera__stream").attributes("src")).not.toContain("front-door-stream");
 
     await wrapper.get(".camera").trigger("click");
     expect(wrapper.get('[role="dialog"] .camera-modal__stream').attributes("src")).toBe(
-      "http://ha.local/front-door-stream",
+      "http://camera.local/front-door-stream",
     );
     expect(document.body.style.overflow).toBe("hidden");
 
@@ -77,10 +77,10 @@ describe("HomePage bindings", () => {
     const rows = wrapper.findAll(".row");
     const rowFor = (name: string) => rows.find((row) => row.get(".row__name").text() === name)!;
 
-    expect(rowFor("Living room").get(".row__meta").text()).toBe("21.5° · MEDIA ON");
-    expect(rowFor("Kitchen").get(".row__meta").text()).toBe("21.0° · MOTION 6M AGO");
+    expect(rowFor("Living room").get(".row__meta").text()).toBe("MEDIA ON");
+    expect(rowFor("Kitchen").get(".row__meta").text()).toBe("");
     expect(rowFor("Hallway").get(".row__meta").text()).toBe("MOTION 6M AGO");
-    expect(rowFor("Bedroom").get(".row__meta").text()).toBe("19.5°");
+    expect(rowFor("Bedroom").get(".row__meta").text()).toBe("");
     expect(rowFor("Living room").classes()).not.toContain("row--dim");
     expect(rowFor("Elsies Room").classes()).toContain("row--dim");
     expect(rowFor("Bedroom").classes()).toContain("row--dim");

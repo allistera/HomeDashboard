@@ -14,7 +14,7 @@
     "format:check": "oxfmt --check . && prettier --check \"**/*.{css,html,json,md}\""
   },
   "dependencies": {
-    "home-assistant-js-websocket": "^9.6.0",
+    "homey-api": "^3.20.0",
     "pinia": "^4.0.3",
     "vue": "^3.5.42",
     "vue-router": "^5.3.1"

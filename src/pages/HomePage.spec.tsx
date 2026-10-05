@@ -32,11 +32,11 @@ describe("HomePage headline", () => {
     expect(wrapper.get("h1").text()).toBe("Lights out.");
   });
 
-  it("marks the activity feed as sourced from Home Assistant when live", () => {
+  it("marks the activity feed as sourced from Homey when live", () => {
     useActivityStore().status = "live";
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
 
-    expect(wrapper.text()).toContain("Activity · Home Assistant");
+    expect(wrapper.text()).toContain("Activity · Homey");
   });
 
   it("shows the bound outdoor temperature in the climate summary", () => {

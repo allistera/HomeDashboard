@@ -24,8 +24,8 @@ describe("SecurityPage cameras", () => {
     const security = useSecurityStore();
     const frontDoor = security.cameras.find((camera) => camera.id === "front-door")!;
     frontDoor.live = true;
-    frontDoor.snapshotUrl = "http://ha.local/front-door-snap";
-    frontDoor.streamUrl = "http://ha.local/front-door-stream";
+    frontDoor.snapshotUrl = "http://camera.local/front-door-snap";
+    frontDoor.streamUrl = "http://camera.local/front-door-stream";
 
     const wrapper = mount(SecurityPage);
     expect(wrapper.get(".camera__stream").attributes("src")).toContain("front-door-snap");
@@ -36,7 +36,7 @@ describe("SecurityPage cameras", () => {
     const dialog = wrapper.get('[role="dialog"]');
     expect(dialog.attributes("aria-modal")).toBe("true");
     expect(dialog.get(".camera-modal__title").text()).toBe("front door");
-    expect(dialog.get("img").attributes("src")).toBe("http://ha.local/front-door-stream");
+    expect(dialog.get("img").attributes("src")).toBe("http://camera.local/front-door-stream");
     expect(document.body.style.overflow).toBe("hidden");
 
     await dialog.trigger("keydown", { key: "Escape" });
@@ -59,7 +59,7 @@ describe("SecurityPage cameras", () => {
     const security = useSecurityStore();
     const frontDoor = security.cameras.find((camera) => camera.id === "front-door")!;
     frontDoor.live = true;
-    frontDoor.streamUrl = "http://ha.local/broken-stream";
+    frontDoor.streamUrl = "http://camera.local/broken-stream";
 
     const wrapper = mount(SecurityPage);
     await wrapper.findAll(".camera")[0]!.trigger("click");
@@ -75,12 +75,12 @@ describe("SecurityPage cameras", () => {
     const security = useSecurityStore();
     const frontDoor = security.cameras.find((camera) => camera.id === "front-door")!;
     frontDoor.live = true;
-    frontDoor.streamUrl = "http://ha.local/front-door-stream";
+    frontDoor.streamUrl = "http://camera.local/front-door-stream";
 
     const wrapper = mount(SecurityPage);
     await wrapper.findAll(".camera")[0]!.trigger("click");
     expect(wrapper.get(".camera-modal__stream").attributes("src")).toBe(
-      "http://ha.local/front-door-stream",
+      "http://camera.local/front-door-stream",
     );
 
     setVisibility("hidden");
@@ -90,7 +90,7 @@ describe("SecurityPage cameras", () => {
     setVisibility("visible");
     await wrapper.vm.$nextTick();
     expect(wrapper.get(".camera-modal__stream").attributes("src")).toBe(
-      "http://ha.local/front-door-stream",
+      "http://camera.local/front-door-stream",
     );
     wrapper.unmount();
   });

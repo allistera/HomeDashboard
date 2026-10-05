@@ -14,8 +14,8 @@ export interface Room {
   name: string;
   floor: string;
   lights: Light[];
-  temp: number;
-  target: number;
+  temp: number | null;
+  target: number | null;
   meta: string;
   media?: { title: string; output: string; playing: boolean; active: boolean };
   motion?: { active: boolean; lastChanged: string; lastChangedAt?: number };

@@ -1,9 +1,9 @@
-import { defineComponent, onMounted, watchEffect } from "vue";
+import { defineComponent, onMounted, onBeforeUnmount, watchEffect } from "vue";
 import { RouterView } from "vue-router";
 
 import SideRail from "@/components/SideRail";
-import { connectHa } from "@/services/haClient";
-import { applyEntities } from "@/services/haSync";
+import { connectHomey, disconnectHomey } from "@/services/homeyClient";
+import { applyDevices } from "@/services/homeySync";
 import { useSettingsStore } from "@/stores/settings";
 import { useThemeStore } from "@/stores/theme";
 
@@ -14,9 +14,10 @@ export default defineComponent({
     const settings = useSettingsStore();
 
     onMounted(() => {
-      if (settings.configured) void connectHa(applyEntities);
+      if (settings.configured) void connectHomey(applyDevices);
       theme.watchSystem();
     });
+    onBeforeUnmount(disconnectHomey);
 
     watchEffect(() => {
       if (theme.dark) {

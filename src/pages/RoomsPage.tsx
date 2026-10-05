@@ -2,24 +2,33 @@ import { computed, defineComponent } from "vue";
 
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
+import { roomDeviceIds } from "@/services/homeyBindings/homeyGlobalBindings";
+import { temperatureText } from "@/services/homeySync";
+import { useActivityStore } from "@/stores/activity";
 import { useRoomsStore, type Room, type Scene } from "@/stores/rooms";
 
 export default defineComponent({
   name: "RoomsPage",
   setup() {
     const rooms = useRoomsStore();
+    const activity = useActivityStore();
+    const roomEvents = computed(() => {
+      if (!rooms.dataFromHomey) return rooms.selectedRoom.events;
+      const ids = new Set(roomDeviceIds(rooms.selectedRoomId));
+      return activity.events.filter((event) => ids.has(event.sourceId));
+    });
 
     const listMeta = (room: Room) => {
       const on = rooms.lightsOn(room);
       const lights = on === 0 ? "OFF" : `${on} ON`;
-      return [lights, `${room.temp.toFixed(1)}°`, room.meta].filter(Boolean).join(" · ");
+      return [lights, temperatureText(room.temp), room.meta].filter(Boolean).join(" · ");
     };
 
     const detailSummary = computed(() => {
       const room = rooms.selectedRoom;
       const on = rooms.lightsOn(room);
       const lights = on === 0 ? "No lights on" : `${on === 1 ? "One light" : `${on} lights`} on`;
-      return `${lights}, holding ${room.temp.toFixed(1)}°.`;
+      return `${lights}, temperature ${temperatureText(room.temp)}.`;
     });
 
     const scenes: { id: Scene; name: string }[] = [
@@ -33,7 +42,7 @@ export default defineComponent({
       return (
         <main class="main">
           <TopBar
-            left={[`OUTSIDE ${rooms.outsideTemp.toFixed(0)}°`]}
+            left={[`OUTSIDE ${temperatureText(rooms.outsideTemp, 0)}`]}
             showPeople
             status={rooms.washingLabel}
             statusTone={rooms.washingTone}
@@ -85,11 +94,13 @@ export default defineComponent({
               </div>
               <div class="col-foot" style={{ padding: "22px 28px", alignItems: "center" }}>
                 <span class="label">All lights</span>
-                <ToggleSwitch
-                  modelValue={rooms.anyLightOn}
-                  label="All lights"
-                  onUpdate:modelValue={(value: boolean) => rooms.setAllLights(value)}
-                />
+                {(!rooms.dataFromHomey || rooms.rooms.some((room) => room.lights.length > 0)) && (
+                  <ToggleSwitch
+                    modelValue={rooms.anyLightOn}
+                    label="All lights"
+                    onUpdate:modelValue={(value: boolean) => rooms.setAllLights(value)}
+                  />
+                )}
               </div>
             </div>
 
@@ -166,11 +177,13 @@ export default defineComponent({
                   <div class="col-foot" style={{ padding: "20px 40px", gap: "34px" }}>
                     <div>
                       <div class="label">Room temp</div>
-                      <div class="big-number">{room.temp.toFixed(1)}°</div>
+                      <div class="big-number">{temperatureText(room.temp)}</div>
                     </div>
                     <div>
                       <div class="label">Target</div>
-                      <div class="big-number big-number--accent">{room.target.toFixed(1)}°</div>
+                      <div class="big-number big-number--accent">
+                        {temperatureText(room.target)}
+                      </div>
                     </div>
                     <div
                       style={{
@@ -189,6 +202,7 @@ export default defineComponent({
                           fontSize: "18px",
                         }}
                         aria-label="Lower target temperature"
+                        disabled={room.target === null}
                         onClick={() => rooms.adjustTarget(room.id, -0.5)}
                       >
                         −
@@ -203,6 +217,7 @@ export default defineComponent({
                           fontSize: "18px",
                         }}
                         aria-label="Raise target temperature"
+                        disabled={room.target === null}
                         onClick={() => rooms.adjustTarget(room.id, 0.5)}
                       >
                         +
@@ -279,18 +294,20 @@ export default defineComponent({
                   )}
 
                   <div class="section-head" style={{ padding: "18px 36px 8px" }}>
-                    <span class="label">In this room today</span>
+                    <span class="label">
+                      {rooms.dataFromHomey ? "In this room · Live" : "In this room today"}
+                    </span>
                   </div>
                   <div style={{ padding: "0 36px" }}>
                     <div class="events">
-                      {room.events.length === 0 && (
+                      {roomEvents.value.length === 0 && (
                         <div class="event">
                           <span class="event__text" style={{ color: "var(--label)" }}>
                             Nothing yet today.
                           </span>
                         </div>
                       )}
-                      {room.events.map((event) => (
+                      {roomEvents.value.map((event) => (
                         <div key={`${event.time}-${event.text}`} class="event">
                           <span class="event__time">{event.time}</span>
                           <span class="event__text">{event.text}</span>

@@ -11,7 +11,7 @@ import {
 } from "vue";
 
 import { useDocumentVisible } from "@/composables/useDocumentVisible";
-import { startHaWebRtcStream, type WebRtcSession, type WebRtcStarter } from "@/services/haWebRtc";
+import { startCameraStream, type WebRtcSession, type WebRtcStarter } from "@/services/cameraStream";
 import type { Camera } from "@/stores/security";
 
 type StreamMode = "webrtc" | "mjpeg";
@@ -21,11 +21,9 @@ export default defineComponent({
   props: {
     // SAFETY: Vue's runtime Object constructor is narrowed to the Camera prop shape by PropType.
     camera: { type: Object as PropType<Camera>, required: true },
-    // Starts a WebRTC session for a camera entity; null means "not available,
-    // use the MJPEG proxy". Injectable so tests can drive the modal without a
-    // Home Assistant connection or a browser peer connection.
+    // A camera integration may supply WebRTC; otherwise use its stream URL.
     // SAFETY: Vue's runtime Function constructor is narrowed to the starter signature by PropType.
-    startStream: { type: Function as PropType<WebRtcStarter>, default: startHaWebRtcStream },
+    startStream: { type: Function as PropType<WebRtcStarter>, default: startCameraStream },
   },
   emits: ["close"],
   setup(props, { emit }) {
@@ -50,14 +48,14 @@ export default defineComponent({
     const startWebRtc = () => {
       stopWebRtc();
       webRtcStream.value = null;
-      const entityId = props.camera.entityId;
-      if (!entityId) {
+      const deviceId = props.camera.deviceId;
+      if (!deviceId) {
         mode.value = "mjpeg";
         return;
       }
       const current = ++generation;
       let failed = false;
-      const started = props.startStream(entityId, {
+      const started = props.startStream(deviceId, {
         onStream: (stream) => {
           if (current === generation) webRtcStream.value = stream;
         },
