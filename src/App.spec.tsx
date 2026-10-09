@@ -1,4 +1,4 @@
-import { mount } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import { describe, expect, it } from "vitest";
 import { createMemoryHistory, createRouter } from "vue-router";
@@ -38,6 +38,25 @@ describe("App", () => {
 
     await router.push("/security");
     expect(wrapper.text()).toContain("Secure since 7:02 PM");
+  });
+
+  it("opens the chosen homepage room without navigating when its light toggle is clicked", async () => {
+    const { wrapper, router } = mountApp();
+    try {
+      await router.isReady();
+      await wrapper.get('[aria-label="Hallway lights"]').trigger("click");
+      expect(router.currentRoute.value.path).toBe("/");
+      await wrapper.get('[aria-label="View Hallway"]').trigger("click");
+      await flushPromises();
+      expect(router.currentRoute.value.path).toBe("/rooms");
+      expect(wrapper.get("h1").text()).toBe("Hallway");
+      await router.push("/");
+      await wrapper.get('[aria-label="View Kitchen"]').trigger("click");
+      await flushPromises();
+      expect(wrapper.get("h1").text()).toBe("Kitchen");
+    } finally {
+      wrapper.unmount();
+    }
   });
 
   it("lists who is home in the people popover", async () => {

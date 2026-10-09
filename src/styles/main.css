@@ -347,6 +347,30 @@ a {
   letter-spacing: -0.02em;
 }
 
+.room-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.room-navigation:hover .row__name {
+  text-decoration: underline;
+}
+
+.room-navigation:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
 .row__meta {
   font-family: var(--mono);
   font-size: 12px;

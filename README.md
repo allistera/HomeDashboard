@@ -10,6 +10,7 @@ type carries the hierarchy.
   front-door camera, activity feed, and scene shortcuts (Good night / Movie / Away).
 - **Rooms** (`/rooms`) — room list on the left, the selected room's lights,
   climate, media, and activity as ruled rows on the right.
+  Click a room's name or status on Home to open its details; its light toggle stays independent.
 - **Floors** (`/floors`) — the "God View": isometric floor plans of the ground
   and first floors with live room callouts (lights, media, windows),
   a floor switcher, and a stairs shortcut. `/energy` redirects here.

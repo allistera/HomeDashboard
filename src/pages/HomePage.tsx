@@ -1,4 +1,5 @@
 import { computed, defineComponent, onScopeDispose, ref } from "vue";
+import { useRouter } from "vue-router";
 
 import CameraModal from "@/components/CameraModal";
 import CameraTile from "@/components/CameraTile";
@@ -16,6 +17,7 @@ import { useSecurityStore, type Camera } from "@/stores/security";
 export default defineComponent({
   name: "HomePage",
   setup() {
+    const router = useRouter();
     const rooms = useRoomsStore();
     const zones = useZonesStore();
     const activity = useActivityStore();
@@ -153,17 +155,27 @@ export default defineComponent({
                       key={room.id}
                       class={["row", { "row--dim": !on }]}
                       style={{
-                        gridTemplateColumns: "1fr auto auto",
+                        gridTemplateColumns: "1fr auto",
                         padding: "16px 0",
                       }}
                     >
-                      <span
-                        class="row__name"
-                        style={{ fontSize: "30px", letterSpacing: "-0.03em" }}
+                      <button
+                        type="button"
+                        class="room-navigation"
+                        aria-label={`View ${room.name}`}
+                        onClick={() => {
+                          rooms.selectRoom(room.id);
+                          void router.push("/rooms");
+                        }}
                       >
-                        {room.name}
-                      </span>
-                      <span class="row__meta">{roomMeta(room.id)}</span>
+                        <span
+                          class="row__name"
+                          style={{ fontSize: "30px", letterSpacing: "-0.03em" }}
+                        >
+                          {room.name}
+                        </span>
+                        <span class="row__meta">{roomMeta(room.id)}</span>
+                      </button>
                       {room.lights.length > 0 && (
                         <ToggleSwitch
                           modelValue={on}
