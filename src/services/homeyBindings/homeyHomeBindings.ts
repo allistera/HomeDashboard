@@ -1,5 +1,8 @@
 import type { DeviceCapabilityBinding } from "@/services/homeyTypes";
-import { livingRoomMediaBinding } from "@/services/homeyBindings/homeyRoomsBindings";
+import {
+  livingRoomLightBindings,
+  livingRoomMediaBinding,
+} from "@/services/homeyBindings/homeyRoomsBindings";
 
 // Leave unavailable devices unbound; never invent device IDs.
 interface HomeBindings {
@@ -17,6 +20,7 @@ export const homePageBindings: HomeBindings = {
   camera: { cameraId: "front-door" },
   mediaPlayer: livingRoomMediaBinding,
   activityDeviceIds: [
+    ...livingRoomLightBindings.map((light) => light.deviceId),
     livingRoomMediaBinding.deviceId,
     "4afb514a-cf25-4bb3-b465-7a8866fcf927",
     "bb4296b0-9fa6-4a0e-b43b-e5671423aed3",

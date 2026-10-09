@@ -1,4 +1,5 @@
 import { createPinia, setActivePinia } from "pinia";
+import { flushPromises } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   connectHomey,
@@ -96,6 +97,48 @@ describe("Homey client", () => {
     } finally {
       binding.lights.pop();
     }
+  });
+
+  it("syncs and controls both living-room lights by device ID independently", async () => {
+    const first = new TestDevice("6df0691d-a8a9-4244-bf93-1ea1cceeca6f", {
+      onoff: true,
+      dim: 0.56,
+    });
+    const second = new TestDevice("20f86d7a-8b47-4189-9264-1ec0e3e160e4", {
+      onoff: false,
+      dim: 0.8,
+    });
+    first.name = "Renamed first light";
+    second.name = "Renamed second light";
+    await connectHomey(applyDevices, async () => new TestHomey([first, second]));
+    const rooms = useRoomsStore();
+    expect(rooms.selectedRoom.lights).toEqual([
+      { id: "livingroom-light", name: first.name, level: 56 },
+      { id: "livingroom-light-2", name: second.name, level: 0 },
+    ]);
+
+    rooms.setLightLevel("living-room", "livingroom-light", 35);
+    await flushPromises();
+    expect(first.commands).toEqual([
+      { capabilityId: "onoff", value: true },
+      { capabilityId: "dim", value: 0.35 },
+    ]);
+    expect(second.commands).toEqual([]);
+
+    rooms.setLightPower("living-room", "livingroom-light-2", true);
+    await flushPromises();
+    expect(second.commands).toEqual([
+      { capabilityId: "onoff", value: true },
+      { capabilityId: "dim", value: 0.7 },
+    ]);
+    rooms.setLightPower("living-room", "livingroom-light", false);
+    await flushPromises();
+    expect(first.commands.at(-1)).toEqual({ capabilityId: "onoff", value: false });
+
+    second.emit("onoff", true);
+    second.emit("dim", 0.42);
+    expect(rooms.selectedRoom.lights[1]?.level).toBe(42);
+    expect(useActivityStore().events.some((event) => event.sourceId === second.id)).toBe(true);
   });
 
   it("destroys an obsolete connection without replacing a newer one", async () => {

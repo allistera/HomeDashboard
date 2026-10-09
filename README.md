@@ -49,8 +49,9 @@ motion: {
 }
 ```
 
-The current inventory binds the living-room Sonos speaker, hallway motion sensor, and toilet
-motion sensor. Add devices to the corresponding page module after verifying their IDs and
+The current inventory binds Livingroom Light and Livingroom Light 2 (power and brightness),
+the living-room Sonos speaker, hallway motion sensor, and toilet motion sensor. Living-room
+light changes also appear in the live activity feed. Add devices to the corresponding page module after verifying their IDs and
 capabilities in Homey; names are display labels and never lookup keys. Lights use `onoff` and
 `dim` (0–1), temperatures use `measure_temperature` / `target_temperature`, and media controls
 use `speaker_playing`, `speaker_prev`, and `speaker_next`.

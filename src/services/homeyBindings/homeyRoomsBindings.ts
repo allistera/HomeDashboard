@@ -1,4 +1,9 @@
-import type { RoomBinding } from "@/services/homeyTypes";
+import type { LightBinding, RoomBinding } from "@/services/homeyTypes";
+
+export const livingRoomLightBindings: LightBinding[] = [
+  { lightId: "livingroom-light", deviceId: "6df0691d-a8a9-4244-bf93-1ea1cceeca6f" },
+  { lightId: "livingroom-light-2", deviceId: "20f86d7a-8b47-4189-9264-1ec0e3e160e4" },
+];
 
 // IDs come from the connected Homey inventory, not names or HA entity IDs.
 export const livingRoomMediaBinding = {
@@ -7,7 +12,11 @@ export const livingRoomMediaBinding = {
 };
 
 export const roomBindings: RoomBinding[] = [
-  { roomId: "living-room", lights: [], media: livingRoomMediaBinding.deviceId },
+  {
+    roomId: "living-room",
+    lights: livingRoomLightBindings,
+    media: livingRoomMediaBinding.deviceId,
+  },
   { roomId: "kitchen", lights: [] },
   {
     roomId: "hallway",
