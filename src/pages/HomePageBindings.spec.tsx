@@ -147,6 +147,35 @@ describe("HomePage bindings", () => {
     }
   });
 
+  it("shows living-room motion age alongside media and updates it from Homey", async () => {
+    const sensor = new TestDevice("f0de7239-1ac7-4580-a1d5-e33733e2abef", { alarm_motion: true });
+    sensor.capabilitiesObj.alarm_motion.lastUpdated = new Date(Date.now() - 6 * 60_000);
+    const speaker = new TestDevice("76e05f8e-87b3-493e-bc6f-4b6ec6aa5665", {
+      speaker_playing: true,
+    });
+    const settings = useSettingsStore();
+    settings.url = "https://homey.example";
+    settings.token = "test-token";
+    const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
+    try {
+      await connectHomey(applyDevices, async () => new TestHomey([sensor, speaker]));
+      await flushPromises();
+      const row = wrapper
+        .findAll(".row")
+        .find((item) => item.get(".row__name").text() === "Living room")!;
+      expect(row.get(".row__meta").text()).toBe("MOTION 6M AGO · MEDIA ON");
+      sensor.emit("alarm_motion", false);
+      await flushPromises();
+      expect(useRoomsStore().selectedRoom.motion?.active).toBe(false);
+      expect(row.get(".row__meta").text()).toContain("MOTION ");
+      expect(row.get(".row__meta").text()).not.toContain("MOTION 6M AGO");
+      expect(row.get(".row__meta").text()).toContain("MEDIA ON");
+    } finally {
+      wrapper.unmount();
+      disconnectHomey();
+    }
+  });
+
   it("shows only binding-backed room details and highlights rooms with lights on", () => {
     const rooms = useRoomsStore();
     const hallway = rooms.rooms.find((room) => room.id === "hallway")!;

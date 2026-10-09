@@ -58,6 +58,10 @@ capabilities in Homey; names are display labels and never lookup keys. Lights us
 `dim` (0–1), temperatures use `measure_temperature` / `target_temperature`, and media controls
 use `speaker_playing`, `speaker_prev`, and `speaker_next`.
 
+The living-room row also shows the Everything Presence Lite sensor's motion age alongside
+its media status. Motion age uses Homey's latest `alarm_motion` update timestamp, including
+motion clearing, and refreshes every minute.
+
 The dashboard subscribes to device capability updates, reconciles device changes/deletions,
 and destroys listeners on disconnect. Unbound or unavailable readings show as unavailable once
 connected. The initial disconnected view remains a demonstration, not live home state.

@@ -25,6 +25,7 @@ export const roomBindings: RoomBinding[] = [
     roomId: "living-room",
     lights: livingRoomLightBindings,
     media: livingRoomMediaBinding.deviceId,
+    motion: { deviceId: "f0de7239-1ac7-4580-a1d5-e33733e2abef", capabilityId: "alarm_motion" },
   },
   { roomId: "kitchen", lights: [] },
   {
