@@ -5,6 +5,11 @@ export const livingRoomLightBindings: LightBinding[] = [
   { lightId: "livingroom-light-2", deviceId: "20f86d7a-8b47-4189-9264-1ec0e3e160e4" },
 ];
 
+export const hallwayLightBindings: LightBinding[] = [
+  { lightId: "downstairs-hallway-light", deviceId: "50cd1111-47b0-4276-aab8-972a055bfb03" },
+  { lightId: "upstairs-hallway-light", deviceId: "b5941eee-99eb-407d-90d4-256599160ed7" },
+];
+
 // IDs come from the connected Homey inventory, not names or HA entity IDs.
 export const livingRoomMediaBinding = {
   roomId: "living-room",
@@ -20,7 +25,7 @@ export const roomBindings: RoomBinding[] = [
   { roomId: "kitchen", lights: [] },
   {
     roomId: "hallway",
-    lights: [],
+    lights: hallwayLightBindings,
     motion: { deviceId: "4afb514a-cf25-4bb3-b465-7a8866fcf927", capabilityId: "alarm_motion" },
   },
   { roomId: "bedroom", lights: [] },

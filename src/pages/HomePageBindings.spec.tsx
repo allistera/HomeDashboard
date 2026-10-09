@@ -1,8 +1,12 @@
-import { mount } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
 import { createPinia, setActivePinia, type Pinia } from "pinia";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import HomePage from "@/pages/HomePage";
+import { connectHomey, disconnectHomey } from "@/services/homeyClient";
+import { applyDevices } from "@/services/homeySync";
+import { TestDevice, TestHomey } from "@/services/homeyTestSupport";
+import { useSettingsStore } from "@/stores/settings";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
 
@@ -63,6 +67,52 @@ describe("HomePage bindings", () => {
     expect(livingRoom.media!.playing).toBe(false);
     expect(wrapper.get('[aria-label="Play"]').text()).toBe("▶");
     expect(wrapper.text()).toContain("Paused · Living room");
+  });
+
+  it("shows live hallway status and switches both Homey hallway lights together", async () => {
+    const downstairs = new TestDevice("50cd1111-47b0-4276-aab8-972a055bfb03", {
+      onoff: true,
+      dim: 0.89,
+    });
+    const upstairs = new TestDevice("b5941eee-99eb-407d-90d4-256599160ed7", {
+      onoff: false,
+      dim: 0.89,
+    });
+    const settings = useSettingsStore();
+    settings.url = "https://homey.example";
+    settings.token = "test-token";
+    const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
+    try {
+      await connectHomey(applyDevices, async () => new TestHomey([downstairs, upstairs]));
+      await flushPromises();
+      const toggle = wrapper.get('[aria-label="Hallway lights"]');
+      expect(toggle.attributes("aria-checked")).toBe("true");
+      await toggle.trigger("click");
+      await flushPromises();
+      expect(downstairs.commands).toEqual([{ capabilityId: "onoff", value: false }]);
+      expect(upstairs.commands).toEqual([{ capabilityId: "onoff", value: false }]);
+
+      downstairs.emit("onoff", false);
+      await flushPromises();
+      expect(toggle.attributes("aria-checked")).toBe("false");
+      await toggle.trigger("click");
+      await flushPromises();
+      for (const light of [downstairs, upstairs]) {
+        expect(light.commands.slice(1)).toEqual([
+          { capabilityId: "onoff", value: true },
+          { capabilityId: "dim", value: 0.7 },
+        ]);
+      }
+      upstairs.emit("onoff", true);
+      await flushPromises();
+      expect(toggle.attributes("aria-checked")).toBe("true");
+      upstairs.emit("onoff", false);
+      await flushPromises();
+      expect(toggle.attributes("aria-checked")).toBe("false");
+    } finally {
+      wrapper.unmount();
+      disconnectHomey();
+    }
   });
 
   it("shows only binding-backed room details and highlights rooms with lights on", () => {

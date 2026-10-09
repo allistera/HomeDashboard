@@ -1,5 +1,6 @@
 import type { DeviceCapabilityBinding } from "@/services/homeyTypes";
 import {
+  hallwayLightBindings,
   livingRoomLightBindings,
   livingRoomMediaBinding,
 } from "@/services/homeyBindings/homeyRoomsBindings";
@@ -20,6 +21,7 @@ export const homePageBindings: HomeBindings = {
   camera: { cameraId: "front-door" },
   mediaPlayer: livingRoomMediaBinding,
   activityDeviceIds: [
+    ...hallwayLightBindings.map((light) => light.deviceId),
     ...livingRoomLightBindings.map((light) => light.deviceId),
     livingRoomMediaBinding.deviceId,
     "4afb514a-cf25-4bb3-b465-7a8866fcf927",
