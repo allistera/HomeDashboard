@@ -10,12 +10,14 @@ import { roomBindingFor } from "@/services/homeyBindings/homeyRoomsBindings";
 import { temperatureText } from "@/services/homeySync";
 import { useActivityStore } from "@/stores/activity";
 import { useRoomsStore } from "@/stores/rooms";
+import { useZonesStore } from "@/stores/zones";
 import { useSecurityStore, type Camera } from "@/stores/security";
 
 export default defineComponent({
   name: "HomePage",
   setup() {
     const rooms = useRoomsStore();
+    const zones = useZonesStore();
     const activity = useActivityStore();
     const security = useSecurityStore();
     const selectedCamera = ref<Camera | null>(null);
@@ -75,12 +77,14 @@ export default defineComponent({
 
       const details: string[] = [];
       if (binding.climate || binding.temperature) details.push(temperatureText(room.temp));
-      if (binding.motion && room.motion) {
-        const motionAge =
-          room.motion.lastChangedAt === undefined
-            ? room.motion.lastChanged.toUpperCase()
-            : `${Math.max(0, Math.floor((now.value - room.motion.lastChangedAt) / 60_000))}M AGO`;
-        details.push(`MOTION ${motionAge}`);
+      const zoneId = homePageBindings.roomZoneIds[roomId];
+      if (zoneId) {
+        const zone = zones.zones[zoneId];
+        const updated = zone?.activeLastUpdated ? Date.parse(zone.activeLastUpdated) : NaN;
+        if (zone?.active === true) details.push("MOTION NOW");
+        else if (zone?.active === false && Number.isFinite(updated))
+          details.push(`MOTION ${Math.max(0, Math.floor((now.value - updated) / 60_000))}M AGO`);
+        else details.push("MOTION UNAVAILABLE");
       }
       if (binding.media && room.media?.active) details.push("MEDIA ON");
       return details.join(" · ");

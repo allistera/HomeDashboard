@@ -3,6 +3,7 @@ import type {
   CapabilityValue,
   HomeyConnection,
   HomeyDevice,
+  HomeyZone,
 } from "@/services/homeyTypes";
 
 export class TestDevice implements HomeyDevice {
@@ -71,8 +72,28 @@ export class TestHomey implements HomeyConnection {
   private events = new Map<string, (() => void)[]>();
   private deviceEvents = new Map<string, ((device: HomeyDevice) => void)[]>();
   devices: HomeyConnection["devices"];
+  zones: HomeyConnection["zones"];
+  zoneInventory: Record<string, HomeyZone> = {};
+  failZones = false;
+  private zoneEvents = new Map<string, ((zone: HomeyZone) => void)[]>();
 
   constructor(inventory: TestDevice[]) {
+    this.zones = {
+      connect: async () => {},
+      getZones: async () => {
+        if (this.failZones) throw new Error("Forbidden");
+        return { ...this.zoneInventory };
+      },
+      on: (event, listener) => {
+        this.zoneEvents.set(event, [...(this.zoneEvents.get(event) ?? []), listener]);
+      },
+      off: (event, listener) => {
+        this.zoneEvents.set(
+          event,
+          (this.zoneEvents.get(event) ?? []).filter((callback) => callback !== listener),
+        );
+      },
+    };
     this.devices = {
       getDevices: async () => Object.fromEntries(inventory.map((device) => [device.id, device])),
       connect: async () => {},
@@ -97,6 +118,9 @@ export class TestHomey implements HomeyConnection {
   }
   emit(event: "connect" | "disconnect" | "reconnect"): void {
     for (const listener of this.events.get(event) ?? []) listener();
+  }
+  emitZone(event: "zone.create" | "zone.update" | "zone.delete", zone: HomeyZone): void {
+    for (const listener of this.zoneEvents.get(event) ?? []) listener(zone);
   }
   emitDevice(event: "device.create" | "device.update" | "device.delete", device: TestDevice): void {
     for (const listener of this.deviceEvents.get(event) ?? []) listener(device);

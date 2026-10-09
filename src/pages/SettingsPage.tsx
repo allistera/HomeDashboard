@@ -4,6 +4,7 @@ import TopBar from "@/components/TopBar";
 import { connectHomey, disconnectHomey } from "@/services/homeyClient";
 import { applyDevices } from "@/services/homeySync";
 import { useHomeyStore } from "@/stores/homey";
+import { useZonesStore } from "@/stores/zones";
 import { useSettingsStore } from "@/stores/settings";
 
 export default defineComponent({
@@ -11,6 +12,7 @@ export default defineComponent({
   setup() {
     const settings = useSettingsStore();
     const homey = useHomeyStore();
+    const zones = useZonesStore();
     const url = ref(settings.url);
     const token = ref(settings.token);
 
@@ -79,7 +81,7 @@ export default defineComponent({
             />
             <p class="field__hint">
               Create one in the Homey Web App under Settings → API Keys. Grant device read and
-              control permissions.
+              control permissions, plus zone read permission for room activity.
             </p>
           </div>
 
@@ -115,6 +117,11 @@ export default defineComponent({
           )}
 
           <div class="connection">
+            {zones.unavailable && (
+              <p role="status">
+                Zone activity unavailable. Check the API key's zone read permission and reconnect.
+              </p>
+            )}
             <div class="label">Live connection</div>
             <p
               class={[

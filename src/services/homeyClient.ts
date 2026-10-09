@@ -1,4 +1,6 @@
 import { subscribeHomeyDevices } from "@/services/homeySubscribe";
+import { subscribeHomeyZones } from "@/services/homeyZones";
+import { useZonesStore } from "@/stores/zones";
 import type {
   CapabilityValue,
   HomeyConnection,
@@ -35,6 +37,7 @@ export async function connectHomey(
   onDevices(new Map());
   let opened: HomeyConnection | null = null;
   let stop: (() => void) | null = null;
+  let stopZones: (() => void) | null = null;
   try {
     opened = await factory(settings.url, settings.token);
     if (current !== generation) {
@@ -76,12 +79,25 @@ export async function connectHomey(
       active.destroy();
       return false;
     }
+    stopZones = await subscribeHomeyZones(active, () => current === generation);
+    if (current !== generation) {
+      stopZones();
+      stop();
+      active.destroy();
+      return false;
+    }
     connection = active;
-    unsubscribe = stop;
+    const stopDevices = stop;
+    const stopZoneUpdates = stopZones;
+    unsubscribe = () => {
+      stopDevices();
+      stopZoneUpdates();
+    };
     subscribed = true;
     ready();
     return true;
   } catch {
+    stopZones?.();
     stop?.();
     opened?.destroy();
     if (current === generation) {
@@ -103,6 +119,7 @@ export function disconnectHomey(): void {
   connection?.destroy();
   connection = null;
   devices.clear();
+  useZonesStore().$reset();
   const state = useHomeyStore();
   state.status = "disconnected";
   state.message = "";

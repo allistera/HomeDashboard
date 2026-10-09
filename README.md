@@ -31,7 +31,7 @@ type carries the hierarchy.
 
 Settings connects directly to the [Homey Web API](https://athombv.github.io/node-homey-api/HomeyAPI.html)
 using a Homey address and personal access token (API key). Create the key in the Homey Web App's
-Settings → API Keys and grant `homey.device.readonly` and `homey.device.control` permissions.
+Settings → API Keys and grant `homey.device.readonly`, `homey.device.control`, and `homey.zone.readonly` permissions.
 Use a browser-reachable Homey address; an HTTPS dashboard requires HTTPS to avoid mixed-content
 blocking. Check LAN reachability, TLS and browser access if connection validation fails.
 The address and token are saved only in this browser under `dedridge.homey.*` keys. Existing
@@ -58,9 +58,12 @@ capabilities in Homey; names are display labels and never lookup keys. Lights us
 `dim` (0–1), temperatures use `measure_temperature` / `target_temperature`, and media controls
 use `speaker_playing`, `speaker_prev`, and `speaker_next`.
 
-The living-room row also shows the Everything Presence Lite sensor's motion age alongside
-its media status. Motion age uses Homey's latest `alarm_motion` update timestamp, including
-motion clearing, and refreshes every minute.
+Homepage motion labels use each room’s verified Homey zone in `homePageBindings.roomZoneIds`,
+including rooms without a directly bound sensor. Active zones show `MOTION NOW`; inactive zones
+show the age of `activeLastUpdated` (the latest change to zone activity origins), refreshed every
+minute. Missing zones or timestamps show `MOTION UNAVAILABLE`; sensor timestamps are never used
+as a fallback. Zone changes update live and refresh after reconnecting. If zone access is denied,
+light controls remain connected and Settings explains the required zone read permission.
 
 The dashboard subscribes to device capability updates, reconciles device changes/deletions,
 and destroys listeners on disconnect. Unbound or unavailable readings show as unavailable once

@@ -34,7 +34,25 @@ export interface HomeyDevice {
   }): Promise<void>;
 }
 
+export interface HomeyZone {
+  id: string;
+  active?: boolean;
+  activeLastUpdated?: string | null;
+}
+
 export interface HomeyConnection {
+  zones: {
+    getZones(options?: { $cache: boolean }): Promise<Record<string, HomeyZone>>;
+    connect(): Promise<void>;
+    on(
+      event: "zone.create" | "zone.update" | "zone.delete",
+      listener: (zone: HomeyZone) => void,
+    ): void;
+    off(
+      event: "zone.create" | "zone.update" | "zone.delete",
+      listener: (zone: HomeyZone) => void,
+    ): void;
+  };
   devices: {
     getDevices(options?: { $cache: boolean }): Promise<Record<string, HomeyDevice>>;
     connect(): Promise<void>;
