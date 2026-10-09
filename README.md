@@ -50,9 +50,9 @@ motion: {
 ```
 
 The current inventory binds Livingroom Light and Livingroom Light 2 (power and brightness),
-the downstairs and upstairs hallway lights, living-room Sonos speaker, hallway motion sensor,
+the downstairs and upstairs hallway lights, Toilet Light, living-room Sonos speaker, hallway motion sensor,
 and toilet motion sensor. The homepage Hallway toggle controls both hallway lights and shows
-on when either is on. Living-room and hallway light power changes appear in the live activity
+on when either is on. The Toilet toggle controls Toilet Light. Living-room, hallway, and toilet light power changes appear in the live activity
 feed. Add devices to the corresponding page module after verifying their IDs and
 capabilities in Homey; names are display labels and never lookup keys. Lights use `onoff` and
 `dim` (0–1), temperatures use `measure_temperature` / `target_temperature`, and media controls

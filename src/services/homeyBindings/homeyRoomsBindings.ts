@@ -10,6 +10,10 @@ export const hallwayLightBindings: LightBinding[] = [
   { lightId: "upstairs-hallway-light", deviceId: "b5941eee-99eb-407d-90d4-256599160ed7" },
 ];
 
+export const toiletLightBindings: LightBinding[] = [
+  { lightId: "toilet_toilet_light", deviceId: "d8b8c271-1fab-4383-9c1e-bbc414c81bb4" },
+];
+
 // IDs come from the connected Homey inventory, not names or HA entity IDs.
 export const livingRoomMediaBinding = {
   roomId: "living-room",
@@ -36,7 +40,7 @@ export const roomBindings: RoomBinding[] = [
     roomId: "toilet",
     name: "Toilet",
     floor: "Ground floor",
-    lights: [],
+    lights: toiletLightBindings,
     motion: { deviceId: "bb4296b0-9fa6-4a0e-b43b-e5671423aed3", capabilityId: "alarm_motion" },
   },
 ];

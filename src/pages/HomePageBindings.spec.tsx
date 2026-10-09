@@ -115,6 +115,38 @@ describe("HomePage bindings", () => {
     }
   });
 
+  it("controls Toilet Light and reflects its live Homey power state", async () => {
+    const light = new TestDevice("d8b8c271-1fab-4383-9c1e-bbc414c81bb4", { onoff: false, dim: 1 });
+    const settings = useSettingsStore();
+    settings.url = "https://homey.example";
+    settings.token = "test-token";
+    const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
+    try {
+      await connectHomey(applyDevices, async () => new TestHomey([light]));
+      await flushPromises();
+      const toggle = wrapper.get('[aria-label="Toilet lights"]');
+      expect(toggle.attributes("aria-checked")).toBe("false");
+      await toggle.trigger("click");
+      await flushPromises();
+      expect(light.commands).toEqual([
+        { capabilityId: "onoff", value: true },
+        { capabilityId: "dim", value: 0.7 },
+      ]);
+      light.emit("onoff", true);
+      await flushPromises();
+      expect(toggle.attributes("aria-checked")).toBe("true");
+      await toggle.trigger("click");
+      await flushPromises();
+      expect(light.commands.at(-1)).toEqual({ capabilityId: "onoff", value: false });
+      light.emit("onoff", false);
+      await flushPromises();
+      expect(toggle.attributes("aria-checked")).toBe("false");
+    } finally {
+      wrapper.unmount();
+      disconnectHomey();
+    }
+  });
+
   it("shows only binding-backed room details and highlights rooms with lights on", () => {
     const rooms = useRoomsStore();
     const hallway = rooms.rooms.find((room) => room.id === "hallway")!;

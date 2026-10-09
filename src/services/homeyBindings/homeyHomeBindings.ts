@@ -3,6 +3,7 @@ import {
   hallwayLightBindings,
   livingRoomLightBindings,
   livingRoomMediaBinding,
+  toiletLightBindings,
 } from "@/services/homeyBindings/homeyRoomsBindings";
 
 // Leave unavailable devices unbound; never invent device IDs.
@@ -21,6 +22,7 @@ export const homePageBindings: HomeBindings = {
   camera: { cameraId: "front-door" },
   mediaPlayer: livingRoomMediaBinding,
   activityDeviceIds: [
+    ...toiletLightBindings.map((light) => light.deviceId),
     ...hallwayLightBindings.map((light) => light.deviceId),
     ...livingRoomLightBindings.map((light) => light.deviceId),
     livingRoomMediaBinding.deviceId,
