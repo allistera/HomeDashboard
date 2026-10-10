@@ -119,6 +119,13 @@ export default defineComponent({
       }
     });
 
+    watch(
+      () => props.camera.snapshotUrl,
+      () => {
+        streamFailed.value = false;
+      },
+    );
+
     watchEffect(() => {
       if (video.value) video.value.srcObject = webRtcStream.value;
     });
@@ -143,7 +150,16 @@ export default defineComponent({
         !streamFailed.value &&
         pageVisible.value;
       const live = showWebRtc ? webRtcStream.value !== null : showMjpeg;
-      const status = showWebRtc && !live ? "Connecting…" : live ? "Live" : "Unavailable";
+      const showSnapshot =
+        !showWebRtc && !showMjpeg && !!props.camera.snapshotUrl && !streamFailed.value;
+      const status =
+        showWebRtc && !live
+          ? "Connecting…"
+          : live
+            ? "Live"
+            : showSnapshot
+              ? "Snapshot"
+              : "Unavailable";
 
       return (
         <div
@@ -199,9 +215,20 @@ export default defineComponent({
                     streamFailed.value = true;
                   }}
                 />
+              ) : showSnapshot ? (
+                <img
+                  class="camera-modal__stream"
+                  src={props.camera.snapshotUrl}
+                  alt={`${props.camera.name} snapshot enlarged`}
+                  onError={() => {
+                    streamFailed.value = true;
+                  }}
+                />
               ) : (
                 <div class="camera-modal__empty">
-                  <span class="label">Live stream unavailable for this camera</span>
+                  <span class="label">
+                    {props.camera.note ?? "Live stream unavailable for this camera"}
+                  </span>
                 </div>
               )}
               {props.camera.live && live && (

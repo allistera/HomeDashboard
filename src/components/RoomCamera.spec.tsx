@@ -22,6 +22,40 @@ describe("Room camera snapshots", () => {
 
   afterEach(() => vi.unstubAllGlobals());
 
+  it("opens the snapshot in a dialog and closes with Escape, close button, or backdrop", async () => {
+    const wrapper = mount(RoomCamera, {
+      attachTo: document.body,
+      props: {
+        camera: {
+          id: "camera",
+          name: "Living room",
+          available: true,
+          snapshotUrl: "/api/image/camera",
+        },
+      },
+    });
+    await flushPromises();
+    const trigger = wrapper.get<HTMLButtonElement>("button.camera");
+    trigger.element.focus();
+    await trigger.trigger("click");
+    expect(wrapper.get('[role="dialog"] img').attributes("src")).toBe("blob:snapshot");
+    expect(wrapper.get('[role="dialog"]').text()).toContain("Snapshot");
+    expect(fetch).toHaveBeenCalledTimes(1);
+    await wrapper.get('[role="dialog"]').trigger("keydown", { key: "Escape" });
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
+    expect(document.activeElement).toBe(trigger.element);
+    await trigger.trigger("click");
+    await wrapper.get('[aria-label="Close camera view"]').trigger("click");
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
+    await trigger.trigger("click");
+    await wrapper.get('[role="dialog"]').trigger("click");
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
+    await trigger.trigger("click");
+    await wrapper.setProps({ camera: { id: "kitchen", name: "Kitchen", available: false } });
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
+    wrapper.unmount();
+  });
+
   it("loads a Homey image with authorization and releases it on unmount", async () => {
     const wrapper = mount(RoomCamera, {
       props: {

@@ -1,4 +1,5 @@
 import { defineComponent, onUnmounted, ref, watch, type PropType } from "vue";
+import CameraModal from "@/components/CameraModal";
 import type { RoomCamera } from "@/models/rooms";
 import { useSettingsStore } from "@/stores/settings";
 
@@ -11,6 +12,13 @@ export default defineComponent({
   setup(props) {
     const settings = useSettingsStore();
     const image = ref("");
+    const expanded = ref(false);
+    watch(
+      () => props.camera.id,
+      () => {
+        expanded.value = false;
+      },
+    );
     const status = ref("Loading camera…");
     const stop = watch(
       () => [
@@ -72,14 +80,40 @@ export default defineComponent({
     );
     onUnmounted(stop);
     return () => (
-      <div class="camera" style={{ height: "150px" }} aria-label={`${props.camera.name} camera`}>
-        {image.value && (
-          <img class="camera__stream" src={image.value} alt={`${props.camera.name} snapshot`} />
+      <>
+        <button
+          type="button"
+          class="camera"
+          style={{ height: "150px" }}
+          aria-label={`${props.camera.name} camera`}
+          aria-haspopup="dialog"
+          aria-expanded={expanded.value}
+          onClick={() => {
+            expanded.value = true;
+          }}
+        >
+          {image.value && (
+            <img class="camera__stream" src={image.value} alt={`${props.camera.name} snapshot`} />
+          )}
+          <span class="camera__tag">
+            {props.camera.name} · {status.value}
+          </span>
+        </button>
+        {expanded.value && (
+          <CameraModal
+            camera={{
+              id: props.camera.id,
+              name: props.camera.name,
+              live: false,
+              snapshotUrl: image.value,
+              note: status.value,
+            }}
+            onClose={() => {
+              expanded.value = false;
+            }}
+          />
         )}
-        <span class="camera__tag">
-          {props.camera.name} · {status.value}
-        </span>
-      </div>
+      </>
     );
   },
 });
