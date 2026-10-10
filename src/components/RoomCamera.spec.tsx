@@ -16,11 +16,62 @@ describe("Room camera snapshots", () => {
         blob: async () => new Blob(["snapshot"], { type: "image/jpeg" }),
       }),
     );
+    Object.defineProperty(HTMLImageElement.prototype, "decode", {
+      configurable: true,
+      value: vi.fn().mockResolvedValue(undefined),
+    });
     URL.createObjectURL = vi.fn().mockReturnValue("blob:snapshot");
     URL.revokeObjectURL = vi.fn();
   });
 
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  it("retains the current snapshot until the next image decodes, and after refresh failures", async () => {
+    vi.useFakeTimers();
+    vi.mocked(URL.createObjectURL)
+      .mockReturnValueOnce("blob:first")
+      .mockReturnValueOnce("blob:second");
+    const wrapper = mount(RoomCamera, {
+      props: {
+        camera: {
+          id: "camera",
+          name: "Living room",
+          available: true,
+          snapshotUrl: "/api/image/camera",
+        },
+      },
+    });
+    try {
+      await flushPromises();
+      await wrapper.get("button.camera").trigger("click");
+      let finishDecode: () => void = () => {};
+      vi.mocked(HTMLImageElement.prototype.decode).mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            finishDecode = resolve;
+          }),
+      );
+      await vi.advanceTimersByTimeAsync(10000);
+      expect(wrapper.get("button.camera img").attributes("src")).toBe("blob:first");
+      expect(wrapper.get('[role="dialog"] img').attributes("src")).toBe("blob:first");
+      expect(URL.revokeObjectURL).not.toHaveBeenCalledWith("blob:first");
+      finishDecode();
+      await flushPromises();
+      expect(wrapper.get("button.camera img").attributes("src")).toBe("blob:second");
+      expect(wrapper.get('[role="dialog"] img').attributes("src")).toBe("blob:second");
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:first");
+      vi.mocked(fetch).mockRejectedValueOnce(new Error("Unavailable"));
+      await vi.advanceTimersByTimeAsync(10000);
+      expect(wrapper.get("button.camera img").attributes("src")).toBe("blob:second");
+      expect(wrapper.text()).toContain("Last snapshot");
+    } finally {
+      wrapper.unmount();
+    }
+  });
 
   it("opens the snapshot in a dialog and closes with Escape, close button, or backdrop", async () => {
     const wrapper = mount(RoomCamera, {

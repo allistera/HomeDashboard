@@ -1,4 +1,4 @@
-import { defineComponent, onUnmounted, ref, watch, type PropType } from "vue";
+import { defineComponent, nextTick, onUnmounted, ref, watch, type PropType } from "vue";
 import CameraModal from "@/components/CameraModal";
 import type { RoomCamera } from "@/models/rooms";
 import { useSettingsStore } from "@/stores/settings";
@@ -30,6 +30,7 @@ export default defineComponent({
       ],
       (_, __, cleanup) => {
         const controller = new AbortController();
+        let pendingUrl = "";
         let timer: ReturnType<typeof setTimeout> | undefined;
         const clearImage = () => {
           if (image.value) URL.revokeObjectURL(image.value);
@@ -39,6 +40,8 @@ export default defineComponent({
         cleanup(() => {
           controller.abort();
           clearTimeout(timer);
+          if (pendingUrl) URL.revokeObjectURL(pendingUrl);
+          pendingUrl = "";
           clearImage();
         });
         if (!props.camera.available || !props.camera.snapshotUrl || !settings.configured) {
@@ -64,13 +67,25 @@ export default defineComponent({
             const blob = await response.blob();
             if (!blob.type.startsWith("image/")) throw new Error("Invalid image");
             if (controller.signal.aborted) return;
-            clearImage();
-            image.value = URL.createObjectURL(blob);
+            pendingUrl = URL.createObjectURL(blob);
+            const nextImage = new Image();
+            nextImage.src = pendingUrl;
+            await nextImage.decode();
+            if (controller.signal.aborted) return;
+            const previousUrl = image.value;
+            image.value = pendingUrl;
+            pendingUrl = "";
             status.value = "Snapshot";
+            await nextTick();
+            if (previousUrl) URL.revokeObjectURL(previousUrl);
           } catch {
             if (controller.signal.aborted) return;
-            clearImage();
-            status.value = "Camera image unavailable";
+            status.value = image.value
+              ? "Last snapshot · refresh unavailable"
+              : "Camera image unavailable";
+          } finally {
+            if (pendingUrl) URL.revokeObjectURL(pendingUrl);
+            pendingUrl = "";
           }
           if (!controller.signal.aborted) timer = setTimeout(refresh, 10000);
         };
