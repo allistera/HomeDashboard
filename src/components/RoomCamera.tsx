@@ -119,7 +119,8 @@ export default defineComponent({
             camera={{
               id: props.camera.id,
               name: props.camera.name,
-              live: false,
+              live: true,
+              deviceId: props.camera.id,
               snapshotUrl: image.value,
               note: status.value,
             }}

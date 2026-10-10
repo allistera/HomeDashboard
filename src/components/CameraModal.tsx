@@ -41,6 +41,7 @@ export default defineComponent({
     let generation = 0;
 
     const stopWebRtc = () => {
+      generation++;
       session?.stop();
       session = null;
     };

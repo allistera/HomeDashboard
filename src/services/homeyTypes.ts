@@ -23,6 +23,7 @@ export interface HomeyDevice {
   class: string;
   zone: string;
   available: boolean;
+  videos?: { type: string; videoObj?: { id: string; options?: { dataChannel?: boolean } } }[];
   images?: { id?: string; imageObj?: { url?: string } }[];
   capabilities: string[];
   capabilitiesObj: Record<string, HomeyCapability>;

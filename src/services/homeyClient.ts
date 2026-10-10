@@ -158,3 +158,9 @@ export async function setHomeyLight(deviceId: string, level: number): Promise<Co
   if (on !== "sent" || !device?.capabilities.includes("dim")) return on;
   return setHomeyCapability(deviceId, "dim", Math.min(100, Math.max(0, level)) / 100);
 }
+
+export function homeyCameraVideo(deviceId: string) {
+  const device = devices.get(deviceId);
+  if (!connection || useHomeyStore().status !== "connected" || !device?.available) return undefined;
+  return device.videos?.find((video) => video.type === "camera")?.videoObj;
+}

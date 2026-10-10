@@ -79,10 +79,12 @@ The live activity feed is generated from capability changes for
 `homePageBindings.activityDeviceIds`. It starts with an empty feed on connection and collects
 events while the page is connected; Home Assistant's previous 24-hour logbook is not retained.
 
-Homey does not supply the old HA camera proxy or WebRTC signalling. No camera is bound in the
-current inventory. Camera bindings may supply independent, browser-compatible snapshot and
-MJPEG stream URLs; an integration can inject a WebRTC starter into `CameraModal`. Unbound cameras
-show unavailable. Alarm, presence, weather, and scene helpers must be explicitly mapped to real
+Room cameras are discovered from their Homey zones and display refreshing snapshots. Opening
+a camera starts live WebRTC video when its Homey integration exposes a camera video. The
+stream stops when the overlay closes or the tab is hidden. Cameras without a live video, or
+whose stream cannot connect, fall back to snapshots. This uses Homey’s video offer and
+keep-alive endpoints with the existing device-read token permission; no microphone or local
+camera permission is needed. Camera bindings may also supply independent MJPEG stream URLs. Alarm, presence, weather, and scene helpers must be explicitly mapped to real
 Homey devices/capabilities before use; no old HA entity IDs are kept as substitute device IDs.
 
 ## Commands
