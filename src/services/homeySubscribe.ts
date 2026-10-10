@@ -11,6 +11,7 @@ export async function subscribeHomeyDevices(
   const devices = new Map<string, HomeyDevice>();
   const listeners = new Map<string, CapabilityListener[]>();
   const watched = new Set(watchedDeviceIds());
+  const roomZones = new Set(Object.values(homePageBindings.roomZoneIds));
   let stopped = false;
   const remove = (id: string) => {
     for (const listener of listeners.get(id) ?? []) listener.destroy();
@@ -21,9 +22,8 @@ export async function subscribeHomeyDevices(
     if (stopped) return;
     remove(device.id);
     devices.set(device.id, device);
-    // Keep the full inventory for room device lists. Only bound controls need
-    // per-capability subscriptions; manager events keep other metadata current.
-    if (!watched.has(device.id)) return;
+    // Room property values need capability updates even without bound controls.
+    if (!watched.has(device.id) && !roomZones.has(device.zone)) return;
     const subscriptions: CapabilityListener[] = [];
     listeners.set(device.id, subscriptions);
     for (const capabilityId of device.capabilities) {

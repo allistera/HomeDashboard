@@ -86,6 +86,43 @@ describe("RoomsPage bindings", () => {
     expect(wrapper.text()).toContain("35%");
   });
 
+  it("expands device properties and keeps unbound sensor readings current", async () => {
+    const sensor = new TestDevice("room-sensor", {
+      measure_temperature: 0,
+      alarm_motion: false,
+      measure_battery: null,
+    });
+    sensor.name = "Room sensor";
+    sensor.class = "sensor";
+    sensor.zone = homePageBindings.roomZoneIds["living-room"];
+    sensor.capabilitiesObj.measure_temperature.title = "Temperature";
+    sensor.capabilitiesObj.measure_temperature.units = "°C";
+    useSettingsStore().url = "https://homey.example";
+    useSettingsStore().token = "test-token";
+    const wrapper = mount(RoomsPage);
+    try {
+      await connectHomey(applyDevices, async () => new TestHomey([sensor]));
+      await flushPromises();
+      const details = wrapper.get<HTMLDetailsElement>("details.device-details");
+      expect(details.element.open).toBe(false);
+      details.get<HTMLElement>("summary").element.click();
+      expect(details.element.open).toBe(true);
+      expect(details.text()).toContain("Temperature");
+      expect(details.text()).toContain("0 °C");
+      expect(details.text()).toContain("No");
+      expect(details.text()).toContain("Unknown");
+      sensor.emit("measure_temperature", 22.5);
+      await flushPromises();
+      expect(details.element.open).toBe(true);
+      expect(details.text()).toContain("22.5 °C");
+      details.get<HTMLElement>("summary").element.click();
+      expect(details.element.open).toBe(false);
+    } finally {
+      wrapper.unmount();
+      disconnectHomey();
+    }
+  });
+
   it("lists every zone device and follows inventory changes without adding controls", async () => {
     const inventory = ["light", "sensor", "speaker", "camera", "washer"].map((type) => {
       const device = new TestDevice(`unbound-${type}`, {});

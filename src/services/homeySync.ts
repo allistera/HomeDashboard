@@ -73,6 +73,12 @@ export function applyDevices(devices: Map<string, HomeyDevice>): void {
         name: device.name,
         type: device.class,
         available: device.available,
+        properties: device.capabilities.map((id) => ({
+          id,
+          name: device.capabilitiesObj[id]?.title || id.replace(/[_.]/g, " "),
+          value: device.capabilitiesObj[id]?.value ?? null,
+          units: device.capabilitiesObj[id]?.units,
+        })),
       }))
       .sort((first, second) => first.name.localeCompare(second.name));
     const camera = room.devices.find((device) => device.type === "camera");

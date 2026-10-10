@@ -2,6 +2,8 @@ export type CapabilityValue = string | number | boolean | null;
 
 export interface HomeyCapability {
   value: CapabilityValue;
+  title?: string;
+  units?: string;
   lastUpdated?: string | Date | null;
   setable?: boolean;
 }

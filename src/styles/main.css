@@ -995,3 +995,55 @@ a {
   flex-direction: column;
   gap: 12px;
 }
+
+.device-details > summary {
+  cursor: pointer;
+  list-style: none;
+  grid-template-columns: 1fr auto 12px;
+}
+
+.device-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.device-details > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.device-details__arrow {
+  transition: transform 0.15s;
+}
+
+.device-details[open] .device-details__arrow {
+  transform: rotate(90deg);
+}
+
+.device-details__body {
+  padding: 0 0 18px;
+}
+
+.device-properties {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px 16px;
+  font-size: 14px;
+}
+
+.device-properties__item {
+  display: contents;
+}
+
+.device-properties dt {
+  color: var(--label);
+}
+
+.device-properties dd {
+  margin: 0;
+  text-align: right;
+}
+
+.device-properties dt,
+.device-properties dd {
+  overflow-wrap: anywhere;
+}

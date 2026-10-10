@@ -1,5 +1,6 @@
 import { computed, defineComponent } from "vue";
 
+import RoomDeviceDetails from "@/components/RoomDeviceDetails";
 import RoomCamera from "@/components/RoomCamera";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
@@ -137,19 +138,7 @@ export default defineComponent({
                     </div>
                     <div class="rows">
                       {(room.devices ?? []).map((device) => (
-                        <div
-                          key={device.id}
-                          class={["row", { "row--dim": !device.available }]}
-                          style={{ gridTemplateColumns: "1fr auto" }}
-                        >
-                          <div>
-                            <span class="row__name">{device.name}</span>
-                            <div class="row__meta">{device.type.replace(/_/g, " ")}</div>
-                          </div>
-                          <span class="row__meta">
-                            {device.available ? "AVAILABLE" : "OFFLINE"}
-                          </span>
-                        </div>
+                        <RoomDeviceDetails key={`${room.id}-${device.id}`} device={device} />
                       ))}
                       {!room.devices?.length && (
                         <p class="row__meta">

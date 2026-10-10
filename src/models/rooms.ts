@@ -28,11 +28,19 @@ export interface Room {
   offlineCount: number;
 }
 
+export interface DeviceProperty {
+  id: string;
+  name: string;
+  value: string | number | boolean | null;
+  units?: string;
+}
+
 export interface RoomDevice {
   id: string;
   name: string;
   type: string;
   available: boolean;
+  properties?: DeviceProperty[];
 }
 
 export type Scene = "relax" | "bright" | "all-off";
