@@ -362,10 +362,6 @@ a {
   cursor: pointer;
 }
 
-.room-navigation:hover .row__name {
-  text-decoration: underline;
-}
-
 .room-navigation:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 4px;
