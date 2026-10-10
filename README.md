@@ -11,6 +11,9 @@ type carries the hierarchy.
 - **Rooms** (`/rooms`) — room list on the left, the selected room's lights,
   climate, media, and activity as ruled rows on the right.
   Click a room's name or status on Home to open its details; its light toggle stays independent.
+  The device list includes every device assigned directly to the room's Homey zone, with its
+  type and availability. Light controls remain below the inventory. Device counts include all
+  listed devices; additions, removals, renames, and zone moves update live.
 - **Floors** (`/floors`) — the "God View": isometric floor plans of the ground
   and first floors with live room callouts (lights, media, windows),
   a floor switcher, and a stairs shortcut. `/energy` redirects here.

@@ -14,6 +14,7 @@ export interface Room {
   name: string;
   floor: string;
   lights: Light[];
+  devices?: RoomDevice[];
   temp: number | null;
   target: number | null;
   meta: string;
@@ -24,6 +25,13 @@ export interface Room {
   events: RoomEvent[];
   deviceCount: number;
   offlineCount: number;
+}
+
+export interface RoomDevice {
+  id: string;
+  name: string;
+  type: string;
+  available: boolean;
 }
 
 export type Scene = "relax" | "bright" | "all-off";

@@ -18,9 +18,12 @@ export async function subscribeHomeyDevices(
     devices.delete(id);
   };
   const attach = async (device: HomeyDevice) => {
-    if (stopped || !watched.has(device.id)) return;
+    if (stopped) return;
     remove(device.id);
     devices.set(device.id, device);
+    // Keep the full inventory for room device lists. Only bound controls need
+    // per-capability subscriptions; manager events keep other metadata current.
+    if (!watched.has(device.id)) return;
     const subscriptions: CapabilityListener[] = [];
     listeners.set(device.id, subscriptions);
     for (const capabilityId of device.capabilities) {
@@ -49,7 +52,7 @@ export async function subscribeHomeyDevices(
     await device.connect();
   };
   const update = (device: HomeyDevice) => {
-    if (stopped || !watched.has(device.id)) return;
+    if (stopped) return;
     void attach(device)
       .then(() => {
         if (!stopped) onDevices(new Map(devices));

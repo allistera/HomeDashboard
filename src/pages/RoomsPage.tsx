@@ -130,6 +130,35 @@ export default defineComponent({
 
               <div class="cols" style={{ gridTemplateColumns: "1.15fr 0.85fr" }}>
                 <div class="col">
+                  <section aria-label="Room devices">
+                    <div class="section-head">
+                      <span class="label">Devices</span>
+                    </div>
+                    <div class="rows">
+                      {(room.devices ?? []).map((device) => (
+                        <div
+                          key={device.id}
+                          class={["row", { "row--dim": !device.available }]}
+                          style={{ gridTemplateColumns: "1fr auto" }}
+                        >
+                          <div>
+                            <span class="row__name">{device.name}</span>
+                            <div class="row__meta">{device.type.replace(/_/g, " ")}</div>
+                          </div>
+                          <span class="row__meta">
+                            {device.available ? "AVAILABLE" : "OFFLINE"}
+                          </span>
+                        </div>
+                      ))}
+                      {!room.devices?.length && (
+                        <p class="row__meta">
+                          {!rooms.dataFromHomey
+                            ? "Connect Homey to see room devices."
+                            : "No devices available for this room."}
+                        </p>
+                      )}
+                    </div>
+                  </section>
                   <div class="section-head">
                     <span class="label">Lights</span>
                   </div>

@@ -65,6 +65,16 @@ export function applyDevices(devices: Map<string, HomeyDevice>): void {
   }
   for (const room of rooms.rooms) {
     const binding = roomBindings.find((item) => item.roomId === room.id);
+    const zoneId = homePageBindings.roomZoneIds[room.id];
+    room.devices = [...devices.values()]
+      .filter((device) => !!zoneId && device.zone === zoneId)
+      .map((device) => ({
+        id: device.id,
+        name: device.name,
+        type: device.class,
+        available: device.available,
+      }))
+      .sort((first, second) => first.name.localeCompare(second.name));
     room.lights = (binding?.lights ?? []).flatMap((light) => {
       const device = devices.get(light.deviceId);
       return device
@@ -115,18 +125,8 @@ export function applyDevices(devices: Map<string, HomeyDevice>): void {
       cleaner?.available && vacuum
         ? { state: String(cleaner.capabilitiesObj[vacuum.capabilityId]?.value ?? "Unknown") }
         : undefined;
-    const ids = new Set(
-      [
-        ...(binding?.lights.map((light) => light.deviceId) ?? []),
-        binding?.media,
-        binding?.temperature?.deviceId,
-        binding?.climate?.deviceId,
-        motion?.deviceId,
-        vacuum?.deviceId,
-      ].filter((id): id is string => !!id),
-    );
-    room.deviceCount = ids.size;
-    room.offlineCount = [...ids].filter((id) => !devices.get(id)?.available).length;
+    room.deviceCount = room.devices.length;
+    room.offlineCount = room.devices.filter((device) => !device.available).length;
   }
 
   security.dataFromHomey = true;
