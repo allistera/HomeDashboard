@@ -22,6 +22,7 @@ export interface Camera {
   id: string;
   name: string;
   live: boolean;
+  available?: boolean;
   note?: string;
   deviceId?: string;
   snapshotUrl?: string;

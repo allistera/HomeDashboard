@@ -182,15 +182,32 @@ export function applyDevices(devices: Map<string, HomeyDevice>): void {
     person.status = device?.available ? (person.home ? "HOME" : "AWAY") : "UNAVAILABLE";
   }
   security.events = [];
-  for (const camera of security.cameras) {
-    const binding = cameraBindings.find((item) => item.cameraId === camera.id);
-    const device = binding ? devices.get(binding.deviceId) : undefined;
-    camera.deviceId = binding?.deviceId;
-    camera.snapshotUrl = device?.available ? binding?.snapshotUrl : undefined;
-    camera.streamUrl = device?.available ? binding?.streamUrl : undefined;
-    camera.live = !!camera.streamUrl;
-    camera.note = camera.live ? undefined : "UNAVAILABLE IN HOMEY";
-  }
+  security.cameras = [...devices.values()]
+    .filter(
+      (device) =>
+        device.class === "camera" ||
+        device.images?.some((image) => image.type === "camera") ||
+        device.videos?.some((video) => video.type === "camera"),
+    )
+    .map((device) => {
+      const binding = cameraBindings.find((item) => item.deviceId === device.id);
+      const image =
+        device.images?.find((item) => item.type === "camera") ??
+        device.images?.find((item) => item.imageObj?.url);
+      return {
+        id: binding?.cameraId ?? device.id,
+        deviceId: device.id,
+        name: device.name,
+        available: device.available,
+        snapshotUrl: image?.imageObj?.url ?? binding?.snapshotUrl,
+        streamUrl: binding?.streamUrl,
+        live:
+          device.available &&
+          (!!binding?.streamUrl ||
+            !!device.videos?.some((video) => video.type === "camera" && video.videoObj?.id)),
+      };
+    })
+    .sort((first, second) => first.name.localeCompare(second.name));
 }
 
 export function temperatureText(value: number | null, digits = 1): string {

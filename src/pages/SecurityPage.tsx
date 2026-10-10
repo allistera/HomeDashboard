@@ -1,6 +1,7 @@
 import { computed, defineComponent, ref } from "vue";
 
 import CameraModal from "@/components/CameraModal";
+import RoomCamera from "@/components/RoomCamera";
 import CameraTile from "@/components/CameraTile";
 import EventFeed from "@/components/EventFeed";
 import ToggleSwitch from "@/components/ToggleSwitch";
@@ -87,9 +88,11 @@ export default defineComponent({
         <div class="cols" style={{ gridTemplateColumns: "1.4fr 1fr" }}>
           <div class="col">
             <div class="section-head">
-              <span class="label">Cameras · Live</span>
+              <span class="label">Cameras</span>
               <span class="label" style={{ letterSpacing: "normal" }}>
-                {security.dataFromHomey ? "NO CAMERAS LINKED" : "RECORDING ON MOTION"}
+                {security.dataFromHomey
+                  ? `${security.cameras.length} CAMERAS FOUND`
+                  : "RECORDING ON MOTION"}
               </span>
             </div>
             <div
@@ -100,16 +103,31 @@ export default defineComponent({
                 gap: "12px",
               }}
             >
-              {security.cameras.map((camera) => (
-                <CameraTile
-                  key={camera.id}
-                  name={camera.name}
-                  live={camera.live}
-                  note={camera.note}
-                  imageUrl={camera.snapshotUrl ?? ""}
-                  onSelect={() => openCamera(camera)}
-                />
-              ))}
+              {security.dataFromHomey && security.cameras.length === 0 && (
+                <p class="row__meta">No cameras found in Homey.</p>
+              )}
+              {security.cameras.map((camera) =>
+                security.dataFromHomey ? (
+                  <RoomCamera
+                    key={camera.id}
+                    camera={{
+                      id: camera.deviceId ?? camera.id,
+                      name: camera.name,
+                      available: camera.available ?? false,
+                      snapshotUrl: camera.snapshotUrl,
+                    }}
+                  />
+                ) : (
+                  <CameraTile
+                    key={camera.id}
+                    name={camera.name}
+                    live={camera.live}
+                    note={camera.note}
+                    imageUrl={camera.snapshotUrl ?? ""}
+                    onSelect={() => openCamera(camera)}
+                  />
+                ),
+              )}
             </div>
 
             <div class="section-head" style={{ padding: "22px 40px 10px" }}>
