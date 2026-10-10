@@ -21,12 +21,12 @@ export default defineComponent({
     );
     const status = ref("Loading camera…");
     const stop = watch(
-      () => [
-        props.camera.id,
-        props.camera.snapshotUrl,
-        props.camera.available,
-        settings.url,
-        settings.token,
+      [
+        () => props.camera.id,
+        () => props.camera.snapshotUrl,
+        () => props.camera.available,
+        () => settings.url,
+        () => settings.token,
       ],
       (_, __, cleanup) => {
         const controller = new AbortController();

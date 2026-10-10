@@ -30,6 +30,36 @@ describe("Room camera snapshots", () => {
     vi.useRealTimers();
   });
 
+  it("keeps the image and refresh schedule when Homey rebuilds unchanged camera metadata", async () => {
+    vi.useFakeTimers();
+    const camera = {
+      id: "camera",
+      name: "Living room",
+      available: true,
+      snapshotUrl: "/api/image/camera",
+    };
+    const wrapper = mount(RoomCamera, { props: { camera } });
+    try {
+      await flushPromises();
+      await wrapper.get("button.camera").trigger("click");
+      const tileImage = wrapper.get("button.camera img").element;
+      const modalImage = wrapper.get('[role="dialog"] img').element;
+      await vi.advanceTimersByTimeAsync(5000);
+      await wrapper.setProps({ camera: { ...camera } });
+      await flushPromises();
+      expect(wrapper.get("button.camera img").element).toBe(tileImage);
+      expect(wrapper.get('[role="dialog"] img').element).toBe(modalImage);
+      expect(wrapper.get("button.camera img").attributes("src")).toBe("blob:snapshot");
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+      expect(wrapper.text()).not.toContain("Loading camera");
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(fetch).toHaveBeenCalledTimes(2);
+    } finally {
+      wrapper.unmount();
+    }
+  });
+
   it("retains the current snapshot until the next image decodes, and after refresh failures", async () => {
     vi.useFakeTimers();
     vi.mocked(URL.createObjectURL)
