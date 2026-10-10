@@ -21,6 +21,7 @@ export interface HomeyDevice {
   class: string;
   zone: string;
   available: boolean;
+  images?: { id?: string; imageObj?: { url?: string } }[];
   capabilities: string[];
   capabilitiesObj: Record<string, HomeyCapability>;
   connect(): Promise<void>;

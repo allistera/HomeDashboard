@@ -15,6 +15,25 @@ describe("RoomsPage bindings", () => {
     setActivePinia(createPinia());
   });
 
+  it("shows the zone camera without a media player and removes it when leaving the room", async () => {
+    const camera = new TestDevice("room-camera", {});
+    camera.class = "camera";
+    camera.name = "Hall camera";
+    camera.zone = homePageBindings.roomZoneIds.hallway!;
+    applyDevices(new Map([[camera.id, camera]]));
+    const rooms = useRoomsStore();
+    rooms.selectRoom("hallway");
+    const wrapper = mount(RoomsPage);
+    expect(wrapper.find('[aria-label="Hall camera camera"]').exists()).toBe(true);
+    expect(wrapper.text()).toContain("Camera image unavailable");
+    expect(wrapper.text()).not.toContain("now playing artwork");
+    expect(rooms.selectedRoom.media).toBeUndefined();
+    rooms.selectRoom("kitchen");
+    await flushPromises();
+    expect(wrapper.find(".camera").exists()).toBe(false);
+    wrapper.unmount();
+  });
+
   it("renders the configured outside temperature", () => {
     const rooms = useRoomsStore();
     rooms.setHomeClimateValues(8.4, null, null);

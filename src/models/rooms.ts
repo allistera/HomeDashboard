@@ -15,6 +15,7 @@ export interface Room {
   floor: string;
   lights: Light[];
   devices?: RoomDevice[];
+  camera?: RoomCamera;
   temp: number | null;
   target: number | null;
   meta: string;
@@ -36,3 +37,10 @@ export interface RoomDevice {
 
 export type Scene = "relax" | "bright" | "all-off";
 export type MediaCommand = "previous" | "toggle" | "next";
+
+export interface RoomCamera {
+  id: string;
+  name: string;
+  available: boolean;
+  snapshotUrl?: string;
+}

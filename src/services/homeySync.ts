@@ -75,6 +75,16 @@ export function applyDevices(devices: Map<string, HomeyDevice>): void {
         available: device.available,
       }))
       .sort((first, second) => first.name.localeCompare(second.name));
+    const camera = room.devices.find((device) => device.type === "camera");
+    room.camera = camera
+      ? {
+          id: camera.id,
+          name: camera.name,
+          available: camera.available,
+          snapshotUrl: devices.get(camera.id)?.images?.find((image) => image.imageObj?.url)
+            ?.imageObj?.url,
+        }
+      : undefined;
     room.lights = (binding?.lights ?? []).flatMap((light) => {
       const device = devices.get(light.deviceId);
       return device

@@ -1,5 +1,6 @@
 import { computed, defineComponent } from "vue";
 
+import RoomCamera from "@/components/RoomCamera";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
 import { roomDeviceIds } from "@/services/homeyBindings/homeyGlobalBindings";
@@ -256,6 +257,11 @@ export default defineComponent({
                 </div>
 
                 <div class="col">
+                  {room.camera && (
+                    <div style={{ padding: "16px 36px 0" }}>
+                      <RoomCamera camera={room.camera} />
+                    </div>
+                  )}
                   {room.media && (
                     <>
                       <div
@@ -264,10 +270,7 @@ export default defineComponent({
                           borderBottom: "1px solid var(--border)",
                         }}
                       >
-                        <div class="camera" style={{ height: "150px" }}>
-                          <span class="camera__tag">now playing artwork</span>
-                        </div>
-                        <div class="section-head" style={{ padding: "16px 0 0" }}>
+                        <div class="section-head" style={{ padding: "0" }}>
                           <span class="label">Media</span>
                         </div>
                         <div

@@ -5,12 +5,28 @@ import {
   roomBindingFor,
 } from "@/services/homeyBindings/homeyRoomsBindings";
 import { applyDevices, lightLevelFrom, numericCapabilityFrom } from "@/services/homeySync";
+import type { HomeyDevice } from "@/services/homeyTypes";
+import { homePageBindings } from "@/services/homeyBindings/homeyHomeBindings";
 import { TestDevice } from "@/services/homeyTestSupport";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
 
 describe("Homey device synchronization", () => {
   beforeEach(() => setActivePinia(createPinia()));
+
+  it("maps camera snapshots by zone and clears removed cameras", () => {
+    const camera: HomeyDevice = new TestDevice("camera", {});
+    camera.class = "camera";
+    camera.zone = homePageBindings.roomZoneIds["living-room"]!;
+    camera.images = [{ imageObj: { url: "/api/image/snapshot" } }];
+    applyDevices(new Map([[camera.id, camera]]));
+    expect(useRoomsStore().selectedRoom.camera?.snapshotUrl).toBe("/api/image/snapshot");
+    camera.available = false;
+    applyDevices(new Map([[camera.id, camera]]));
+    expect(useRoomsStore().selectedRoom.camera?.available).toBe(false);
+    applyDevices(new Map());
+    expect(useRoomsStore().selectedRoom.camera).toBeUndefined();
+  });
 
   it("links by device ID even if the display name changes", () => {
     const speaker = new TestDevice(livingRoomMediaBinding.deviceId, {
