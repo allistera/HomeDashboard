@@ -258,17 +258,17 @@ export default defineComponent({
                 <div class="col">
                   {room.media && (
                     <>
-                      <div class="section-head" style={{ padding: "16px 36px 10px" }}>
-                        <span class="label">Media</span>
-                      </div>
                       <div
                         style={{
-                          padding: "0 36px 20px",
+                          padding: "16px 36px 20px",
                           borderBottom: "1px solid var(--border)",
                         }}
                       >
                         <div class="camera" style={{ height: "150px" }}>
                           <span class="camera__tag">now playing artwork</span>
+                        </div>
+                        <div class="section-head" style={{ padding: "16px 0 0" }}>
+                          <span class="label">Media</span>
                         </div>
                         <div
                           style={{
