@@ -34,6 +34,9 @@ describe("HomePage bindings", () => {
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
 
     expect(wrapper.text()).toContain("OUTSIDE 8°");
+    expect(wrapper.get(".homepage-footer").text()).toContain("Outdoor Temp");
+    expect(wrapper.get(".homepage-footer").text()).toContain("8.4°");
+    expect(wrapper.element.lastElementChild?.classList.contains("homepage-footer")).toBe(true);
     expect(wrapper.text()).toContain("20.7°");
     expect(wrapper.text()).toContain("21.5°");
     expect(wrapper.text()).toContain("Playing · Living room");
@@ -105,7 +108,11 @@ describe("HomePage bindings", () => {
       await connectHomey(applyDevices, async () => new TestHomey([downstairs, upstairs]));
       await flushPromises();
       const toggle = wrapper.get('[aria-label="Hallway lights"]');
+      const row = wrapper
+        .findAll(".row")
+        .find((item) => item.get(".row__name").text() === "Hallway")!;
       expect(toggle.attributes("aria-checked")).toBe("true");
+      expect(row.get(".room-light-status").text()).toBe("Light on");
       await toggle.trigger("click");
       await flushPromises();
       expect(downstairs.commands).toEqual([{ capabilityId: "onoff", value: false }]);
@@ -128,6 +135,7 @@ describe("HomePage bindings", () => {
       upstairs.emit("onoff", false);
       await flushPromises();
       expect(toggle.attributes("aria-checked")).toBe("false");
+      expect(row.get(".room-light-status").text()).toBe("Lights off");
     } finally {
       wrapper.unmount();
       disconnectHomey();
@@ -144,7 +152,11 @@ describe("HomePage bindings", () => {
       await connectHomey(applyDevices, async () => new TestHomey([light]));
       await flushPromises();
       const toggle = wrapper.get('[aria-label="Toilet lights"]');
+      const row = wrapper
+        .findAll(".row")
+        .find((item) => item.get(".row__name").text() === "Toilet")!;
       expect(toggle.attributes("aria-checked")).toBe("false");
+      expect(row.get(".room-light-status").text()).toBe("Light off");
       await toggle.trigger("click");
       await flushPromises();
       expect(light.commands).toEqual([
@@ -154,6 +166,7 @@ describe("HomePage bindings", () => {
       light.emit("onoff", true);
       await flushPromises();
       expect(toggle.attributes("aria-checked")).toBe("true");
+      expect(row.get(".room-light-status").text()).toBe("Light on");
       await toggle.trigger("click");
       await flushPromises();
       expect(light.commands.at(-1)).toEqual({ capabilityId: "onoff", value: false });
@@ -217,6 +230,7 @@ describe("HomePage bindings", () => {
     const rowFor = (name: string) => rows.find((row) => row.get(".row__name").text() === name)!;
 
     expect(rowFor("Living room").get(".row__meta").text()).toBe("MEDIA ON");
+    expect(rowFor("Living room").get(".room-light-status").text()).toBe("Two lights on");
     expect(rowFor("Kitchen").get(".row__meta").text()).toBe("");
     expect(rowFor("Hallway").get(".row__meta").text()).toBe("");
     expect(rowFor("Bedroom").get(".row__meta").text()).toBe("");
@@ -224,6 +238,7 @@ describe("HomePage bindings", () => {
     expect(rowFor("Elsies Room").classes()).toContain("row--dim");
     expect(rowFor("Bedroom").classes()).toContain("row--dim");
     expect(rowFor("Kitchen").find('[role="switch"]').exists()).toBe(false);
+    expect(rowFor("Kitchen").find(".room-light-status").exists()).toBe(false);
     expect(rowFor("Jaicobs Room").find('[role="switch"]').exists()).toBe(false);
     expect(rowFor("Elsies Room").find('[role="switch"]').exists()).toBe(false);
 

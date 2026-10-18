@@ -384,6 +384,19 @@ a {
   outline-offset: 4px;
 }
 
+.room-light-control {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.room-light-status {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .row__meta {
   font-family: var(--mono);
   font-size: 12px;
@@ -668,6 +681,15 @@ a {
   justify-content: space-between;
   align-items: flex-end;
   gap: 16px;
+}
+
+.homepage-footer {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 18px;
+  padding: 12px 40px 20px;
+  border-top: 1px solid var(--border);
 }
 
 .big-number {

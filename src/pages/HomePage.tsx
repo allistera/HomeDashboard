@@ -100,7 +100,7 @@ export default defineComponent({
               disabled={rooms.dataFromHomey && !rooms.rooms.some((room) => room.lights.length > 0)}
               onClick={goodNight}
             >
-              Good night
+              Get Jaicob
             </button>
             <button
               type="button"
@@ -108,7 +108,7 @@ export default defineComponent({
               disabled={rooms.dataFromHomey && !mediaRoom.value?.lights.length}
               onClick={movie}
             >
-              Movie
+              Night Time
             </button>
             <button
               type="button"
@@ -134,7 +134,16 @@ export default defineComponent({
               {rooms.rooms
                 .filter((room) => !homePageBindings.excludedRoomIds.includes(room.id))
                 .map((room) => {
-                  const on = rooms.lightsOn(room) > 0;
+                  const lightsOn = rooms.lightsOn(room);
+                  const on = lightsOn > 0;
+                  const lightStatus =
+                    lightsOn === 0
+                      ? room.lights.length === 1
+                        ? "Light off"
+                        : "Lights off"
+                      : lightsOn === 1
+                        ? "Light on"
+                        : `${["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"][lightsOn]?.replace(/^./, (letter) => letter.toUpperCase()) ?? lightsOn} lights on`;
                   return (
                     <div
                       key={room.id}
@@ -162,13 +171,16 @@ export default defineComponent({
                         <span class="row__meta">{roomMeta(room.id)}</span>
                       </button>
                       {room.lights.length > 0 && (
-                        <ToggleSwitch
-                          modelValue={on}
-                          label={`${room.name} lights`}
-                          onUpdate:modelValue={(value: boolean) =>
-                            rooms.setRoomLights(room.id, value)
-                          }
-                        />
+                        <div class="room-light-control">
+                          <span class="room-light-status">{lightStatus}</span>
+                          <ToggleSwitch
+                            modelValue={on}
+                            label={`${room.name} lights`}
+                            onUpdate:modelValue={(value: boolean) =>
+                              rooms.setRoomLights(room.id, value)
+                            }
+                          />
+                        </div>
                       )}
                     </div>
                   );
@@ -176,12 +188,6 @@ export default defineComponent({
             </div>
 
             <div class="col-foot" style={{ padding: "20px 40px", gap: "34px" }}>
-              <div>
-                <div class="label">Outdoor Temp</div>
-                <div class="big-number" style={{ fontSize: "54px" }}>
-                  {temperatureText(rooms.outsideTemp)}
-                </div>
-              </div>
               <div>
                 <div class="label">Target</div>
                 <div class="big-number big-number--accent" style={{ fontSize: "54px" }}>
@@ -277,6 +283,13 @@ export default defineComponent({
             </div>
           </div>
         </div>
+
+        <footer class="homepage-footer">
+          <div class="label">Outdoor Temp</div>
+          <div class="big-number" style={{ fontSize: "40px" }}>
+            {temperatureText(rooms.outsideTemp)}
+          </div>
+        </footer>
 
         {selectedCamera.value && (
           <CameraModal
