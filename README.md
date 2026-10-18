@@ -67,12 +67,9 @@ capabilities in Homey; names are display labels and never lookup keys. Lights us
 `dim` (0–1), temperatures use `measure_temperature` / `target_temperature`, and media controls
 use `speaker_playing`, `speaker_prev`, and `speaker_next`.
 
-Homepage motion labels use each room’s verified Homey zone in `homePageBindings.roomZoneIds`,
-including rooms without a directly bound sensor. Active zones show `MOTION NOW`; inactive zones
-show the age of `activeLastUpdated` (the latest change to zone activity origins), refreshed every
-minute. Missing zones or timestamps show `MOTION UNAVAILABLE`; sensor timestamps are never used
-as a fallback. Zone changes update live and refresh after reconnecting. If zone access is denied,
-light controls remain connected and Settings explains the required zone read permission.
+Homepage room rows show mapped temperature and live media status. Motion remains available in
+room details. If zone access is denied, light controls remain connected and Settings explains the
+required zone read permission.
 
 The dashboard subscribes to device capability updates, reconciles device changes/deletions,
 and destroys listeners on disconnect. Unbound or unavailable readings show as unavailable once
