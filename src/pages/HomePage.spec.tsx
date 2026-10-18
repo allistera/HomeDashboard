@@ -22,6 +22,9 @@ describe("HomePage headline", () => {
   it("labels the homepage night button 'Get Jaicob'", () => {
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
     expect(wrapper.get(".btn--primary").text()).toBe("Get Jaicob");
+    expect(wrapper.findAll(".hero__actions button").map((button) => button.text())).toContain(
+      "Night Time",
+    );
   });
 
   it("falls back to 'Everything's quiet.' when there is no recent activity", () => {

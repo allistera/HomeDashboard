@@ -108,7 +108,7 @@ export default defineComponent({
               disabled={rooms.dataFromHomey && !mediaRoom.value?.lights.length}
               onClick={movie}
             >
-              Movie
+              Night Time
             </button>
             <button
               type="button"
