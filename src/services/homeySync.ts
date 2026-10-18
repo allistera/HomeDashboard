@@ -38,7 +38,9 @@ export function applyDevices(devices: Map<string, HomeyDevice>): void {
   const security = useSecurityStore();
   rooms.dataFromHomey = true;
   rooms.setHomeClimateValues(
-    numericCapabilityFrom(devices, homePageBindings.outsideTemperature),
+    homePageBindings.outsideTemperature
+      ? numericCapabilityFrom(devices, homePageBindings.outsideTemperature)
+      : rooms.outsideTempFromHomey,
     numericCapabilityFrom(devices, homePageBindings.houseTemperature),
     numericCapabilityFrom(devices, homePageBindings.houseTarget),
   );

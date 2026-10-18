@@ -10,6 +10,8 @@ import type {
 import { useActivityStore } from "@/stores/activity";
 import { useHomeyStore } from "@/stores/homey";
 import { useSettingsStore } from "@/stores/settings";
+import { homePageBindings } from "@/services/homeyBindings/homeyHomeBindings";
+import { useRoomsStore } from "@/stores/rooms";
 
 let connection: HomeyConnection | null = null;
 let unsubscribe: (() => void) | null = null;
@@ -38,6 +40,7 @@ export async function connectHomey(
   let opened: HomeyConnection | null = null;
   let stop: (() => void) | null = null;
   let stopZones: (() => void) | null = null;
+  let stopWeather: (() => void) | null = null;
   try {
     opened = await factory(settings.url, settings.token);
     if (current !== generation) {
@@ -58,9 +61,21 @@ export async function connectHomey(
       state.status = "connected";
       state.message = "";
       activity.receive([]);
+      void refreshOutsideTemperature(active, current);
     };
     active.on("connect", ready);
     active.on("reconnect", ready);
+    active.on("disconnect", () => {
+      if (current === generation) useRoomsStore().setOutsideTemperature(null);
+    });
+    if (active.flowtoken) {
+      const updateWeather = (token: { id: string }) => {
+        if (token.id === homePageBindings.outsideTemperatureTokenId)
+          void refreshOutsideTemperature(active, current);
+      };
+      active.flowtoken.on("flowtoken.update", updateWeather);
+      stopWeather = () => active?.flowtoken?.off("flowtoken.update", updateWeather);
+    }
     await active.connect();
     stop = await subscribeHomeyDevices(
       active,
@@ -75,12 +90,14 @@ export async function connectHomey(
       },
     );
     if (current !== generation) {
+      stopWeather?.();
       stop();
       active.destroy();
       return false;
     }
     stopZones = await subscribeHomeyZones(active, () => current === generation);
     if (current !== generation) {
+      stopWeather?.();
       stopZones();
       stop();
       active.destroy();
@@ -92,6 +109,7 @@ export async function connectHomey(
     unsubscribe = () => {
       stopDevices();
       stopZoneUpdates();
+      stopWeather?.();
     };
     subscribed = true;
     ready();
@@ -99,6 +117,7 @@ export async function connectHomey(
   } catch {
     stopZones?.();
     stop?.();
+    stopWeather?.();
     opened?.destroy();
     if (current === generation) {
       devices.clear();
@@ -120,11 +139,33 @@ export function disconnectHomey(): void {
   connection = null;
   devices.clear();
   useZonesStore().$reset();
+  useRoomsStore().setOutsideTemperature(null);
   const state = useHomeyStore();
   state.status = "disconnected";
   state.message = "";
   state.deviceCount = 0;
   useActivityStore().disconnect();
+}
+
+async function refreshOutsideTemperature(homey: HomeyConnection, current: number): Promise<void> {
+  if (!homey.flowtoken) return;
+  try {
+    const value = await homey.flowtoken.getFlowTokenValue({
+      id: homePageBindings.outsideTemperatureTokenId,
+    });
+    if (
+      current !== generation ||
+      value === null ||
+      value === undefined ||
+      value === true ||
+      value === false
+    )
+      return;
+    const temperature = Number(value);
+    if (Number.isFinite(temperature)) useRoomsStore().setOutsideTemperature(temperature);
+  } catch {
+    // Flow-token read permission is optional; Homey device controls remain connected.
+  }
 }
 
 export type CommandResult = "sent" | "failed" | "offline";

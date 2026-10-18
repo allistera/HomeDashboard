@@ -45,6 +45,11 @@ export interface HomeyZone {
 }
 
 export interface HomeyConnection {
+  flowtoken?: {
+    getFlowTokenValue(options: { id: string }): Promise<number | string | boolean | null>;
+    on(event: "flowtoken.update", listener: (token: { id: string }) => void): void;
+    off(event: "flowtoken.update", listener: (token: { id: string }) => void): void;
+  };
   insights?: {
     getLogs(options?: { $cache: boolean }): Promise<Record<string, HomeyInsightLog>>;
   };

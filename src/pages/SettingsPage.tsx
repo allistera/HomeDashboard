@@ -81,7 +81,8 @@ export default defineComponent({
             />
             <p class="field__hint">
               Create one in the Homey Web App under Settings → API Keys. Grant device read and
-              control, zone read, and Insights read permissions for activity history.
+              control, zone read, Insights read for activity history, and Flow read for Homey's
+              outdoor temperature.
             </p>
           </div>
 
