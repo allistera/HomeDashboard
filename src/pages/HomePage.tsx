@@ -134,7 +134,16 @@ export default defineComponent({
               {rooms.rooms
                 .filter((room) => !homePageBindings.excludedRoomIds.includes(room.id))
                 .map((room) => {
-                  const on = rooms.lightsOn(room) > 0;
+                  const lightsOn = rooms.lightsOn(room);
+                  const on = lightsOn > 0;
+                  const lightStatus =
+                    lightsOn === 0
+                      ? room.lights.length === 1
+                        ? "Light off"
+                        : "Lights off"
+                      : lightsOn === 1
+                        ? "Light on"
+                        : `${["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"][lightsOn]?.replace(/^./, (letter) => letter.toUpperCase()) ?? lightsOn} lights on`;
                   return (
                     <div
                       key={room.id}
@@ -162,13 +171,16 @@ export default defineComponent({
                         <span class="row__meta">{roomMeta(room.id)}</span>
                       </button>
                       {room.lights.length > 0 && (
-                        <ToggleSwitch
-                          modelValue={on}
-                          label={`${room.name} lights`}
-                          onUpdate:modelValue={(value: boolean) =>
-                            rooms.setRoomLights(room.id, value)
-                          }
-                        />
+                        <div class="room-light-control">
+                          <span class="room-light-status">{lightStatus}</span>
+                          <ToggleSwitch
+                            modelValue={on}
+                            label={`${room.name} lights`}
+                            onUpdate:modelValue={(value: boolean) =>
+                              rooms.setRoomLights(room.id, value)
+                            }
+                          />
+                        </div>
                       )}
                     </div>
                   );
