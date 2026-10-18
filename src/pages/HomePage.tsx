@@ -189,12 +189,6 @@ export default defineComponent({
 
             <div class="col-foot" style={{ padding: "20px 40px", gap: "34px" }}>
               <div>
-                <div class="label">Outdoor Temp</div>
-                <div class="big-number" style={{ fontSize: "54px" }}>
-                  {temperatureText(rooms.outsideTemp)}
-                </div>
-              </div>
-              <div>
                 <div class="label">Target</div>
                 <div class="big-number big-number--accent" style={{ fontSize: "54px" }}>
                   {temperatureText(rooms.houseTarget)}
@@ -289,6 +283,13 @@ export default defineComponent({
             </div>
           </div>
         </div>
+
+        <footer class="homepage-footer">
+          <div class="label">Outdoor Temp</div>
+          <div class="big-number" style={{ fontSize: "40px" }}>
+            {temperatureText(rooms.outsideTemp)}
+          </div>
+        </footer>
 
         {selectedCamera.value && (
           <CameraModal

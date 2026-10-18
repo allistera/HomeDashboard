@@ -34,6 +34,9 @@ describe("HomePage bindings", () => {
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
 
     expect(wrapper.text()).toContain("OUTSIDE 8°");
+    expect(wrapper.get(".homepage-footer").text()).toContain("Outdoor Temp");
+    expect(wrapper.get(".homepage-footer").text()).toContain("8.4°");
+    expect(wrapper.element.lastElementChild?.classList.contains("homepage-footer")).toBe(true);
     expect(wrapper.text()).toContain("20.7°");
     expect(wrapper.text()).toContain("21.5°");
     expect(wrapper.text()).toContain("Playing · Living room");

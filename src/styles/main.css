@@ -683,6 +683,15 @@ a {
   gap: 16px;
 }
 
+.homepage-footer {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 18px;
+  padding: 12px 40px 20px;
+  border-top: 1px solid var(--border);
+}
+
 .big-number {
   font-size: 50px;
   letter-spacing: -0.04em;
