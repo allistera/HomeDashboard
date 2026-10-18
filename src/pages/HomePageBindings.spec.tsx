@@ -56,6 +56,24 @@ describe("HomePage bindings", () => {
     wrapper.unmount();
   });
 
+  it("shows the bound Homey front-door camera and opens its live-view modal", async () => {
+    const camera = new TestDevice("0c7f09c5-98ea-4cf2-ac1c-804acbbb9abc", {});
+    camera.class = "camera";
+    camera.name = "G5 Turret Camera";
+    camera.images = [{ type: "camera", imageObj: { url: "/api/image/g5" } }];
+    camera.videos = [{ type: "camera", videoObj: { id: "g5-video" } }];
+    applyDevices(new Map([[camera.id, camera]]));
+
+    const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
+    try {
+      expect(wrapper.text()).toContain("Front door · Live");
+      await wrapper.get('[aria-label="G5 Turret Camera camera"]').trigger("click");
+      expect(wrapper.get('[role="dialog"] .camera-modal__title').text()).toBe("G5 Turret Camera");
+    } finally {
+      wrapper.unmount();
+    }
+  });
+
   it("controls the bound media player from the homepage", async () => {
     const rooms = useRoomsStore();
     const livingRoom = rooms.rooms.find((room) => room.id === "living-room")!;

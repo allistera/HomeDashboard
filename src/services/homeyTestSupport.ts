@@ -12,6 +12,8 @@ export class TestDevice implements HomeyDevice {
   class = "speaker";
   zone = "test-zone";
   available = true;
+  images?: HomeyDevice["images"];
+  videos?: HomeyDevice["videos"];
   capabilities: string[];
   capabilitiesObj: HomeyDevice["capabilitiesObj"];
   commands: { capabilityId: string; value: Exclude<CapabilityValue, null> }[] = [];

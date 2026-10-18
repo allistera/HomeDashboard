@@ -11,7 +11,7 @@ export const cameraBindings: {
   deviceId: string;
   snapshotUrl?: string;
   streamUrl?: string;
-}[] = [];
+}[] = [{ cameraId: "front-door", deviceId: "0c7f09c5-98ea-4cf2-ac1c-804acbbb9abc" }];
 
 // Add a capability or virtual device only when it exists on Homey.
 interface SecurityBindings {

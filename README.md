@@ -89,7 +89,8 @@ a camera starts live WebRTC video when its Homey integration exposes a camera vi
 stream stops when the overlay closes or the tab is hidden. Cameras without a live video, or
 whose stream cannot connect, fall back to snapshots. This uses Homey’s video offer and
 keep-alive endpoints with the existing device-read token permission; no microphone or local
-camera permission is needed. Camera bindings may also supply independent MJPEG stream URLs. Alarm, presence, weather, and scene helpers must be explicitly mapped to real
+camera permission is needed. The homepage Front door tile uses the bound G5 Turret Camera
+device. Camera bindings may also supply independent MJPEG stream URLs. Alarm, presence, weather, and scene helpers must be explicitly mapped to real
 Homey devices/capabilities before use; no old HA entity IDs are kept as substitute device IDs.
 
 ## Commands
