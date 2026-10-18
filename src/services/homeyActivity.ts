@@ -71,3 +71,31 @@ export function activityEventFromHomey(
     accent: capabilityId.startsWith("alarm_") || capabilityId === "locked",
   };
 }
+
+export function activityEventFromInsight(
+  device: HomeyDevice,
+  title: string,
+  value: string | number | boolean,
+  timestamp: string | number,
+): ActivityEvent | null {
+  const parsedTimestamp = new Date(timestamp).getTime();
+  const occurredAt = parsedTimestamp < 1e12 ? parsedTimestamp * 1000 : parsedTimestamp;
+  const changedAt = new Date(occurredAt);
+  if (!Number.isFinite(changedAt.getTime())) return null;
+  const text =
+    value === true || value === false
+      ? `${device.name} ${title.toLocaleLowerCase()}`
+      : `${device.name} ${title.toLocaleLowerCase()} changed to ${value}`;
+  return {
+    id: `${device.id}:${title}:${occurredAt}:${value}`,
+    occurredAt,
+    time: changedAt
+      .toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+      .replace(/\s?[AP]M$/, ""),
+    text,
+    sourceId: device.id,
+    sourceName: device.name,
+    domain: device.class,
+    accent: title.toLowerCase().includes("motion") || title.toLowerCase().includes("contact"),
+  };
+}

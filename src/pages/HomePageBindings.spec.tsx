@@ -152,7 +152,7 @@ describe("HomePage bindings", () => {
   it("uses zone activity for living-room motion while retaining media status", async () => {
     const sensor = new TestDevice("f0de7239-1ac7-4580-a1d5-e33733e2abef", { alarm_motion: true });
     sensor.capabilitiesObj.alarm_motion.lastUpdated = new Date(Date.now() - 6 * 60_000);
-    const speaker = new TestDevice("76e05f8e-87b3-493e-bc6f-4b6ec6aa5665", {
+    const speaker = new TestDevice(homePageBindings.mediaPlayer.deviceId, {
       speaker_playing: true,
     });
     const settings = useSettingsStore();

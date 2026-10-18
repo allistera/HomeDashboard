@@ -1,6 +1,10 @@
 import { watchedDeviceIds } from "@/services/homeyBindings/homeyGlobalBindings";
 import { homePageBindings } from "@/services/homeyBindings/homeyHomeBindings";
-import { activityEventFromHomey, type ActivityEvent } from "@/services/homeyActivity";
+import {
+  activityEventFromHomey,
+  activityEventFromInsight,
+  type ActivityEvent,
+} from "@/services/homeyActivity";
 import type { CapabilityListener, HomeyConnection, HomeyDevice } from "@/services/homeyTypes";
 
 export async function subscribeHomeyDevices(
@@ -84,7 +88,43 @@ export async function subscribeHomeyDevices(
     const inventory = await connection.devices.getDevices({ $cache: false });
     await Promise.all(Object.values(inventory).map(attach));
     onDevices(new Map(devices));
-    onEvents([]);
+    const historical: ActivityEvent[] = [];
+    if (connection.insights) {
+      try {
+        const logs = await connection.insights.getLogs({ $cache: false });
+        const relevantDevices = new Map(
+          [...devices.values()]
+            .filter((device) => homePageBindings.activityDeviceIds.includes(device.id))
+            .map((device) => [device.id, device]),
+        );
+        await Promise.all(
+          Object.values(logs)
+            .filter((log) => relevantDevices.has(log.ownerId))
+            .map(async (log) => {
+              try {
+                const entries = await log.getEntries();
+                const device = relevantDevices.get(log.ownerId);
+                if (!device) return;
+                for (const entry of entries.values) {
+                  const title =
+                    entry.v === true || entry.v === false
+                      ? entry.v
+                        ? (log.titleTrue ?? log.title)
+                        : (log.titleFalse ?? log.title)
+                      : log.title;
+                  const event = activityEventFromInsight(device, title, entry.v, entry.t);
+                  if (event) historical.push(event);
+                }
+              } catch {
+                // Insights are optional; a failed history request must not hide live activity.
+              }
+            }),
+        );
+      } catch {
+        // Existing device and zone controls continue when this token lacks insights permission.
+      }
+    }
+    if (!stopped) onEvents(historical);
     return cleanup;
   } catch (error) {
     cleanup();

@@ -73,11 +73,13 @@ export class TestHomey implements HomeyConnection {
   private deviceEvents = new Map<string, ((device: HomeyDevice) => void)[]>();
   devices: HomeyConnection["devices"];
   zones: HomeyConnection["zones"];
+  insights: HomeyConnection["insights"];
   zoneInventory: Record<string, HomeyZone> = {};
   failZones = false;
   private zoneEvents = new Map<string, ((zone: HomeyZone) => void)[]>();
 
   constructor(inventory: TestDevice[]) {
+    this.insights = undefined;
     this.zones = {
       connect: async () => {},
       getZones: async () => {
