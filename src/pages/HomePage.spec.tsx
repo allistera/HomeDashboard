@@ -19,6 +19,11 @@ describe("HomePage headline", () => {
     expect(wrapper.get("h1").text()).toBe("Front door unlocked by Allister.");
   });
 
+  it("labels the homepage night button 'Get Jaicob'", () => {
+    const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
+    expect(wrapper.get(".btn--primary").text()).toBe("Get Jaicob");
+  });
+
   it("falls back to 'Everything's quiet.' when there is no recent activity", () => {
     useActivityStore().events = [];
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });

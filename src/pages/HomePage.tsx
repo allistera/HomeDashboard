@@ -100,7 +100,7 @@ export default defineComponent({
               disabled={rooms.dataFromHomey && !rooms.rooms.some((room) => room.lights.length > 0)}
               onClick={goodNight}
             >
-              Good night
+              Get Jaicob
             </button>
             <button
               type="button"
