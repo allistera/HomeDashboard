@@ -1,4 +1,4 @@
-import { computed, defineComponent, onScopeDispose, ref } from "vue";
+import { computed, defineComponent, ref } from "vue";
 import { useRouter } from "vue-router";
 
 import CameraModal from "@/components/CameraModal";
@@ -12,7 +12,6 @@ import { roomBindingFor } from "@/services/homeyBindings/homeyRoomsBindings";
 import { temperatureText } from "@/services/homeySync";
 import { useActivityStore } from "@/stores/activity";
 import { useRoomsStore } from "@/stores/rooms";
-import { useZonesStore } from "@/stores/zones";
 import { useSecurityStore, type Camera } from "@/stores/security";
 
 export default defineComponent({
@@ -20,15 +19,9 @@ export default defineComponent({
   setup() {
     const router = useRouter();
     const rooms = useRoomsStore();
-    const zones = useZonesStore();
     const activity = useActivityStore();
     const security = useSecurityStore();
     const selectedCamera = ref<Camera | null>(null);
-    const now = ref(Date.now());
-    const motionAgeTimer = setInterval(() => {
-      now.value = Date.now();
-    }, 60_000);
-    onScopeDispose(() => clearInterval(motionAgeTimer));
     const homeCamera = computed(() =>
       security.cameras.find((camera) => camera.id === homePageBindings.camera.cameraId),
     );
@@ -80,15 +73,6 @@ export default defineComponent({
 
       const details: string[] = [];
       if (binding.climate || binding.temperature) details.push(temperatureText(room.temp));
-      const zoneId = homePageBindings.roomZoneIds[roomId];
-      if (zoneId) {
-        const zone = zones.zones[zoneId];
-        const updated = zone?.activeLastUpdated ? Date.parse(zone.activeLastUpdated) : NaN;
-        if (zone?.active === true) details.push("MOTION NOW");
-        else if (zone?.active === false && Number.isFinite(updated))
-          details.push(`MOTION ${Math.max(0, Math.floor((now.value - updated) / 60_000))}M AGO`);
-        else details.push("MOTION UNAVAILABLE");
-      }
       if (binding.media && room.media?.active) details.push("MEDIA ON");
       return details.join(" · ");
     };

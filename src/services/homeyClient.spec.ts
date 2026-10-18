@@ -58,6 +58,55 @@ describe("Homey client", () => {
     expect(useActivityStore().events).toHaveLength(count);
   });
 
+  it("loads and refreshes outdoor temperature from the Homey weather Flow token", async () => {
+    const speaker = new TestDevice(livingRoomMediaBinding.deviceId, {
+      speaker_track: "First track",
+    });
+    const homey = new TestHomey([speaker]);
+    let value: number | string = "12.5";
+    const listeners: ((token: { id: string }) => void)[] = [];
+    const requestedIds: string[] = [];
+    homey.flowtoken = {
+      getFlowTokenValue: async ({ id }) => {
+        requestedIds.push(id);
+        return value;
+      },
+      on: (_event, listener) => listeners.push(listener),
+      off: (_event, listener) => {
+        const index = listeners.indexOf(listener);
+        if (index >= 0) listeners.splice(index, 1);
+      },
+    };
+
+    expect(await connectHomey(applyDevices, async () => homey)).toBe(true);
+    await flushPromises();
+    expect(requestedIds).toEqual(["homey:manager:weather:temperature"]);
+    expect(useRoomsStore().outsideTemp).toBe(12.5);
+
+    speaker.emit("speaker_track", "Second track");
+    expect(useRoomsStore().outsideTemp).toBe(12.5);
+    value = 14;
+    listeners[0]?.({ id: "homey:manager:weather:temperature" });
+    await flushPromises();
+    expect(useRoomsStore().outsideTemp).toBe(14);
+  });
+
+  it("keeps Homey connected when Flow-token read permission is unavailable", async () => {
+    const homey = new TestHomey([]);
+    homey.flowtoken = {
+      getFlowTokenValue: async () => {
+        throw new Error("Forbidden");
+      },
+      on: () => {},
+      off: () => {},
+    };
+
+    expect(await connectHomey(applyDevices, async () => homey)).toBe(true);
+    await flushPromises();
+    expect(useHomeyStore().status).toBe("connected");
+    expect(useRoomsStore().outsideTemp).toBeNull();
+  });
+
   it("writes media capabilities and restores optimistic state on rejection", async () => {
     const speaker = new TestDevice(livingRoomMediaBinding.deviceId, {
       speaker_playing: true,

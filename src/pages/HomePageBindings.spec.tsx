@@ -3,7 +3,6 @@ import { createPinia, setActivePinia, type Pinia } from "pinia";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { homePageBindings } from "@/services/homeyBindings/homeyHomeBindings";
-import { useZonesStore } from "@/stores/zones";
 import HomePage from "@/pages/HomePage";
 import { connectHomey, disconnectHomey } from "@/services/homeyClient";
 import { applyDevices } from "@/services/homeySync";
@@ -167,7 +166,7 @@ describe("HomePage bindings", () => {
     }
   });
 
-  it("uses zone activity for living-room motion while retaining media status", async () => {
+  it("omits room motion from homepage rows while retaining media status", async () => {
     const sensor = new TestDevice("f0de7239-1ac7-4580-a1d5-e33733e2abef", { alarm_motion: true });
     sensor.capabilitiesObj.alarm_motion.lastUpdated = new Date(Date.now() - 6 * 60_000);
     const speaker = new TestDevice(homePageBindings.mediaPlayer.deviceId, {
@@ -177,12 +176,6 @@ describe("HomePage bindings", () => {
     settings.url = "https://homey.example";
     settings.token = "test-token";
     const homey = new TestHomey([sensor, speaker]);
-    const zone = {
-      id: homePageBindings.roomZoneIds["living-room"],
-      active: false,
-      activeLastUpdated: new Date(Date.now() - 360000).toISOString(),
-    };
-    homey.zoneInventory[zone.id] = zone;
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
     try {
       await connectHomey(applyDevices, async () => homey);
@@ -190,60 +183,31 @@ describe("HomePage bindings", () => {
       const row = wrapper
         .findAll(".row")
         .find((item) => item.get(".row__name").text() === "Living room")!;
-      expect(row.get(".row__meta").text()).toBe("MOTION 6M AGO · MEDIA ON");
+      expect(row.get(".row__meta").text()).toBe("MEDIA ON");
       sensor.emit("alarm_motion", false);
       await flushPromises();
       expect(useRoomsStore().selectedRoom.motion?.active).toBe(false);
-      expect(row.get(".row__meta").text()).toContain("MOTION ");
-      expect(row.get(".row__meta").text()).toBe("MOTION 6M AGO · MEDIA ON");
-      homey.emitZone("zone.update", { ...zone, active: true });
+      homey.emitZone("zone.update", {
+        id: homePageBindings.roomZoneIds["living-room"],
+        active: true,
+      });
       await flushPromises();
-      expect(row.get(".row__meta").text()).toBe("MOTION NOW · MEDIA ON");
-      expect(row.get(".row__meta").text()).toContain("MEDIA ON");
+      expect(row.get(".row__meta").text()).toBe("MEDIA ON");
     } finally {
       wrapper.unmount();
       disconnectHomey();
     }
   });
 
-  it("uses every mapped room zone and never substitutes sensor timestamps", async () => {
-    const zones = useZonesStore();
-    for (const id of Object.values(homePageBindings.roomZoneIds)) {
-      zones.zones[id] = {
-        id,
-        active: false,
-        activeLastUpdated: new Date(Date.now() - 600000).toISOString(),
-      };
-    }
+  it("does not show motion status on homepage room rows", () => {
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
-    try {
-      for (const row of wrapper.findAll(".row"))
-        expect(row.get(".row__meta").text()).toContain("MOTION 10M AGO");
-      const hallwayId = homePageBindings.roomZoneIds.hallway;
-      zones.zones[hallwayId].activeLastUpdated = null;
-      await flushPromises();
-      const hallway = wrapper
-        .findAll(".row")
-        .find((row) => row.get(".row__name").text() === "Hallway")!;
-      expect(hallway.get(".row__meta").text()).toBe("MOTION UNAVAILABLE");
-      zones.zones[hallwayId].activeLastUpdated = "invalid";
-      await flushPromises();
-      expect(hallway.get(".row__meta").text()).toBe("MOTION UNAVAILABLE");
-    } finally {
-      wrapper.unmount();
-    }
+    for (const row of wrapper.findAll(".row"))
+      expect(row.get(".row__meta").text()).not.toContain("MOTION");
+    wrapper.unmount();
   });
 
   it("shows only binding-backed room details and highlights rooms with lights on", () => {
     const rooms = useRoomsStore();
-    const hallway = rooms.rooms.find((room) => room.id === "hallway")!;
-    hallway.motion!.lastChangedAt = Date.now();
-    const hallwayZoneId = homePageBindings.roomZoneIds.hallway;
-    useZonesStore().zones[hallwayZoneId] = {
-      id: hallwayZoneId,
-      active: false,
-      activeLastUpdated: new Date(Date.now() - 360000).toISOString(),
-    };
     const kitchen = rooms.rooms.find((room) => room.id === "kitchen")!;
     kitchen.media!.playing = false;
     kitchen.media!.active = false;
@@ -252,10 +216,10 @@ describe("HomePage bindings", () => {
     const rows = wrapper.findAll(".row");
     const rowFor = (name: string) => rows.find((row) => row.get(".row__name").text() === name)!;
 
-    expect(rowFor("Living room").get(".row__meta").text()).toBe("MOTION UNAVAILABLE · MEDIA ON");
-    expect(rowFor("Kitchen").get(".row__meta").text()).toBe("MOTION UNAVAILABLE");
-    expect(rowFor("Hallway").get(".row__meta").text()).toBe("MOTION 6M AGO");
-    expect(rowFor("Bedroom").get(".row__meta").text()).toBe("MOTION UNAVAILABLE");
+    expect(rowFor("Living room").get(".row__meta").text()).toBe("MEDIA ON");
+    expect(rowFor("Kitchen").get(".row__meta").text()).toBe("");
+    expect(rowFor("Hallway").get(".row__meta").text()).toBe("");
+    expect(rowFor("Bedroom").get(".row__meta").text()).toBe("");
     expect(rowFor("Living room").classes()).not.toContain("row--dim");
     expect(rowFor("Elsies Room").classes()).toContain("row--dim");
     expect(rowFor("Bedroom").classes()).toContain("row--dim");

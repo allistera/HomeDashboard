@@ -11,6 +11,7 @@ interface HomeBindings {
   outsideTemperature?: DeviceCapabilityBinding;
   houseTemperature?: DeviceCapabilityBinding;
   houseTarget?: DeviceCapabilityBinding;
+  outsideTemperatureTokenId: string;
   washingWeather?: DeviceCapabilityBinding;
   camera: { cameraId: string; deviceId?: string };
   mediaPlayer: typeof livingRoomMediaBinding;
@@ -20,6 +21,7 @@ interface HomeBindings {
 }
 
 export const homePageBindings: HomeBindings = {
+  outsideTemperatureTokenId: "homey:manager:weather:temperature",
   roomZoneIds: {
     "living-room": "19d2530e-a1fc-43f4-ba0c-1269889ebf21",
     kitchen: "61bed053-197d-4829-98eb-e3974e704aa4",

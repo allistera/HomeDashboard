@@ -93,6 +93,9 @@ export const useRoomsStore = defineStore("rooms", {
       this.houseTempFromHomey = temperature;
       this.houseTargetFromHomey = target;
     },
+    setOutsideTemperature(value: number | null) {
+      this.outsideTempFromHomey = value;
+    },
     setWashingWeather(ok: boolean) {
       this.washingWeatherOk = ok;
     },

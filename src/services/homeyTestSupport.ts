@@ -75,12 +75,14 @@ export class TestHomey implements HomeyConnection {
   private deviceEvents = new Map<string, ((device: HomeyDevice) => void)[]>();
   devices: HomeyConnection["devices"];
   zones: HomeyConnection["zones"];
+  flowtoken: HomeyConnection["flowtoken"];
   insights: HomeyConnection["insights"];
   zoneInventory: Record<string, HomeyZone> = {};
   failZones = false;
   private zoneEvents = new Map<string, ((zone: HomeyZone) => void)[]>();
 
   constructor(inventory: TestDevice[]) {
+    this.flowtoken = undefined;
     this.insights = undefined;
     this.zones = {
       connect: async () => {},
