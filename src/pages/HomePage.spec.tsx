@@ -42,7 +42,7 @@ describe("HomePage headline", () => {
   it("shows the bound outdoor temperature in the climate summary", () => {
     useRoomsStore().setHomeClimateValues(8.4, 20.7, 21.5);
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
-    const climateSummary = wrapper.findAll(".col-foot")[0];
+    const climateSummary = wrapper.get(".homepage-footer");
 
     expect(climateSummary.text()).toContain("Outdoor Temp");
     expect(climateSummary.text()).toContain("8.4°");
