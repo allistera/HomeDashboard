@@ -1,6 +1,8 @@
 import { defineComponent, type PropType } from "vue";
 
 import { useClock } from "@/composables/useClock";
+import { useHomeyStore } from "@/stores/homey";
+import { useSettingsStore } from "@/stores/settings";
 import { useSecurityStore } from "@/stores/security";
 import { useThemeStore } from "@/stores/theme";
 
@@ -22,54 +24,75 @@ export default defineComponent({
   },
   setup(props) {
     const theme = useThemeStore();
+    const homey = useHomeyStore();
+    const settings = useSettingsStore();
     const security = useSecurityStore();
     const clock = useClock();
     return () => (
-      <header class="topbar">
-        <div class="topbar__group">
-          <span class="topbar__home">Dedridge</span>
-          <span>{clock.value}</span>
-          {props.left.map((item) => (
-            <span key={item}>{item}</span>
-          ))}
-        </div>
-        <div class="topbar__group">
-          {props.right.map((item) => (
-            <span key={item}>{item}</span>
-          ))}
-          {props.showPeople && (
-            <span class="topbar__people" tabindex={0}>
-              {security.dataFromHomey &&
-              security.people.every((person) => person.status === "UNAVAILABLE")
-                ? "PRESENCE UNAVAILABLE"
-                : `${security.peopleHome} PEOPLE HOME`}
-              <span class="topbar__popover" role="tooltip">
-                <span class="topbar__popover-box">
-                  {security.people
-                    .filter((person) => !person.guest && person.home !== false)
-                    .map((person) => (
-                      <span key={person.id} class="topbar__popover-row">
-                        <span class="topbar__popover-dot" style={{ background: person.color }} />
-                        {person.name}
-                      </span>
-                    ))}
+      <>
+        <header class="topbar">
+          <div class="topbar__group">
+            <span class="topbar__home">Dedridge</span>
+            <span>{clock.value}</span>
+            {props.left.map((item) => (
+              <span key={item}>{item}</span>
+            ))}
+          </div>
+          <div class="topbar__group">
+            {props.right.map((item) => (
+              <span key={item}>{item}</span>
+            ))}
+            {props.showPeople && (
+              <span class="topbar__people" tabindex={0}>
+                {security.dataFromHomey &&
+                security.people.every((person) => person.status === "UNAVAILABLE")
+                  ? "PRESENCE UNAVAILABLE"
+                  : `${security.peopleHome} PEOPLE HOME`}
+                <span class="topbar__popover" role="tooltip">
+                  <span class="topbar__popover-box">
+                    {security.people
+                      .filter((person) => !person.guest && person.home !== false)
+                      .map((person) => (
+                        <span key={person.id} class="topbar__popover-row">
+                          <span class="topbar__popover-dot" style={{ background: person.color }} />
+                          {person.name}
+                        </span>
+                      ))}
+                  </span>
                 </span>
               </span>
+            )}
+            <span class={["topbar__status", `topbar__status--${props.statusTone}`]}>
+              ● {props.status}
             </span>
-          )}
-          <span class={["topbar__status", `topbar__status--${props.statusTone}`]}>
-            ● {props.status}
-          </span>
-          <button
-            type="button"
-            class="topbar__theme"
-            onClick={() => theme.cycle()}
-            aria-label={`Theme: ${theme.mode}. Click to change.`}
-          >
-            {theme.mode.toUpperCase()}
-          </button>
-        </div>
-      </header>
+            <button
+              type="button"
+              class="topbar__theme"
+              onClick={() => theme.cycle()}
+              aria-label={`Theme: ${theme.mode}. Click to change.`}
+            >
+              {theme.mode.toUpperCase()}
+            </button>
+          </div>
+        </header>
+        {(homey.message || homey.status === "error" || homey.status === "disconnected") && (
+          <div class="homey-warning" role="alert">
+            <strong>Homey communication issue.</strong>{" "}
+            {homey.message ||
+              (settings.configured ? (
+                "Unable to communicate with Homey. Check your connection and Homey settings."
+              ) : (
+                <>
+                  Homey is not connected.{" "}
+                  <a href={`${import.meta.env.BASE_URL}settings#homey-url`}>
+                    Add your Homey address and access token in Settings
+                  </a>
+                  .
+                </>
+              ))}
+          </div>
+        )}
+      </>
     );
   },
 });

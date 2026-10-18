@@ -41,6 +41,11 @@ blocking. Check LAN reachability, TLS and browser access if connection validatio
 The address and token are saved only in this browser under `dedridge.homey.*` keys. Existing
 Home Assistant settings are not reused. No token belongs in source code or build-time variables.
 
+A full-width pastel red warning below the top bar reports Homey connection failures,
+reconnect attempts, and failed device commands. It clears when the connection recovers
+or a subsequent device command succeeds. When Homey is not configured in this browser,
+the warning directs you to add its address and access token in Settings.
+
 ## Homey device bindings
 
 Page modules in `src/services/homeyBindings/` link dashboard items to exact Homey **device IDs**.

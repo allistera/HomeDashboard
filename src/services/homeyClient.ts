@@ -144,6 +144,7 @@ export async function setHomeyCapability(
     return "failed";
   try {
     await device.setCapabilityValue({ capabilityId, value });
+    if (useHomeyStore().status === "connected") useHomeyStore().message = "";
     return "sent";
   } catch {
     useHomeyStore().message = `Homey could not update ${device.name}.`;
