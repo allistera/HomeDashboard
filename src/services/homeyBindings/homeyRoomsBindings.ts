@@ -17,7 +17,7 @@ export const toiletLightBindings: LightBinding[] = [
 // IDs come from the connected Homey inventory, not names or HA entity IDs.
 export const livingRoomMediaBinding = {
   roomId: "living-room",
-  deviceId: "76e05f8e-87b3-493e-bc6f-4b6ec6aa5665",
+  deviceId: "d74d5250-28c4-4698-aed9-32db1637a22d",
 };
 
 export const roomBindings: RoomBinding[] = [

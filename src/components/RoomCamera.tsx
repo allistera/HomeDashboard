@@ -8,6 +8,7 @@ export default defineComponent({
   props: {
     // SAFETY: Vue checks the object prop; RoomsPage supplies the typed RoomCamera model.
     camera: { type: Object as PropType<RoomCamera>, required: true },
+    height: { type: Number, default: 150 },
   },
   setup(props) {
     const settings = useSettingsStore();
@@ -99,7 +100,7 @@ export default defineComponent({
         <button
           type="button"
           class="camera"
-          style={{ height: "150px" }}
+          style={{ height: `${props.height}px` }}
           aria-label={`${props.camera.name} camera`}
           aria-haspopup="dialog"
           aria-expanded={expanded.value}

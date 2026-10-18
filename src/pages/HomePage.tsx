@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import CameraModal from "@/components/CameraModal";
 import CameraTile from "@/components/CameraTile";
 import EventFeed from "@/components/EventFeed";
+import RoomCamera from "@/components/RoomCamera";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
 import { homePageBindings } from "@/services/homeyBindings/homeyHomeBindings";
@@ -213,16 +214,28 @@ export default defineComponent({
               </span>
             </div>
             <div style={{ padding: "0 40px" }}>
-              <CameraTile
-                name={`camera feed — ${homeCamera.value?.name ?? "front door"}`}
-                live={homeCamera.value?.live ?? false}
-                note={homeCamera.value?.note}
-                imageUrl={homeCamera.value?.snapshotUrl ?? ""}
-                height={250}
-                onSelect={() => {
-                  if (homeCamera.value) selectedCamera.value = homeCamera.value;
-                }}
-              />
+              {homeCamera.value?.deviceId ? (
+                <RoomCamera
+                  camera={{
+                    id: homeCamera.value.deviceId,
+                    name: homeCamera.value.name,
+                    available: homeCamera.value.available ?? false,
+                    snapshotUrl: homeCamera.value.snapshotUrl,
+                  }}
+                  height={250}
+                />
+              ) : (
+                <CameraTile
+                  name={`camera feed — ${homeCamera.value?.name ?? "front door"}`}
+                  live={homeCamera.value?.live ?? false}
+                  note={homeCamera.value?.note}
+                  imageUrl={homeCamera.value?.snapshotUrl ?? ""}
+                  height={250}
+                  onSelect={() => {
+                    if (homeCamera.value) selectedCamera.value = homeCamera.value;
+                  }}
+                />
+              )}
             </div>
             <div class="section-head" style={{ padding: "20px 40px 8px" }}>
               <span class="label">Activity{activity.status === "live" ? " · Homey" : ""}</span>

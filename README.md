@@ -35,7 +35,7 @@ type carries the hierarchy.
 
 Settings connects directly to the [Homey Web API](https://athombv.github.io/node-homey-api/HomeyAPI.html)
 using a Homey address and personal access token (API key). Create the key in the Homey Web App's
-Settings → API Keys and grant `homey.device.readonly`, `homey.device.control`, and `homey.zone.readonly` permissions.
+Settings → API Keys and grant `homey.device.readonly`, `homey.device.control`, `homey.zone.readonly`, and `homey.insights.readonly` permissions.
 Use a browser-reachable Homey address; an HTTPS dashboard requires HTTPS to avoid mixed-content
 blocking. Check LAN reachability, TLS and browser access if connection validation fails.
 The address and token are saved only in this browser under `dedridge.homey.*` keys. Existing
@@ -59,7 +59,7 @@ motion: {
 ```
 
 The current inventory binds Livingroom Light and Livingroom Light 2 (power and brightness),
-the downstairs and upstairs hallway lights, Toilet Light, living-room Sonos speaker, hallway motion sensor,
+the downstairs and upstairs hallway lights, Toilet Light, living-room Apple TV, hallway motion sensor,
 and toilet motion sensor. The homepage Hallway toggle controls both hallway lights and shows
 on when either is on. The Toilet toggle controls Toilet Light. Living-room, hallway, and toilet light power changes appear in the live activity
 feed. Add devices to the corresponding page module after verifying their IDs and
@@ -80,16 +80,17 @@ connected. The initial disconnected view remains a demonstration, not live home 
 
 ## Activity and cameras
 
-The live activity feed is generated from capability changes for
-`homePageBindings.activityDeviceIds`. It starts with an empty feed on connection and collects
-events while the page is connected; Home Assistant's previous 24-hour logbook is not retained.
+The activity feed loads recent Insights history and then follows live capability changes for
+`homePageBindings.activityDeviceIds`. Grant `homey.insights.readonly` for history; without it,
+the live feed still works. Home Assistant's previous 24-hour logbook is not retained.
 
 Room cameras are discovered from their Homey zones and display refreshing snapshots. Opening
 a camera starts live WebRTC video when its Homey integration exposes a camera video. The
 stream stops when the overlay closes or the tab is hidden. Cameras without a live video, or
 whose stream cannot connect, fall back to snapshots. This uses Homey’s video offer and
 keep-alive endpoints with the existing device-read token permission; no microphone or local
-camera permission is needed. Camera bindings may also supply independent MJPEG stream URLs. Alarm, presence, weather, and scene helpers must be explicitly mapped to real
+camera permission is needed. The homepage Front door tile uses the bound G5 Turret Camera
+device. Camera bindings may also supply independent MJPEG stream URLs. Alarm, presence, weather, and scene helpers must be explicitly mapped to real
 Homey devices/capabilities before use; no old HA entity IDs are kept as substitute device IDs.
 
 ## Commands

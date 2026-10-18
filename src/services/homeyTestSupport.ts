@@ -12,6 +12,8 @@ export class TestDevice implements HomeyDevice {
   class = "speaker";
   zone = "test-zone";
   available = true;
+  images?: HomeyDevice["images"];
+  videos?: HomeyDevice["videos"];
   capabilities: string[];
   capabilitiesObj: HomeyDevice["capabilitiesObj"];
   commands: { capabilityId: string; value: Exclude<CapabilityValue, null> }[] = [];
@@ -73,11 +75,13 @@ export class TestHomey implements HomeyConnection {
   private deviceEvents = new Map<string, ((device: HomeyDevice) => void)[]>();
   devices: HomeyConnection["devices"];
   zones: HomeyConnection["zones"];
+  insights: HomeyConnection["insights"];
   zoneInventory: Record<string, HomeyZone> = {};
   failZones = false;
   private zoneEvents = new Map<string, ((zone: HomeyZone) => void)[]>();
 
   constructor(inventory: TestDevice[]) {
+    this.insights = undefined;
     this.zones = {
       connect: async () => {},
       getZones: async () => {

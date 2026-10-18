@@ -45,6 +45,9 @@ export interface HomeyZone {
 }
 
 export interface HomeyConnection {
+  insights?: {
+    getLogs(options?: { $cache: boolean }): Promise<Record<string, HomeyInsightLog>>;
+  };
   zones: {
     getZones(options?: { $cache: boolean }): Promise<Record<string, HomeyZone>>;
     connect(): Promise<void>;
@@ -72,6 +75,17 @@ export interface HomeyConnection {
   connect(): Promise<void>;
   destroy(): void;
   on(event: "connect" | "disconnect" | "reconnect", listener: () => void): void;
+}
+
+export interface HomeyInsightLog {
+  id: string;
+  ownerId: string;
+  ownerUri: string;
+  title: string;
+  type: "number" | "boolean";
+  titleTrue?: string | null;
+  titleFalse?: string | null;
+  getEntries(): Promise<{ values: Array<{ t: string | number; v: number | boolean }> }>;
 }
 
 export type HomeyFactory = (address: string, token: string) => Promise<HomeyConnection>;
