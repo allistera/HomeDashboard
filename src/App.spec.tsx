@@ -23,7 +23,27 @@ describe("App", () => {
     await router.isReady();
     const links = wrapper.findAll(".rail__link").map((link) => link.text());
     expect(links).toEqual(["HOME", "ROOMS", "FLOORS", "SECURITY"]);
+    const warning = wrapper.get('[role="alert"]');
+    expect(warning.text()).toContain("Homey is not connected.");
+    expect(wrapper.get(".topbar").element.nextElementSibling).toBe(warning.element);
     expect(wrapper.text()).toContain("Front door unlocked by Allister.");
+  });
+
+  it("links the Homey warning directly to the Homey URL setting", async () => {
+    const { wrapper, router } = mountApp();
+    try {
+      await router.isReady();
+      const link = wrapper.get(".homey-warning a");
+      expect(link.text()).toBe("Add your Homey address and access token in Settings");
+      expect(link.attributes("href")).toBe("/settings#homey-url");
+      await router.push(link.attributes("href")!);
+      await flushPromises();
+      expect(router.currentRoute.value.path).toBe("/settings");
+      expect(router.currentRoute.value.hash).toBe("#homey-url");
+      expect(wrapper.get("#homey-url").element.tagName).toBe("INPUT");
+    } finally {
+      wrapper.unmount();
+    }
   });
 
   it("navigates between the four pages", async () => {

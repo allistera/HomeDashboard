@@ -159,6 +159,23 @@ a {
   color: var(--muted);
 }
 
+.homey-warning {
+  width: 100%;
+  padding: 14px clamp(16px, 3vw, 40px);
+  background: #f8d7da;
+  color: #76232c;
+  border-bottom: 1px solid #edb9be;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.homey-warning a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .topbar__group {
   display: flex;
   gap: 26px;
