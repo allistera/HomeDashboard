@@ -2,7 +2,6 @@ import { computed, defineComponent, ref } from "vue";
 
 import TopBar from "@/components/TopBar";
 import { connectHomey, disconnectHomey } from "@/services/homeyClient";
-import { applyDevices } from "@/services/homeySync";
 import { useHomeyStore } from "@/stores/homey";
 import { useZonesStore } from "@/stores/zones";
 import { useSettingsStore } from "@/stores/settings";
@@ -19,7 +18,7 @@ export default defineComponent({
     const submit = async (event: Event) => {
       event.preventDefault();
       const saved = await settings.validateAndSave(url.value, token.value);
-      if (saved) await connectHomey(applyDevices);
+      if (saved) await connectHomey();
     };
 
     const clear = () => {
@@ -143,7 +142,7 @@ export default defineComponent({
                 type="button"
                 class="btn btn--small"
                 style={{ alignSelf: "flex-start" }}
-                onClick={() => void connectHomey(applyDevices)}
+                onClick={() => void connectHomey()}
               >
                 Reconnect
               </button>

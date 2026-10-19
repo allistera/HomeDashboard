@@ -1,4 +1,4 @@
-import { homeyCameraVideo } from "@/services/homeyClient";
+import { homeyCameraVideo } from "@/services/homeyCommands";
 import { useSettingsStore } from "@/stores/settings";
 
 export interface WebRtcStreamHandlers {

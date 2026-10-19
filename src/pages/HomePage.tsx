@@ -9,7 +9,7 @@ import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
 import { homePageBindings } from "@/services/homeyBindings/homeyHomeBindings";
 import { roomBindingFor } from "@/services/homeyBindings/homeyRoomsBindings";
-import { temperatureText } from "@/services/homeySync";
+import { temperatureText } from "@/utils/temperature";
 import { useActivityStore } from "@/stores/activity";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore, type Camera } from "@/stores/security";

@@ -4,8 +4,8 @@ import { useZonesStore } from "@/stores/zones";
 export async function subscribeHomeyZones(
   connection: HomeyConnection,
   isCurrent: () => boolean = () => true,
+  store = useZonesStore(),
 ): Promise<() => void> {
-  const store = useZonesStore();
   let stopped = false;
   let revision = 0;
   let requestId = 0;

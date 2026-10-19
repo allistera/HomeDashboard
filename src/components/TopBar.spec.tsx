@@ -26,7 +26,7 @@ describe("Homey communication warning", () => {
       expect(wrapper.get('[role="alert"]').text()).toContain("access token in Settings.");
       useSettingsStore().url = "https://homey.example";
       useSettingsStore().token = "test-token";
-      useHomeyStore().status = "connecting";
+      useHomeyStore().transport.status = "connecting";
       await flushPromises();
       expect(wrapper.find('[role="alert"]').exists()).toBe(false);
     } finally {
@@ -39,12 +39,9 @@ describe("Homey communication warning", () => {
     try {
       useSettingsStore().url = "https://homey.example";
       useSettingsStore().token = "test-token";
-      await connectHomey(
-        () => {},
-        async () => {
-          throw new Error("Unreachable");
-        },
-      );
+      await connectHomey(async () => {
+        throw new Error("Unreachable");
+      });
       await flushPromises();
       const alert = wrapper.get('[role="alert"]');
       expect(alert.text()).toContain("Homey communication issue.");
@@ -61,10 +58,7 @@ describe("Homey communication warning", () => {
       useSettingsStore().url = "https://homey.example";
       useSettingsStore().token = "test-token";
       const homey = new TestHomey([]);
-      await connectHomey(
-        () => {},
-        async () => homey,
-      );
+      await connectHomey(async () => homey);
       await flushPromises();
       expect(wrapper.find('[role="alert"]').exists()).toBe(false);
       homey.emit("disconnect");
@@ -84,10 +78,7 @@ describe("Homey communication warning", () => {
       useSettingsStore().url = "https://homey.example";
       useSettingsStore().token = "test-token";
       const light = new TestDevice("light", { onoff: false });
-      await connectHomey(
-        () => {},
-        async () => new TestHomey([light]),
-      );
+      await connectHomey(async () => new TestHomey([light]));
       light.failWrites = true;
       expect(await setHomeyCapability(light.id, "onoff", true)).toBe("failed");
       await flushPromises();

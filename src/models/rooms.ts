@@ -52,3 +52,13 @@ export interface RoomCamera {
   available: boolean;
   snapshotUrl?: string;
 }
+
+export interface RoomsState {
+  rooms: Room[];
+  selectedRoomId: string;
+  washingWeatherOk: boolean | null;
+  outsideTempFromHomey: number | null;
+  houseTempFromHomey: number | null;
+  houseTargetFromHomey: number | null;
+  mode: "demo" | "live";
+}

@@ -1,4 +1,4 @@
-import { parse } from "yaml";
+import { parseHomeyConfig } from "@/services/homeyBindings/parseHomeyConfig";
 import source from "@/config/homey.yaml?raw";
 import type { AlarmArmState, DeviceCapabilityBinding, RoomBinding } from "@/services/homeyTypes";
 
@@ -24,7 +24,7 @@ interface SecurityBindings {
   sensorCount: number;
 }
 
-interface HomeyConfig {
+export interface HomeyConfig {
   home: HomeBindings;
   rooms: RoomBinding[];
   floors: {
@@ -45,5 +45,5 @@ interface HomeyConfig {
   };
 }
 
-// Trusted bundled configuration; binding tests verify IDs and screen references.
-export const homeyConfig: HomeyConfig = parse(source);
+// Validate bundled YAML before exposing it to stores and pages.
+export const homeyConfig: HomeyConfig = parseHomeyConfig(source);

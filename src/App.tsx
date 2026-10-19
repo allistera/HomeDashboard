@@ -3,7 +3,6 @@ import { RouterView } from "vue-router";
 
 import SideRail from "@/components/SideRail";
 import { connectHomey, disconnectHomey } from "@/services/homeyClient";
-import { applyDevices } from "@/services/homeySync";
 import { useSettingsStore } from "@/stores/settings";
 import { useThemeStore } from "@/stores/theme";
 
@@ -14,7 +13,7 @@ export default defineComponent({
     const settings = useSettingsStore();
 
     onMounted(() => {
-      if (settings.configured) void connectHomey(applyDevices);
+      if (settings.configured) void connectHomey();
       theme.watchSystem();
     });
     onBeforeUnmount(disconnectHomey);

@@ -1,0 +1,4 @@
+.room-light {
+  grid-template-columns: minmax(0, 1fr) minmax(100px, 140px) 52px 44px;
+  gap: 16px;
+}

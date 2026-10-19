@@ -101,7 +101,7 @@ describe("RoomsPage bindings", () => {
     useSettingsStore().token = "test-token";
     const wrapper = mount(RoomsPage);
     try {
-      await connectHomey(applyDevices, async () => new TestHomey([sensor]));
+      await connectHomey(async () => new TestHomey([sensor]));
       await flushPromises();
       const details = wrapper.get<HTMLDetailsElement>("details.device-details");
       expect(details.element.open).toBe(false);
@@ -140,7 +140,7 @@ describe("RoomsPage bindings", () => {
     useSettingsStore().token = "test-token";
     const wrapper = mount(RoomsPage);
     try {
-      await connectHomey(applyDevices, async () => homey);
+      await connectHomey(async () => homey);
       await flushPromises();
       const list = wrapper.get('[aria-label="Room devices"]');
       expect(list.findAll(".row")).toHaveLength(5);
