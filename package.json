@@ -17,7 +17,8 @@
     "homey-api": "^3.20.1",
     "pinia": "^4.0.3",
     "vue": "^3.5.43",
-    "vue-router": "^5.4.0"
+    "vue-router": "^5.4.0",
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "@oxlint/plugins": "^1.87.0",

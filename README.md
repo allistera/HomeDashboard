@@ -48,21 +48,20 @@ the warning directs you to add its address and access token in Settings.
 
 ## Homey device bindings
 
-Page modules in `src/services/homeyBindings/` link dashboard items to exact Homey **device IDs**.
-A property binding is `{ deviceId, capabilityId }`, for example:
-
-```ts
-motion: {
-  deviceId: "4afb514a-cf25-4bb3-b465-7a8866fcf927",
-  capabilityId: "alarm_motion",
-}
-```
+The central runtime mapping is [`src/config/homey.yaml`](src/config/homey.yaml).
+Edit its `home`, `rooms`, `floors`, and `security` sections to map screen items to
+Homey device IDs, capability properties, and zones. YAML anchors reuse device IDs
+across screens. Comments list the standard light, media, and camera properties,
+and explain dynamic zone discovery and unbound items. Optional property bindings
+use `{ deviceId, capabilityId }`; omit unavailable bindings rather than inventing IDs.
+Changes take effect through Vite during development or after rebuilding for deployment.
+The TypeScript page modules expose this shared configuration to existing consumers.
 
 The current inventory binds Livingroom Light and Livingroom Light 2 (power and brightness),
-the downstairs and upstairs hallway lights, Toilet Light, living-room Apple TV, hallway motion sensor,
+the downstairs and upstairs hallway lights, Bedroom Light, Toilet Light, living-room Apple TV, hallway motion sensor,
 and toilet motion sensor. The homepage Hallway toggle controls both hallway lights and shows
-on when either is on. The Toilet toggle controls Toilet Light. Living-room, hallway, and toilet light power changes appear in the live activity
-feed. Add devices to the corresponding page module after verifying their IDs and
+on when either is on. The Bedroom toggle controls Bedroom Light; the Toilet toggle controls Toilet Light. Living-room, hallway, and toilet light power changes appear in the live activity
+feed. Add devices to the central YAML file after verifying their IDs and
 capabilities in Homey; names are display labels and never lookup keys. Lights use `onoff` and
 `dim` (0–1), temperatures use `measure_temperature` / `target_temperature`, and media controls
 use `speaker_playing`, `speaker_prev`, and `speaker_next`.
