@@ -364,6 +364,10 @@ a {
   letter-spacing: -0.02em;
 }
 
+.row__name--motion {
+  font-weight: 700;
+}
+
 .room-navigation {
   display: flex;
   align-items: center;
