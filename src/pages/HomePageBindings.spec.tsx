@@ -197,9 +197,11 @@ describe("HomePage bindings", () => {
         .findAll(".row")
         .find((item) => item.get(".row__name").text() === "Living room")!;
       expect(row.get(".row__meta").text()).toBe("MEDIA ON");
+      expect(row.get(".row__name").classes()).toContain("row__name--motion");
       sensor.emit("alarm_motion", false);
       await flushPromises();
       expect(useRoomsStore().selectedRoom.motion?.active).toBe(false);
+      expect(row.get(".row__name").classes()).not.toContain("row__name--motion");
       homey.emitZone("zone.update", {
         id: homePageBindings.roomZoneIds["living-room"],
         active: true,

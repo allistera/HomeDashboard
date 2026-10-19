@@ -163,7 +163,7 @@ export default defineComponent({
                         }}
                       >
                         <span
-                          class="row__name"
+                          class={["row__name", { "row__name--motion": room.motion?.active }]}
                           style={{ fontSize: "30px", letterSpacing: "-0.03em" }}
                         >
                           {room.name}
