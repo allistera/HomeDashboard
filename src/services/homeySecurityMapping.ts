@@ -45,15 +45,31 @@ export function mapHomeySecurity(
       }
     }
   }
-  for (const person of security.people) {
-    const binding = personBindings.find((item) => item.personId === person.id);
-    const device = binding ? devices.get(binding.presence.deviceId) : undefined;
-    person.home =
-      device?.available && binding
-        ? device.capabilitiesObj[binding.presence.capabilityId]?.value === true
-        : false;
-    person.status = device?.available ? (person.home ? "HOME" : "AWAY") : "UNAVAILABLE";
-  }
+  security.people = [...devices.values()]
+    .filter(
+      (device) =>
+        device.capabilities.includes("presence") ||
+        personBindings.some((binding) => binding.presence.deviceId === device.id),
+    )
+    .map((device) => {
+      const binding = personBindings.find((item) => item.presence.deviceId === device.id);
+      const capabilityId = binding?.presence.capabilityId ?? "presence";
+      const value = device.capabilitiesObj[capabilityId]?.value;
+      const home =
+        device.available &&
+        device.capabilities.includes(capabilityId) &&
+        (value === true || value === false)
+          ? value
+          : undefined;
+      return {
+        id: binding?.personId ?? device.id,
+        name: device.name,
+        home,
+        status: home === undefined ? "UNAVAILABLE" : home ? "HOME" : "AWAY",
+        color: "#C7CEEC",
+      };
+    })
+    .sort((first, second) => first.name.localeCompare(second.name));
   security.events = [];
   security.cameras = [...devices.values()]
     .filter(

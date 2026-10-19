@@ -89,7 +89,8 @@ capabilities in Homey; names are display labels and never lookup keys. Lights us
 `dim` (0–1), temperatures use `measure_temperature` / `target_temperature`, and media controls
 use `speaker_playing`, `speaker_prev`, and `speaker_next`.
 
-The homepage outdoor temperature comes from Homey's `homey:manager:weather:temperature` Flow token.
+The outdoor temperature at the bottom of the homepage comes from Homey's
+`homey:manager:weather:temperature` Flow token and refreshes on live updates and reconnects.
 Grant `homey.flow.readonly` to read it; if unavailable, Homey controls remain connected and the
 temperature shows as unavailable. Homepage room rows show mapped temperature and live media
 status. Motion remains available in room details. If zone access is denied, light controls remain
@@ -98,6 +99,12 @@ connected and Settings explains the required zone read permission.
 The dashboard subscribes to device capability updates, reconciles device changes/deletions,
 and destroys listeners on disconnect. Unbound or unavailable readings show as unavailable once
 connected. The initial disconnected view remains a demonstration, not live home state.
+
+Presence is discovered from Homey devices with the boolean `presence` capability, across all
+zones. The top-menu people dropdown lists their device names with Home, Away, or Unavailable
+labels and counts only confirmed home readings. Device additions, renames, removals, and
+presence changes update live. Room occupancy and motion sensors are not counted as people.
+This uses the existing device-read permission; no separate presence permission is needed.
 
 ## Activity and cameras
 
@@ -111,7 +118,7 @@ stream stops when the overlay closes or the tab is hidden. Cameras without a liv
 whose stream cannot connect, fall back to snapshots. This uses Homey’s video offer and
 keep-alive endpoints with the existing device-read token permission; no microphone or local
 camera permission is needed. The homepage Front door tile uses the bound G5 Turret Camera
-device. Camera bindings may also supply independent MJPEG stream URLs. Alarm, presence, weather, and scene helpers must be explicitly mapped to real
+device. Camera bindings may also supply independent MJPEG stream URLs. Alarm, washing-weather, and scene helpers must be explicitly mapped to real
 Homey devices/capabilities before use; no old HA entity IDs are kept as substitute device IDs.
 
 ## Commands

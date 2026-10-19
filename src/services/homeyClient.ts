@@ -9,9 +9,9 @@ import { useActivityStore } from "@/stores/activity";
 import { useHomeyStore } from "@/stores/homey";
 import { useSettingsStore } from "@/stores/settings";
 import { homePageBindings } from "@/services/homeyBindings/homeyHomeBindings";
-import { useSecurityStore } from "@/stores/security";
 import type { HomeyTransport } from "@/services/homeyTransport";
 import { useRoomsStore } from "@/stores/rooms";
+import { useSecurityStore } from "@/stores/security";
 
 async function createHomey(address: string, token: string): Promise<HomeyConnection> {
   // Import only HomeyAPI, not all Athom cloud clients, and load it on demand.
@@ -74,6 +74,11 @@ export async function connectHomey(factory: HomeyFactory = createHomey): Promise
       stopWeather = () => active?.flowtoken?.off("flowtoken.update", updateWeather);
     }
     await active.connect();
+    try {
+      await active.flowtoken?.connect();
+    } catch {
+      // Weather subscriptions are optional; keep device controls available.
+    }
     stop = await subscribeHomeyDevices(
       active,
       (snapshot) => {
@@ -139,6 +144,8 @@ export function disconnectHomey(): void {
   if (useRoomsStore().mode === "live") applyDevices(new Map());
   useZonesStore().$reset();
   useRoomsStore().setOutsideTemperature(null);
+  const security = useSecurityStore();
+  if (security.dataFromHomey) security.people = [];
   const state = useHomeyStore();
   session.status = "disconnected";
   session.message = "";
@@ -157,18 +164,14 @@ async function refreshOutsideTemperature(
     const value = await homey.flowtoken.getFlowTokenValue({
       id: homePageBindings.outsideTemperatureTokenId,
     });
-    if (
-      current !== session.generation ||
-      value === null ||
-      value === undefined ||
-      value === true ||
-      value === false
-    )
-      return;
-    const temperature = Number(value);
-    if (Number.isFinite(temperature)) rooms.setOutsideTemperature(temperature);
+    if (current !== session.generation || session.status !== "connected") return;
+    const reading = String(value ?? "").trim();
+    const temperature = reading === "" ? NaN : Number(reading);
+    rooms.setOutsideTemperature(Number.isFinite(temperature) ? temperature : null);
   } catch {
     // Flow-token read permission is optional; Homey device controls remain connected.
+    if (current === session.generation && session.status === "connected")
+      rooms.setOutsideTemperature(null);
   }
 }
 

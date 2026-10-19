@@ -846,6 +846,12 @@ a {
   flex-shrink: 0;
 }
 
+.topbar__popover-status {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 10px;
+}
+
 /* ── Live connection panel ──────────────────────────── */
 
 .connection {

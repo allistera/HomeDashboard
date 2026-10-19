@@ -1,6 +1,7 @@
 import { createPinia, setActivePinia } from "pinia";
-import { flushPromises } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { createMemoryHistory, createRouter } from "vue-router";
 import {
   connectHomey,
   disconnectHomey,
@@ -19,6 +20,7 @@ import { useActivityStore } from "@/stores/activity";
 import { useHomeyStore } from "@/stores/homey";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSettingsStore } from "@/stores/settings";
+import HomePage from "@/pages/HomePage";
 
 describe("Homey client", () => {
   beforeEach(() => {
@@ -73,10 +75,16 @@ describe("Homey client", () => {
       speaker_track: "First track",
     });
     const homey = new TestHomey([speaker]);
-    let value: number | string = "12.5";
+    const router = createRouter({ history: createMemoryHistory(), routes: [] });
+    const wrapper = mount(HomePage, { global: { plugins: [router] } });
+    let value: number | string | boolean | null = "12.5";
+    let connected = false;
     const listeners: ((token: { id: string }) => void)[] = [];
     const requestedIds: string[] = [];
     homey.flowtoken = {
+      connect: async () => {
+        connected = true;
+      },
       getFlowTokenValue: async ({ id }) => {
         requestedIds.push(id);
         return value;
@@ -92,18 +100,49 @@ describe("Homey client", () => {
     await flushPromises();
     expect(requestedIds).toEqual(["homey:manager:weather:temperature"]);
     expect(useRoomsStore().outsideTemp).toBe(12.5);
+    expect(wrapper.get(".homepage-footer .big-number").text()).toBe("12.5°");
 
     speaker.emit("speaker_track", "Second track");
     expect(useRoomsStore().outsideTemp).toBe(12.5);
     value = 14;
-    listeners[0]?.({ id: "homey:manager:weather:temperature" });
+    if (connected) listeners[0]?.({ id: "homey:manager:weather:temperature" });
     await flushPromises();
     expect(useRoomsStore().outsideTemp).toBe(14);
+    expect(wrapper.get(".homepage-footer .big-number").text()).toBe("14.0°");
+
+    for (const invalid of [null, true, false, "", " ", "unavailable", NaN, Infinity]) {
+      value = invalid;
+      listeners[0]?.({ id: "homey:manager:weather:temperature" });
+      await flushPromises();
+      expect(wrapper.get(".homepage-footer .big-number").text()).toBe("—");
+    }
+
+    value = 0;
+    homey.emit("reconnect");
+    await flushPromises();
+    expect(wrapper.get(".homepage-footer .big-number").text()).toBe("0.0°");
+
+    homey.flowtoken.getFlowTokenValue = async () => {
+      throw new Error("Unavailable");
+    };
+    listeners[0]?.({ id: "homey:manager:weather:temperature" });
+    await flushPromises();
+    expect(wrapper.get(".homepage-footer .big-number").text()).toBe("—");
+    expect(useHomeyStore().status).toBe("connected");
+
+    disconnectHomey();
+    await flushPromises();
+    expect(listeners).toHaveLength(0);
+    expect(wrapper.get(".homepage-footer .big-number").text()).toBe("—");
+    wrapper.unmount();
   });
 
   it("keeps Homey connected when Flow-token read permission is unavailable", async () => {
     const homey = new TestHomey([]);
     homey.flowtoken = {
+      connect: async () => {
+        throw new Error("Forbidden");
+      },
       getFlowTokenValue: async () => {
         throw new Error("Forbidden");
       },

@@ -14,7 +14,9 @@ export const useSecurityStore = defineStore("security", {
   getters: {
     dataFromHomey: (state): boolean => state.mode === "live",
     peopleHome(state): number {
-      return state.people.filter((p) => !p.guest && p.home !== false).length;
+      return state.people.filter(
+        (p) => !p.guest && (state.mode === "live" ? p.home === true : p.home !== false),
+      ).length;
     },
     openEntries(state): Entry[] {
       return state.entries.filter((e) => e.open);
