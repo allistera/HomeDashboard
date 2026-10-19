@@ -14,6 +14,52 @@ import { useSecurityStore } from "@/stores/security";
 describe("Homey device synchronization", () => {
   beforeEach(() => setActivePinia(createPinia()));
 
+  it("discovers named people across zones without counting occupancy sensors", () => {
+    const resident = new TestDevice("resident", { presence: true });
+    resident.class = "sensor";
+    resident.name = "Alex";
+    const visitor = new TestDevice("visitor", { presence: false });
+    visitor.class = "sensor";
+    visitor.name = "Casey";
+    const occupancy = new TestDevice("occupancy", { alarm_presence: true, alarm_motion: true });
+    occupancy.class = "sensor";
+    applyDevices(new Map([resident, visitor, occupancy].map((device) => [device.id, device])));
+
+    const security = useSecurityStore();
+    expect(
+      security.people.map(({ id, name, home, status }) => ({ id, name, home, status })),
+    ).toEqual([
+      { id: "resident", name: "Alex", home: true, status: "HOME" },
+      { id: "visitor", name: "Casey", home: false, status: "AWAY" },
+    ]);
+    expect(security.peopleHome).toBe(1);
+
+    resident.available = false;
+    applyDevices(new Map([[resident.id, resident]]));
+    expect(security.people[0]?.status).toBe("UNAVAILABLE");
+    expect(security.peopleHome).toBe(0);
+    applyDevices(new Map());
+    expect(security.people).toEqual([]);
+  });
+
+  it.each([null, "true", "false", 1, 0])(
+    "marks non-boolean presence %s as unavailable",
+    (value) => {
+      const person = new TestDevice("resident", { presence: value });
+      applyDevices(new Map([[person.id, person]]));
+      expect(useSecurityStore().people[0]?.status).toBe("UNAVAILABLE");
+      expect(useSecurityStore().peopleHome).toBe(0);
+    },
+  );
+
+  it("marks a missing presence reading as unavailable", () => {
+    const person = new TestDevice("resident", {});
+    person.capabilities = ["presence"];
+    applyDevices(new Map([[person.id, person]]));
+    expect(useSecurityStore().people[0]?.status).toBe("UNAVAILABLE");
+    expect(useSecurityStore().peopleHome).toBe(0);
+  });
+
   it("maps camera snapshots by zone and clears removed cameras", () => {
     const camera: HomeyDevice = new TestDevice("camera", {});
     camera.class = "camera";

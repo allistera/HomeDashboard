@@ -7,6 +7,7 @@ import { connectHomey, disconnectHomey, setHomeyCapability } from "@/services/ho
 import { TestDevice, TestHomey } from "@/services/homeyTestSupport";
 import { useHomeyStore } from "@/stores/homey";
 import { useSettingsStore } from "@/stores/settings";
+import { applyDevices } from "@/services/homeySync";
 
 function mountTopBar() {
   return mount(TopBar, { props: { left: [], status: "HOME" } });
@@ -111,6 +112,101 @@ describe("Homey communication warning", () => {
       useSettingsStore().clear();
       await flushPromises();
       expect(wrapper.get('[role="alert"]').text()).toContain("Homey is not connected.");
+    } finally {
+      wrapper.unmount();
+    }
+  });
+});
+
+describe("Homey people dropdown", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    setActivePinia(createPinia());
+    useSettingsStore().url = "https://homey.example";
+    useSettingsStore().token = "test-token";
+  });
+  afterEach(() => disconnectHomey());
+
+  it("labels discovered people and follows presence, device changes, and disconnection", async () => {
+    const alex = new TestDevice("alex-device", { presence: true });
+    alex.class = "sensor";
+    alex.name = "Alex";
+    const casey = new TestDevice("casey-device", { presence: false });
+    casey.class = "sensor";
+    casey.name = "Casey";
+    const homey = new TestHomey([alex, casey]);
+    const wrapper = mount(TopBar, { props: { left: [], status: "HOME", showPeople: true } });
+    try {
+      expect(await connectHomey(applyDevices, async () => homey)).toBe(true);
+      await flushPromises();
+      expect(wrapper.get(".topbar__people").text()).toContain("1 PERSON HOME");
+      expect(wrapper.findAll(".topbar__popover-row").map((row) => row.text())).toEqual([
+        "AlexHOME",
+        "CaseyAWAY",
+      ]);
+
+      alex.emit("presence", false);
+      await flushPromises();
+      expect(wrapper.get(".topbar__people").text()).toContain("0 PEOPLE HOME");
+      expect(wrapper.get(".topbar__popover-row").text()).toBe("AlexAWAY");
+
+      alex.name = "Alex renamed";
+      alex.available = false;
+      homey.emitDevice("device.update", alex);
+      await flushPromises();
+      expect(wrapper.get(".topbar__popover-row").text()).toBe("Alex renamedUNAVAILABLE");
+
+      homey.emitDevice("device.delete", casey);
+      await flushPromises();
+      expect(wrapper.get(".topbar__people").text()).toContain("PRESENCE UNAVAILABLE");
+      expect(wrapper.findAll(".topbar__popover-row")).toHaveLength(1);
+
+      const sam = new TestDevice("sam-device", { presence: false });
+      sam.class = "sensor";
+      sam.name = "Sam";
+      homey.emitDevice("device.create", sam);
+      await flushPromises();
+      sam.emit("presence", true);
+      await flushPromises();
+      expect(wrapper.get(".topbar__people").text()).toContain("1 PERSON HOME");
+      expect(wrapper.get(".topbar__popover").text()).toContain("SamHOME");
+
+      homey.emit("disconnect");
+      await flushPromises();
+      expect(wrapper.get(".topbar__people").text()).toContain("PRESENCE UNAVAILABLE");
+      expect(wrapper.get(".topbar__popover").text()).toBe("Presence unavailable.");
+
+      disconnectHomey();
+      sam.emit("presence", true);
+      await flushPromises();
+      expect(sam.destroyed).toBe(1);
+      expect(wrapper.get(".topbar__people").text()).toContain("PRESENCE UNAVAILABLE");
+    } finally {
+      wrapper.unmount();
+    }
+  });
+
+  it("explains when no person devices are discovered", async () => {
+    await connectHomey(applyDevices, async () => new TestHomey([]));
+    const wrapper = mount(TopBar, { props: { left: [], status: "HOME", showPeople: true } });
+    try {
+      expect(wrapper.get(".topbar__people").text()).toContain("PRESENCE UNAVAILABLE");
+      expect(wrapper.get(".topbar__popover").text()).toBe("No person devices found.");
+    } finally {
+      wrapper.unmount();
+    }
+  });
+
+  it("clears live presence when the user disconnects Homey", async () => {
+    const person = new TestDevice("person-device", { presence: true });
+    await connectHomey(applyDevices, async () => new TestHomey([person]));
+    const wrapper = mount(TopBar, { props: { left: [], status: "HOME", showPeople: true } });
+    try {
+      expect(wrapper.get(".topbar__people").text()).toContain("1 PERSON HOME");
+      disconnectHomey();
+      await flushPromises();
+      expect(wrapper.get(".topbar__people").text()).toContain("PRESENCE UNAVAILABLE");
+      expect(wrapper.get(".topbar__popover").text()).toBe("Presence unavailable.");
     } finally {
       wrapper.unmount();
     }

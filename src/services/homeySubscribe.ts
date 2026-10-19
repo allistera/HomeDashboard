@@ -26,8 +26,13 @@ export async function subscribeHomeyDevices(
     if (stopped) return;
     remove(device.id);
     devices.set(device.id, device);
-    // Room property values need capability updates even without bound controls.
-    if (!watched.has(device.id) && !roomZones.has(device.zone)) return;
+    // Room properties and person devices need updates even without bound controls.
+    if (
+      !watched.has(device.id) &&
+      !roomZones.has(device.zone) &&
+      !device.capabilities.includes("presence")
+    )
+      return;
     const subscriptions: CapabilityListener[] = [];
     listeners.set(device.id, subscriptions);
     for (const capabilityId of device.capabilities) {
