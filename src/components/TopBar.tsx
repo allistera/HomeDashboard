@@ -47,17 +47,25 @@ export default defineComponent({
                 {security.dataFromHomey &&
                 security.people.every((person) => person.status === "UNAVAILABLE")
                   ? "PRESENCE UNAVAILABLE"
-                  : `${security.peopleHome} PEOPLE HOME`}
+                  : `${security.peopleHome} ${security.peopleHome === 1 ? "PERSON" : "PEOPLE"} HOME`}
                 <span class="topbar__popover" role="tooltip">
                   <span class="topbar__popover-box">
                     {security.people
-                      .filter((person) => !person.guest && person.home !== false)
+                      .filter((person) => !person.guest)
                       .map((person) => (
                         <span key={person.id} class="topbar__popover-row">
                           <span class="topbar__popover-dot" style={{ background: person.color }} />
-                          {person.name}
+                          <span>{person.name}</span>
+                          <span class="topbar__popover-status">{person.status}</span>
                         </span>
                       ))}
+                    {security.people.length === 0 && (
+                      <span class="topbar__popover-row">
+                        {homey.status === "connected"
+                          ? "No person devices found."
+                          : "Presence unavailable."}
+                      </span>
+                    )}
                   </span>
                 </span>
               </span>

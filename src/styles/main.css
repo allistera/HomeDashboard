@@ -849,6 +849,12 @@ a {
   flex-shrink: 0;
 }
 
+.topbar__popover-status {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 10px;
+}
+
 /* ── God view / floor plan ──────────────────────────── */
 
 .plan-wrap {

@@ -132,7 +132,9 @@ export const useSecurityStore = defineStore("security", {
   state: (): SecurityState => structuredClone(seedState),
   getters: {
     peopleHome(state): number {
-      return state.people.filter((p) => !p.guest && p.home !== false).length;
+      return state.people.filter(
+        (p) => !p.guest && (state.dataFromHomey ? p.home === true : p.home !== false),
+      ).length;
     },
     openEntries(state): Entry[] {
       return state.entries.filter((e) => e.open);

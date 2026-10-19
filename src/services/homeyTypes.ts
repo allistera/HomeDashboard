@@ -46,6 +46,7 @@ export interface HomeyZone {
 
 export interface HomeyConnection {
   flowtoken?: {
+    connect(): Promise<void>;
     getFlowTokenValue(options: { id: string }): Promise<number | string | boolean | null>;
     on(event: "flowtoken.update", listener: (token: { id: string }) => void): void;
     off(event: "flowtoken.update", listener: (token: { id: string }) => void): void;

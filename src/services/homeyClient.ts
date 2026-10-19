@@ -12,6 +12,7 @@ import { useHomeyStore } from "@/stores/homey";
 import { useSettingsStore } from "@/stores/settings";
 import { homePageBindings } from "@/services/homeyBindings/homeyHomeBindings";
 import { useRoomsStore } from "@/stores/rooms";
+import { useSecurityStore } from "@/stores/security";
 
 let connection: HomeyConnection | null = null;
 let unsubscribe: (() => void) | null = null;
@@ -77,6 +78,11 @@ export async function connectHomey(
       stopWeather = () => active?.flowtoken?.off("flowtoken.update", updateWeather);
     }
     await active.connect();
+    try {
+      await active.flowtoken?.connect();
+    } catch {
+      // Weather subscriptions are optional; keep device controls available.
+    }
     stop = await subscribeHomeyDevices(
       active,
       (snapshot) => {
@@ -140,6 +146,8 @@ export function disconnectHomey(): void {
   devices.clear();
   useZonesStore().$reset();
   useRoomsStore().setOutsideTemperature(null);
+  const security = useSecurityStore();
+  if (security.dataFromHomey) security.people = [];
   const state = useHomeyStore();
   state.status = "disconnected";
   state.message = "";
@@ -153,18 +161,14 @@ async function refreshOutsideTemperature(homey: HomeyConnection, current: number
     const value = await homey.flowtoken.getFlowTokenValue({
       id: homePageBindings.outsideTemperatureTokenId,
     });
-    if (
-      current !== generation ||
-      value === null ||
-      value === undefined ||
-      value === true ||
-      value === false
-    )
-      return;
-    const temperature = Number(value);
-    if (Number.isFinite(temperature)) useRoomsStore().setOutsideTemperature(temperature);
+    if (current !== generation || useHomeyStore().status !== "connected") return;
+    const reading = String(value ?? "").trim();
+    const temperature = reading === "" ? NaN : Number(reading);
+    useRoomsStore().setOutsideTemperature(Number.isFinite(temperature) ? temperature : null);
   } catch {
     // Flow-token read permission is optional; Homey device controls remain connected.
+    if (current === generation && useHomeyStore().status === "connected")
+      useRoomsStore().setOutsideTemperature(null);
   }
 }
 
