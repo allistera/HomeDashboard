@@ -687,13 +687,10 @@ a {
   gap: 16px;
 }
 
-.homepage-footer {
-  display: flex;
+.homepage-climate {
+  padding: 20px 40px;
   align-items: baseline;
-  justify-content: flex-end;
-  gap: 18px;
-  padding: 12px 40px 20px;
-  border-top: 1px solid var(--border);
+  gap: 34px;
 }
 
 .big-number {

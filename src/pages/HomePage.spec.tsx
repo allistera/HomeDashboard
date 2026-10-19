@@ -50,9 +50,13 @@ describe("HomePage headline", () => {
   it("shows the bound outdoor temperature in the climate summary", () => {
     useRoomsStore().setHomeClimateValues(8.4, 20.7, 21.5);
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
-    const climateSummary = wrapper.get(".homepage-footer");
+    const climateSummary = wrapper.get(".homepage-climate");
 
-    expect(climateSummary.text()).toContain("Outdoor Temp");
+    expect(climateSummary.findAll(".label").map((label) => label.text())).toEqual([
+      "Target",
+      "Outdoor Temp",
+    ]);
+    expect(climateSummary.text()).toContain("21.5°");
     expect(climateSummary.text()).toContain("8.4°");
     expect(climateSummary.text()).not.toContain("House temp");
     expect(climateSummary.text()).not.toContain("20.7°");
