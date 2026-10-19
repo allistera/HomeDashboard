@@ -1,54 +1,8 @@
-import type { LightBinding, RoomBinding } from "@/services/homeyTypes";
+import { homeyConfig } from "@/services/homeyBindings/homeyConfig";
+import type { RoomBinding } from "@/services/homeyTypes";
 
-export const livingRoomLightBindings: LightBinding[] = [
-  { lightId: "livingroom-light", deviceId: "6df0691d-a8a9-4244-bf93-1ea1cceeca6f" },
-  { lightId: "livingroom-light-2", deviceId: "20f86d7a-8b47-4189-9264-1ec0e3e160e4" },
-];
-
-export const hallwayLightBindings: LightBinding[] = [
-  { lightId: "downstairs-hallway-light", deviceId: "50cd1111-47b0-4276-aab8-972a055bfb03" },
-  { lightId: "upstairs-hallway-light", deviceId: "b5941eee-99eb-407d-90d4-256599160ed7" },
-];
-
-export const bedroomLightBindings: LightBinding[] = [
-  { lightId: "bedroom-light", deviceId: "3f895820-f667-4bac-a314-de22649fafd7" },
-];
-
-export const toiletLightBindings: LightBinding[] = [
-  { lightId: "toilet_toilet_light", deviceId: "d8b8c271-1fab-4383-9c1e-bbc414c81bb4" },
-];
-
-// IDs come from the connected Homey inventory, not names or HA entity IDs.
-export const livingRoomMediaBinding = {
-  roomId: "living-room",
-  deviceId: "d74d5250-28c4-4698-aed9-32db1637a22d",
-};
-
-export const roomBindings: RoomBinding[] = [
-  {
-    roomId: "living-room",
-    lights: livingRoomLightBindings,
-    media: livingRoomMediaBinding.deviceId,
-    motion: { deviceId: "f0de7239-1ac7-4580-a1d5-e33733e2abef", capabilityId: "alarm_motion" },
-  },
-  { roomId: "kitchen", lights: [] },
-  {
-    roomId: "hallway",
-    lights: hallwayLightBindings,
-    motion: { deviceId: "4afb514a-cf25-4bb3-b465-7a8866fcf927", capabilityId: "alarm_motion" },
-  },
-  { roomId: "bedroom", lights: bedroomLightBindings },
-  { roomId: "jaicobs-room", lights: [] },
-  { roomId: "elsies-room", lights: [] },
-  { roomId: "garden", lights: [] },
-  {
-    roomId: "toilet",
-    name: "Toilet",
-    floor: "Ground floor",
-    lights: toiletLightBindings,
-    motion: { deviceId: "bb4296b0-9fa6-4a0e-b43b-e5671423aed3", capabilityId: "alarm_motion" },
-  },
-];
+export const roomBindings = homeyConfig.rooms;
+export const livingRoomMediaBinding = homeyConfig.home.mediaPlayer;
 
 export function roomBindingFor(roomId: string): RoomBinding | undefined {
   return roomBindings.find((binding) => binding.roomId === roomId);

@@ -1,0 +1,101 @@
+# Central screen-to-Homey mapping. Device IDs must come from the Homey inventory.
+# Omitted optional bindings are unavailable; do not use placeholder IDs.
+# Property bindings use { deviceId, capabilityId }.
+# Lights: onoff (power), dim (brightness, 0–1).
+# Media: speaker_track (title), sonos_group (output, falls back to device name),
+# speaker_playing (state/play-pause), speaker_prev / speaker_next (commands).
+# Room temperature: temperature.capabilityId, or measure_temperature on climate.deviceId.
+# Climate target: climate.capabilityId (usually target_temperature).
+# Cameras: images[].imageObj.url (snapshot), videos[].videoObj.id (live video).
+
+rooms: # /rooms; also supplies Home room rows and Floors callouts
+  - roomId: living-room
+    lights:
+      - lightId: livingroom-light
+        deviceId: &livingLight 6df0691d-a8a9-4244-bf93-1ea1cceeca6f
+      - lightId: livingroom-light-2
+        deviceId: &livingLight2 20f86d7a-8b47-4189-9264-1ec0e3e160e4
+    media: &livingMedia d74d5250-28c4-4698-aed9-32db1637a22d
+    motion:
+      deviceId: f0de7239-1ac7-4580-a1d5-e33733e2abef
+      capabilityId: alarm_motion
+  - roomId: kitchen
+    lights: []
+  - roomId: hallway
+    lights:
+      - lightId: downstairs-hallway-light
+        deviceId: &hallLight 50cd1111-47b0-4276-aab8-972a055bfb03
+      - lightId: upstairs-hallway-light
+        deviceId: &hallLight2 b5941eee-99eb-407d-90d4-256599160ed7
+    motion:
+      deviceId: &hallMotion 4afb514a-cf25-4bb3-b465-7a8866fcf927
+      capabilityId: alarm_motion
+  - roomId: bedroom
+    lights:
+      - lightId: bedroom-light
+        deviceId: &bedroomLight 3f895820-f667-4bac-a314-de22649fafd7
+  - roomId: jaicobs-room
+    lights: []
+  - roomId: elsies-room
+    lights: []
+  - roomId: garden
+    lights: []
+  - roomId: toilet
+    name: Toilet
+    floor: Ground floor
+    lights:
+      - lightId: toilet_toilet_light
+        deviceId: &toiletLight d8b8c271-1fab-4383-9c1e-bbc414c81bb4
+    motion:
+      deviceId: &toiletMotion bb4296b0-9fa6-4a0e-b43b-e5671423aed3
+      capabilityId: alarm_motion
+  # Optional per-room properties: temperature, climate, motion, vacuum.
+  # Each uses { deviceId, capabilityId }; media uses a device ID.
+  # Device inventory and room cameras are discovered from home.roomZoneIds.
+
+home: # /
+  outsideTemperatureTokenId: homey:manager:weather:temperature
+  # Optional: outsideTemperature overrides the Flow token.
+  # houseTemperature, houseTarget and washingWeather are currently unbound.
+  roomZoneIds:
+    living-room: 19d2530e-a1fc-43f4-ba0c-1269889ebf21
+    kitchen: 61bed053-197d-4829-98eb-e3974e704aa4
+    hallway: a16e4f05-875c-4ca0-a933-be7889217fc1
+    bedroom: d450a27b-1a36-44d3-a517-2fa4f3e533f9
+    jaicobs-room: 3acb3f11-a2d3-4dc3-b7ee-034352fbaadc
+    elsies-room: 2a153501-3a96-463a-b8e8-7c1f671aaf44
+    toilet: 0aa1fe69-2b97-4643-9a13-4c0966224ca5
+  camera: { cameraId: front-door } # resolves through security.cameras
+  mediaPlayer: { roomId: living-room, deviceId: *livingMedia }
+  activityDeviceIds:
+    - *bedroomLight
+    - *toiletLight
+    - *hallLight
+    - *hallLight2
+    - *livingLight
+    - *livingLight2
+    - *livingMedia
+    - *hallMotion
+    - *toiletMotion
+  excludedRoomIds: [garden]
+  # Room light toggles operate every mapped light; on if any light is on.
+  # Scene shortcuts have no Homey Flow bindings.
+
+floors: # /floors; room IDs reuse the mappings above
+  kitchenRoomId: kitchen
+  livingRoomId: living-room
+  hallwayRoomId: hallway
+  bedroomRoomIds: [bedroom, elsies-room]
+  jaicobsRoomId: jaicobs-room
+
+security: # /security
+  sensorCount: 2
+  # alarmControlPanel is unbound. To bind: deviceId, capabilityId,
+  # states: { home: <Homey value>, away: <Homey value>, disarmed: <Homey value> }.
+  entries: [] # entryId + optional lock/sensor property bindings
+  people: [] # personId + presence property binding
+  cameras:
+    - cameraId: front-door
+      deviceId: 0c7f09c5-98ea-4cf2-ac1c-804acbbb9abc
+  # The camera wall also discovers cameras from Homey's device inventory.
+  # Settings uses browser connection preferences; it has no device mapping.

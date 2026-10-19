@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { homeyConfig } from "@/services/homeyBindings/homeyConfig";
 import { watchedDeviceIds } from "@/services/homeyBindings/homeyGlobalBindings";
 import { livingRoomMediaBinding, roomBindings } from "@/services/homeyBindings/homeyRoomsBindings";
 import { homePageBindings } from "@/services/homeyBindings/homeyHomeBindings";
@@ -8,6 +9,28 @@ import {
 } from "@/services/homeyBindings/homeySecurityBindings";
 
 describe("Homey device bindings", () => {
+  it("resolves shared screen mappings from the central YAML", () => {
+    expect(homePageBindings).toBe(homeyConfig.home);
+    expect(roomBindings).toBe(homeyConfig.rooms);
+    expect(cameraBindings).toBe(homeyConfig.security.cameras);
+    const roomIds = roomBindings.map((room) => room.roomId);
+    expect(new Set(roomIds).size).toBe(roomIds.length);
+    for (const roomId of Object.values(homeyConfig.floors).flat()) {
+      expect(roomIds).toContain(roomId);
+    }
+    for (const roomId of Object.keys(homePageBindings.roomZoneIds)) {
+      expect(roomIds).toContain(roomId);
+    }
+    expect(
+      cameraBindings.some((camera) => camera.cameraId === homePageBindings.camera.cameraId),
+    ).toBe(true);
+    const mediaRoom = roomBindings.find(
+      (room) => room.roomId === homePageBindings.mediaPlayer.roomId,
+    );
+    expect(mediaRoom?.media).toBe(homePageBindings.mediaPlayer.deviceId);
+    for (const id of homePageBindings.activityDeviceIds) expect(watchedDeviceIds()).toContain(id);
+  });
+
   it("uses only verified device UUIDs and keeps missing hardware unbound", () => {
     const ids = watchedDeviceIds();
     expect(ids).toHaveLength(11);
