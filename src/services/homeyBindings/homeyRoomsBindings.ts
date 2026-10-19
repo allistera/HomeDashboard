@@ -10,6 +10,10 @@ export const hallwayLightBindings: LightBinding[] = [
   { lightId: "upstairs-hallway-light", deviceId: "b5941eee-99eb-407d-90d4-256599160ed7" },
 ];
 
+export const bedroomLightBindings: LightBinding[] = [
+  { lightId: "bedroom-light", deviceId: "3f895820-f667-4bac-a314-de22649fafd7" },
+];
+
 export const toiletLightBindings: LightBinding[] = [
   { lightId: "toilet_toilet_light", deviceId: "d8b8c271-1fab-4383-9c1e-bbc414c81bb4" },
 ];
@@ -33,7 +37,7 @@ export const roomBindings: RoomBinding[] = [
     lights: hallwayLightBindings,
     motion: { deviceId: "4afb514a-cf25-4bb3-b465-7a8866fcf927", capabilityId: "alarm_motion" },
   },
-  { roomId: "bedroom", lights: [] },
+  { roomId: "bedroom", lights: bedroomLightBindings },
   { roomId: "jaicobs-room", lights: [] },
   { roomId: "elsies-room", lights: [] },
   { roomId: "garden", lights: [] },

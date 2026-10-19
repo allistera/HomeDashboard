@@ -10,7 +10,7 @@ import {
 describe("Homey device bindings", () => {
   it("uses only verified device UUIDs and keeps missing hardware unbound", () => {
     const ids = watchedDeviceIds();
-    expect(ids).toHaveLength(10);
+    expect(ids).toHaveLength(11);
     expect(new Set(ids).size).toBe(ids.length);
     for (const id of ids) expect(id).toMatch(/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/);
     expect(ids).toContain(livingRoomMediaBinding.deviceId);
@@ -20,7 +20,7 @@ describe("Homey device bindings", () => {
     });
     expect(
       roomBindings
-        .filter((room) => !["living-room", "hallway", "toilet"].includes(room.roomId))
+        .filter((room) => !["living-room", "hallway", "toilet", "bedroom"].includes(room.roomId))
         .every((room) => room.lights.length === 0),
     ).toBe(true);
     expect(homePageBindings.outsideTemperature).toBeUndefined();

@@ -1,5 +1,6 @@
 import type { DeviceCapabilityBinding } from "@/services/homeyTypes";
 import {
+  bedroomLightBindings,
   hallwayLightBindings,
   livingRoomLightBindings,
   livingRoomMediaBinding,
@@ -34,6 +35,7 @@ export const homePageBindings: HomeBindings = {
   camera: { cameraId: "front-door" },
   mediaPlayer: livingRoomMediaBinding,
   activityDeviceIds: [
+    ...bedroomLightBindings.map((light) => light.deviceId),
     ...toiletLightBindings.map((light) => light.deviceId),
     ...hallwayLightBindings.map((light) => light.deviceId),
     ...livingRoomLightBindings.map((light) => light.deviceId),

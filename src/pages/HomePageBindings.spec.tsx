@@ -179,6 +179,43 @@ describe("HomePage bindings", () => {
     }
   });
 
+  it("controls Bedroom Light and reflects its live Homey power state", async () => {
+    const light = new TestDevice("3f895820-f667-4bac-a314-de22649fafd7", { onoff: false, dim: 1 });
+    const settings = useSettingsStore();
+    settings.url = "https://homey.example";
+    settings.token = "test-token";
+    const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
+    try {
+      await connectHomey(applyDevices, async () => new TestHomey([light]));
+      await flushPromises();
+      const toggle = wrapper.get('[aria-label="Bedroom lights"]');
+      const row = wrapper
+        .findAll(".row")
+        .find((item) => item.get(".row__name").text() === "Bedroom")!;
+      expect(toggle.attributes("aria-checked")).toBe("false");
+      expect(row.get(".room-light-status").text()).toBe("Light off");
+      await toggle.trigger("click");
+      await flushPromises();
+      expect(light.commands).toEqual([
+        { capabilityId: "onoff", value: true },
+        { capabilityId: "dim", value: 0.7 },
+      ]);
+      light.emit("onoff", true);
+      await flushPromises();
+      expect(toggle.attributes("aria-checked")).toBe("true");
+      expect(row.get(".room-light-status").text()).toBe("Light on");
+      await toggle.trigger("click");
+      await flushPromises();
+      expect(light.commands.at(-1)).toEqual({ capabilityId: "onoff", value: false });
+      light.emit("onoff", false);
+      await flushPromises();
+      expect(toggle.attributes("aria-checked")).toBe("false");
+    } finally {
+      wrapper.unmount();
+      disconnectHomey();
+    }
+  });
+
   it("omits room motion from homepage rows while retaining media status", async () => {
     const sensor = new TestDevice("f0de7239-1ac7-4580-a1d5-e33733e2abef", { alarm_motion: true });
     sensor.capabilitiesObj.alarm_motion.lastUpdated = new Date(Date.now() - 6 * 60_000);
