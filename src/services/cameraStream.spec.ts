@@ -40,10 +40,7 @@ describe("Homey live camera streaming", () => {
     const camera = Object.assign(new TestDevice("camera", {}), {
       videos: [{ type: "camera", videoObj: { id: "video-id" } }],
     });
-    await connectHomey(
-      () => {},
-      async () => new TestHomey([camera]),
-    );
+    await connectHomey(async () => new TestHomey([camera]));
     vi.stubGlobal("RTCPeerConnection", TestPeer);
     vi.stubGlobal("MediaStream", TestStream);
     vi.stubGlobal(

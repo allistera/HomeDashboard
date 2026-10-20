@@ -16,7 +16,6 @@ import {
 import { subscribeHomeyDevices } from "@/services/homeySubscribe";
 import { TestDevice, TestHomey } from "@/services/homeyTestSupport";
 import type { HomeyConnection, HomeyDevice } from "@/services/homeyTypes";
-import { applyDevices } from "@/services/homeySync";
 import { useActivityStore } from "@/stores/activity";
 import { useHomeyStore } from "@/stores/homey";
 import { useRoomsStore } from "@/stores/rooms";
@@ -32,6 +31,17 @@ describe("Homey client", () => {
   });
   afterEach(() => disconnectHomey());
 
+  it("clears live readings on explicit disconnect without returning to demo mode", async () => {
+    const speaker = new TestDevice(livingRoomMediaBinding.deviceId, { speaker_playing: true });
+    await connectHomey(async () => new TestHomey([speaker]));
+    expect(useRoomsStore().selectedRoom.media?.playing).toBe(true);
+    disconnectHomey();
+    expect(useRoomsStore().mode).toBe("live");
+    expect(useRoomsStore().selectedRoom.media).toBeUndefined();
+    expect(useRoomsStore().houseTemp).toBeNull();
+    expect(useHomeyStore().status).toBe("disconnected");
+  });
+
   it("loads devices and live updates, records activity by device ID, and cleans up", async () => {
     const speaker = new TestDevice(livingRoomMediaBinding.deviceId, {
       speaker_playing: true,
@@ -41,7 +51,7 @@ describe("Homey client", () => {
       alarm_motion: false,
     });
     const homey = new TestHomey([speaker, motion]);
-    expect(await connectHomey(applyDevices, async () => homey)).toBe(true);
+    expect(await connectHomey(async () => homey)).toBe(true);
     expect(useHomeyStore().status).toBe("connected");
     expect(useHomeyStore().deviceCount).toBe(2);
     expect(useActivityStore().events).toEqual([]);
@@ -86,7 +96,7 @@ describe("Homey client", () => {
       },
     };
 
-    expect(await connectHomey(applyDevices, async () => homey)).toBe(true);
+    expect(await connectHomey(async () => homey)).toBe(true);
     await flushPromises();
     expect(requestedIds).toEqual(["homey:manager:weather:temperature"]);
     expect(useRoomsStore().outsideTemp).toBe(12.5);
@@ -140,7 +150,7 @@ describe("Homey client", () => {
       off: () => {},
     };
 
-    expect(await connectHomey(applyDevices, async () => homey)).toBe(true);
+    expect(await connectHomey(async () => homey)).toBe(true);
     await flushPromises();
     expect(useHomeyStore().status).toBe("connected");
     expect(useRoomsStore().outsideTemp).toBeNull();
@@ -153,7 +163,7 @@ describe("Homey client", () => {
       speaker_next: null,
     });
     const homey = new TestHomey([speaker]);
-    await connectHomey(applyDevices, async () => homey);
+    await connectHomey(async () => homey);
     await useRoomsStore().controlMedia("living-room", "toggle");
     await useRoomsStore().controlMedia("living-room", "next");
     expect(speaker.commands).toEqual([
@@ -174,7 +184,7 @@ describe("Homey client", () => {
     const light = new TestDevice("test-light-id", { onoff: false, dim: 0 });
     binding.lights.push({ lightId: "test-light", deviceId: light.id });
     try {
-      await connectHomey(applyDevices, async () => new TestHomey([light]));
+      await connectHomey(async () => new TestHomey([light]));
       expect(await setHomeyLight(light.id, 35)).toBe("sent");
       expect(light.commands).toEqual([
         { capabilityId: "onoff", value: true },
@@ -198,7 +208,7 @@ describe("Homey client", () => {
     });
     first.name = "Renamed first light";
     second.name = "Renamed second light";
-    await connectHomey(applyDevices, async () => new TestHomey([first, second]));
+    await connectHomey(async () => new TestHomey([first, second]));
     const rooms = useRoomsStore();
     expect(rooms.selectedRoom.lights).toEqual([
       { id: "livingroom-light", name: first.name, level: 56 },
@@ -236,8 +246,8 @@ describe("Homey client", () => {
     const pending = new Promise<HomeyConnection>((resolve) => {
       resolveOld = resolve;
     });
-    const first = connectHomey(applyDevices, () => pending);
-    expect(await connectHomey(applyDevices, async () => current)).toBe(true);
+    const first = connectHomey(() => pending);
+    expect(await connectHomey(async () => current)).toBe(true);
     resolveOld(old);
     expect(await first).toBe(false);
     expect(old.destroyed).toBe(true);
@@ -249,7 +259,7 @@ describe("Homey client", () => {
     const speaker = new TestDevice(livingRoomMediaBinding.deviceId, { speaker_playing: true });
     speaker.failConnect = true;
     const homey = new TestHomey([speaker]);
-    expect(await connectHomey(applyDevices, async () => homey)).toBe(false);
+    expect(await connectHomey(async () => homey)).toBe(false);
     expect(homey.destroyed).toBe(true);
     expect(speaker.destroyed).toBe(1);
     expect(useHomeyStore().status).toBe("error");

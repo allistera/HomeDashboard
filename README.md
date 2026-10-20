@@ -31,6 +31,29 @@ type carries the hierarchy.
 - [oxfmt](https://oxc.rs) formats TypeScript/TSX; [Prettier](https://prettier.io)
   formats CSS, HTML, JSON, and Markdown
 
+## Application structure
+
+- `pages/` composes route screens; `components/` owns reusable UI sections and
+  their feature styles. Shared tokens and layout rules live in `styles/main.css`.
+- `models/` defines room and security state independently of Pinia.
+- `stores/` owns reactive state and user actions. Each Homey store owns its own
+  transport; connection state is not shared between Pinia instances.
+- `services/homeyTransport.ts` handles commands and camera lookup without stores.
+  `homeyCommands.ts` connects store actions to that transport. `homeyClient.ts`
+  orchestrates connections, subscriptions, weather and activity updates.
+- `homeyRoomMapping.ts` and `homeySecurityMapping.ts` transform snapshots without
+  mutating their inputs; `homeySync.ts` applies their results to stores.
+- `config/homey.yaml` is decoded and validated before use, including required
+  fields, value types, room references, and camera references. Invalid settings
+  fail with a configuration path. YAML anchors remain supported.
+- `data/rooms.ts` holds room identities; `data/demo/` holds demonstration readings.
+  Stores explicitly distinguish demo and live mode. The top bar labels demo data;
+  disconnecting after a live connection clears readings and stays in live mode.
+- `data/floors.ts` holds floor geometry; `utils/` holds display formatting.
+
+Tests live beside the modules they exercise. CI checks lint, formatting, the
+production build (including TypeScript), and the Vitest suite.
+
 ## Homey connection
 
 Settings connects directly to the [Homey Web API](https://athombv.github.io/node-homey-api/HomeyAPI.html)

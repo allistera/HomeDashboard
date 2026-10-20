@@ -34,9 +34,9 @@ describe("HomePage bindings", () => {
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
 
     expect(wrapper.text()).toContain("OUTSIDE 8°");
-    expect(wrapper.get(".homepage-footer").text()).toContain("Outdoor Temp");
-    expect(wrapper.get(".homepage-footer").text()).toContain("8.4°");
-    expect(wrapper.element.lastElementChild?.classList.contains("homepage-footer")).toBe(true);
+    expect(wrapper.get(".homepage-climate").text()).toContain("Outdoor Temp");
+    expect(wrapper.get(".homepage-climate").text()).toContain("8.4°");
+    expect(wrapper.get(".homepage-climate").text()).toContain("Target");
     expect(wrapper.text()).toContain("20.7°");
     expect(wrapper.text()).toContain("21.5°");
     expect(wrapper.text()).toContain("Playing · Living room");
@@ -105,7 +105,7 @@ describe("HomePage bindings", () => {
     settings.token = "test-token";
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
     try {
-      await connectHomey(applyDevices, async () => new TestHomey([downstairs, upstairs]));
+      await connectHomey(async () => new TestHomey([downstairs, upstairs]));
       await flushPromises();
       const toggle = wrapper.get('[aria-label="Hallway lights"]');
       const row = wrapper
@@ -149,7 +149,7 @@ describe("HomePage bindings", () => {
     settings.token = "test-token";
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
     try {
-      await connectHomey(applyDevices, async () => new TestHomey([light]));
+      await connectHomey(async () => new TestHomey([light]));
       await flushPromises();
       const toggle = wrapper.get('[aria-label="Toilet lights"]');
       const row = wrapper
@@ -186,7 +186,7 @@ describe("HomePage bindings", () => {
     settings.token = "test-token";
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
     try {
-      await connectHomey(applyDevices, async () => new TestHomey([light]));
+      await connectHomey(async () => new TestHomey([light]));
       await flushPromises();
       const toggle = wrapper.get('[aria-label="Bedroom lights"]');
       const row = wrapper
@@ -228,7 +228,7 @@ describe("HomePage bindings", () => {
     const homey = new TestHomey([sensor, speaker]);
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
     try {
-      await connectHomey(applyDevices, async () => homey);
+      await connectHomey(async () => homey);
       await flushPromises();
       const row = wrapper
         .findAll(".row")

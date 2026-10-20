@@ -1,5 +1,6 @@
 import { defineComponent, type PropType } from "vue";
 
+import { useRoomsStore } from "@/stores/rooms";
 import { useClock } from "@/composables/useClock";
 import { useHomeyStore } from "@/stores/homey";
 import { useSettingsStore } from "@/stores/settings";
@@ -23,6 +24,7 @@ export default defineComponent({
     showPeople: { type: Boolean, default: false },
   },
   setup(props) {
+    const rooms = useRoomsStore();
     const theme = useThemeStore();
     const homey = useHomeyStore();
     const settings = useSettingsStore();
@@ -33,6 +35,7 @@ export default defineComponent({
         <header class="topbar">
           <div class="topbar__group">
             <span class="topbar__home">Dedridge</span>
+            {rooms.mode === "demo" && <span>DEMO DATA</span>}
             <span>{clock.value}</span>
             {props.left.map((item) => (
               <span key={item}>{item}</span>

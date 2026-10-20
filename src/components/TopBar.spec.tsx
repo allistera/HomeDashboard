@@ -7,7 +7,6 @@ import { connectHomey, disconnectHomey, setHomeyCapability } from "@/services/ho
 import { TestDevice, TestHomey } from "@/services/homeyTestSupport";
 import { useHomeyStore } from "@/stores/homey";
 import { useSettingsStore } from "@/stores/settings";
-import { applyDevices } from "@/services/homeySync";
 
 function mountTopBar() {
   return mount(TopBar, { props: { left: [], status: "HOME" } });
@@ -27,7 +26,7 @@ describe("Homey communication warning", () => {
       expect(wrapper.get('[role="alert"]').text()).toContain("access token in Settings.");
       useSettingsStore().url = "https://homey.example";
       useSettingsStore().token = "test-token";
-      useHomeyStore().status = "connecting";
+      useHomeyStore().transport.status = "connecting";
       await flushPromises();
       expect(wrapper.find('[role="alert"]').exists()).toBe(false);
     } finally {
@@ -40,12 +39,9 @@ describe("Homey communication warning", () => {
     try {
       useSettingsStore().url = "https://homey.example";
       useSettingsStore().token = "test-token";
-      await connectHomey(
-        () => {},
-        async () => {
-          throw new Error("Unreachable");
-        },
-      );
+      await connectHomey(async () => {
+        throw new Error("Unreachable");
+      });
       await flushPromises();
       const alert = wrapper.get('[role="alert"]');
       expect(alert.text()).toContain("Homey communication issue.");
@@ -62,10 +58,7 @@ describe("Homey communication warning", () => {
       useSettingsStore().url = "https://homey.example";
       useSettingsStore().token = "test-token";
       const homey = new TestHomey([]);
-      await connectHomey(
-        () => {},
-        async () => homey,
-      );
+      await connectHomey(async () => homey);
       await flushPromises();
       expect(wrapper.find('[role="alert"]').exists()).toBe(false);
       homey.emit("disconnect");
@@ -85,10 +78,7 @@ describe("Homey communication warning", () => {
       useSettingsStore().url = "https://homey.example";
       useSettingsStore().token = "test-token";
       const light = new TestDevice("light", { onoff: false });
-      await connectHomey(
-        () => {},
-        async () => new TestHomey([light]),
-      );
+      await connectHomey(async () => new TestHomey([light]));
       light.failWrites = true;
       expect(await setHomeyCapability(light.id, "onoff", true)).toBe("failed");
       await flushPromises();
@@ -137,7 +127,7 @@ describe("Homey people dropdown", () => {
     const homey = new TestHomey([alex, casey]);
     const wrapper = mount(TopBar, { props: { left: [], status: "HOME", showPeople: true } });
     try {
-      expect(await connectHomey(applyDevices, async () => homey)).toBe(true);
+      expect(await connectHomey(async () => homey)).toBe(true);
       await flushPromises();
       expect(wrapper.get(".topbar__people").text()).toContain("1 PERSON HOME");
       expect(wrapper.findAll(".topbar__popover-row").map((row) => row.text())).toEqual([
@@ -187,7 +177,7 @@ describe("Homey people dropdown", () => {
   });
 
   it("explains when no person devices are discovered", async () => {
-    await connectHomey(applyDevices, async () => new TestHomey([]));
+    await connectHomey(async () => new TestHomey([]));
     const wrapper = mount(TopBar, { props: { left: [], status: "HOME", showPeople: true } });
     try {
       expect(wrapper.get(".topbar__people").text()).toContain("PRESENCE UNAVAILABLE");
@@ -199,7 +189,7 @@ describe("Homey people dropdown", () => {
 
   it("clears live presence when the user disconnects Homey", async () => {
     const person = new TestDevice("person-device", { presence: true });
-    await connectHomey(applyDevices, async () => new TestHomey([person]));
+    await connectHomey(async () => new TestHomey([person]));
     const wrapper = mount(TopBar, { props: { left: [], status: "HOME", showPeople: true } });
     try {
       expect(wrapper.get(".topbar__people").text()).toContain("1 PERSON HOME");

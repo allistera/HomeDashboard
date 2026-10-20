@@ -1,23 +1,17 @@
+import { markRaw } from "vue";
+
+import { applyDevices } from "@/services/homeySync";
 import { subscribeHomeyDevices } from "@/services/homeySubscribe";
 import { subscribeHomeyZones } from "@/services/homeyZones";
 import { useZonesStore } from "@/stores/zones";
-import type {
-  CapabilityValue,
-  HomeyConnection,
-  HomeyDevice,
-  HomeyFactory,
-} from "@/services/homeyTypes";
+import type { HomeyConnection, HomeyDevice, HomeyFactory } from "@/services/homeyTypes";
 import { useActivityStore } from "@/stores/activity";
 import { useHomeyStore } from "@/stores/homey";
 import { useSettingsStore } from "@/stores/settings";
 import { homePageBindings } from "@/services/homeyBindings/homeyHomeBindings";
+import type { HomeyTransport } from "@/services/homeyTransport";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
-
-let connection: HomeyConnection | null = null;
-let unsubscribe: (() => void) | null = null;
-let devices = new Map<string, HomeyDevice>();
-let generation = 0;
 
 async function createHomey(address: string, token: string): Promise<HomeyConnection> {
   // Import only HomeyAPI, not all Athom cloud clients, and load it on demand.
@@ -25,17 +19,19 @@ async function createHomey(address: string, token: string): Promise<HomeyConnect
   return HomeyAPI.createLocalAPI({ address, token, debug: null });
 }
 
-export async function connectHomey(
-  onDevices: (devices: Map<string, HomeyDevice>) => void,
-  factory: HomeyFactory = createHomey,
-): Promise<boolean> {
+export async function connectHomey(factory: HomeyFactory = createHomey): Promise<boolean> {
+  const session = useHomeyStore().transport;
+  const rooms = useRoomsStore();
+  const security = useSecurityStore();
+  const zones = useZonesStore();
+  const onDevices = (devices: Map<string, HomeyDevice>) => applyDevices(devices, rooms, security);
   const settings = useSettingsStore();
   if (!settings.configured) return false;
   disconnectHomey();
-  const current = generation;
+  const current = session.generation;
   const state = useHomeyStore();
   const activity = useActivityStore();
-  state.status = "connecting";
+  session.status = "connecting";
   activity.beginLoading();
   onDevices(new Map());
   let opened: HomeyConnection | null = null;
@@ -44,35 +40,35 @@ export async function connectHomey(
   let stopWeather: (() => void) | null = null;
   try {
     opened = await factory(settings.url, settings.token);
-    if (current !== generation) {
+    if (current !== session.generation) {
       opened.destroy();
       return false;
     }
     const active = opened;
     let subscribed = false;
     active.on("disconnect", () => {
-      if (current !== generation) return;
-      state.status = "connecting";
-      state.message = "Connection lost — retrying…";
+      if (current !== session.generation) return;
+      session.status = "connecting";
+      session.message = "Connection lost — retrying…";
       activity.disconnect();
       onDevices(new Map());
     });
     const ready = () => {
-      if (current !== generation || !subscribed) return;
-      state.status = "connected";
-      state.message = "";
+      if (current !== session.generation || !subscribed) return;
+      session.status = "connected";
+      session.message = "";
       activity.receive([]);
-      void refreshOutsideTemperature(active, current);
+      void refreshOutsideTemperature(active, current, session, rooms);
     };
     active.on("connect", ready);
     active.on("reconnect", ready);
     active.on("disconnect", () => {
-      if (current === generation) useRoomsStore().setOutsideTemperature(null);
+      if (current === session.generation) rooms.setOutsideTemperature(null);
     });
     if (active.flowtoken) {
       const updateWeather = (token: { id: string }) => {
         if (token.id === homePageBindings.outsideTemperatureTokenId)
-          void refreshOutsideTemperature(active, current);
+          void refreshOutsideTemperature(active, current, session, rooms);
       };
       active.flowtoken.on("flowtoken.update", updateWeather);
       stopWeather = () => active?.flowtoken?.off("flowtoken.update", updateWeather);
@@ -86,33 +82,33 @@ export async function connectHomey(
     stop = await subscribeHomeyDevices(
       active,
       (snapshot) => {
-        if (current !== generation) return;
-        devices = snapshot;
+        if (current !== session.generation) return;
+        session.devices = markRaw(snapshot);
         state.deviceCount = snapshot.size;
         onDevices(snapshot);
       },
       (events) => {
-        if (current === generation) activity.receive(events);
+        if (current === session.generation) activity.receive(events);
       },
     );
-    if (current !== generation) {
+    if (current !== session.generation) {
       stopWeather?.();
       stop();
       active.destroy();
       return false;
     }
-    stopZones = await subscribeHomeyZones(active, () => current === generation);
-    if (current !== generation) {
+    stopZones = await subscribeHomeyZones(active, () => current === session.generation, zones);
+    if (current !== session.generation) {
       stopWeather?.();
       stopZones();
       stop();
       active.destroy();
       return false;
     }
-    connection = active;
+    session.connection = markRaw(active);
     const stopDevices = stop;
     const stopZoneUpdates = stopZones;
-    unsubscribe = () => {
+    session.unsubscribe = () => {
       stopDevices();
       stopZoneUpdates();
       stopWeather?.();
@@ -125,11 +121,11 @@ export async function connectHomey(
     stop?.();
     stopWeather?.();
     opened?.destroy();
-    if (current === generation) {
-      devices.clear();
+    if (current === session.generation) {
+      session.devices.clear();
       state.deviceCount = 0;
-      state.status = "error";
-      state.message =
+      session.status = "error";
+      session.message =
         "Could not connect to Homey. Check the address, personal access token, and device permissions.";
       activity.fail();
     }
@@ -138,75 +134,45 @@ export async function connectHomey(
 }
 
 export function disconnectHomey(): void {
-  generation++;
-  unsubscribe?.();
-  unsubscribe = null;
-  connection?.destroy();
-  connection = null;
-  devices.clear();
+  const session = useHomeyStore().transport;
+  session.generation++;
+  session.unsubscribe?.();
+  session.unsubscribe = null;
+  session.connection?.destroy();
+  session.connection = null;
+  session.devices.clear();
+  if (useRoomsStore().mode === "live") applyDevices(new Map());
   useZonesStore().$reset();
   useRoomsStore().setOutsideTemperature(null);
   const security = useSecurityStore();
   if (security.dataFromHomey) security.people = [];
   const state = useHomeyStore();
-  state.status = "disconnected";
-  state.message = "";
+  session.status = "disconnected";
+  session.message = "";
   state.deviceCount = 0;
   useActivityStore().disconnect();
 }
 
-async function refreshOutsideTemperature(homey: HomeyConnection, current: number): Promise<void> {
+async function refreshOutsideTemperature(
+  homey: HomeyConnection,
+  current: number,
+  session: HomeyTransport,
+  rooms: ReturnType<typeof useRoomsStore>,
+): Promise<void> {
   if (!homey.flowtoken) return;
   try {
     const value = await homey.flowtoken.getFlowTokenValue({
       id: homePageBindings.outsideTemperatureTokenId,
     });
-    if (current !== generation || useHomeyStore().status !== "connected") return;
+    if (current !== session.generation || session.status !== "connected") return;
     const reading = String(value ?? "").trim();
     const temperature = reading === "" ? NaN : Number(reading);
-    useRoomsStore().setOutsideTemperature(Number.isFinite(temperature) ? temperature : null);
+    rooms.setOutsideTemperature(Number.isFinite(temperature) ? temperature : null);
   } catch {
     // Flow-token read permission is optional; Homey device controls remain connected.
-    if (current === generation && useHomeyStore().status === "connected")
-      useRoomsStore().setOutsideTemperature(null);
+    if (current === session.generation && session.status === "connected")
+      rooms.setOutsideTemperature(null);
   }
 }
 
-export type CommandResult = "sent" | "failed" | "offline";
-
-export async function setHomeyCapability(
-  deviceId: string,
-  capabilityId: string,
-  value: Exclude<CapabilityValue, null>,
-): Promise<CommandResult> {
-  if (!connection || useHomeyStore().status !== "connected") return "offline";
-  const device = devices.get(deviceId);
-  if (
-    !device?.available ||
-    !device.capabilities.includes(capabilityId) ||
-    device.capabilitiesObj[capabilityId]?.setable === false
-  )
-    return "failed";
-  try {
-    await device.setCapabilityValue({ capabilityId, value });
-    if (useHomeyStore().status === "connected") useHomeyStore().message = "";
-    return "sent";
-  } catch {
-    useHomeyStore().message = `Homey could not update ${device.name}.`;
-    return "failed";
-  }
-}
-
-export async function setHomeyLight(deviceId: string, level: number): Promise<CommandResult> {
-  const device = devices.get(deviceId);
-  if (level <= 0) return setHomeyCapability(deviceId, "onoff", false);
-  const on = await setHomeyCapability(deviceId, "onoff", true);
-  if (on !== "sent" || !device?.capabilities.includes("dim")) return on;
-  return setHomeyCapability(deviceId, "dim", Math.min(100, Math.max(0, level)) / 100);
-}
-
-export function homeyCameraVideo(deviceId: string) {
-  const device = devices.get(deviceId);
-  if (!connection || useHomeyStore().status !== "connected" || !device?.available) return undefined;
-  return device.videos?.find((video) => video.type === "camera")?.videoObj;
-}
+export { setHomeyCapability, setHomeyLight, homeyCameraVideo } from "@/services/homeyCommands";

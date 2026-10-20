@@ -9,7 +9,7 @@ import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
 import { homePageBindings } from "@/services/homeyBindings/homeyHomeBindings";
 import { roomBindingFor } from "@/services/homeyBindings/homeyRoomsBindings";
-import { temperatureText } from "@/services/homeySync";
+import { temperatureText } from "@/utils/temperature";
 import { useActivityStore } from "@/stores/activity";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore, type Camera } from "@/stores/security";
@@ -187,11 +187,17 @@ export default defineComponent({
                 })}
             </div>
 
-            <div class="col-foot" style={{ padding: "20px 40px", gap: "34px" }}>
+            <div class="col-foot homepage-climate">
               <div>
                 <div class="label">Target</div>
                 <div class="big-number big-number--accent" style={{ fontSize: "54px" }}>
                   {temperatureText(rooms.houseTarget)}
+                </div>
+              </div>
+              <div>
+                <div class="label">Outdoor Temp</div>
+                <div class="big-number" style={{ fontSize: "54px" }}>
+                  {temperatureText(rooms.outsideTemp)}
                 </div>
               </div>
             </div>
@@ -283,13 +289,6 @@ export default defineComponent({
             </div>
           </div>
         </div>
-
-        <footer class="homepage-footer">
-          <div class="label">Outdoor Temp</div>
-          <div class="big-number" style={{ fontSize: "40px" }}>
-            {temperatureText(rooms.outsideTemp)}
-          </div>
-        </footer>
 
         {selectedCamera.value && (
           <CameraModal

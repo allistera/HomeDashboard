@@ -1,21 +1,11 @@
 import { defineStore } from "pinia";
 
-import { seedRooms } from "@/data/rooms";
-import type { MediaCommand, Room, Scene } from "@/models/rooms";
+import { demoRooms } from "@/data/demo/rooms";
+import type { MediaCommand, Room, Scene, RoomsState } from "@/models/rooms";
 import { roomBindingFor } from "@/services/homeyBindings/homeyRoomsBindings";
-import { setHomeyCapability, setHomeyLight } from "@/services/homeyClient";
+import { setHomeyCapability, setHomeyLight } from "@/services/homeyCommands";
 
-export type { MediaCommand, Room, Scene } from "@/models/rooms";
-
-interface RoomsState {
-  rooms: Room[];
-  selectedRoomId: string;
-  washingWeatherOk: boolean | null;
-  outsideTempFromHomey: number | null;
-  houseTempFromHomey: number | null;
-  houseTargetFromHomey: number | null;
-  dataFromHomey: boolean;
-}
+export type { MediaCommand, Room, Scene, RoomsState } from "@/models/rooms";
 
 // Homey links are stable device IDs; UI light IDs stay page-owned.
 function pushLight(roomId: string, lightId: string, level: number): void {
@@ -39,15 +29,16 @@ export const useRoomsStore = defineStore("rooms", {
   // Clone the module-level seeds so store instances never share mutable state.
   state: (): RoomsState =>
     structuredClone({
-      rooms: seedRooms,
+      rooms: demoRooms,
       selectedRoomId: "living-room",
       washingWeatherOk: false,
       outsideTempFromHomey: null,
       houseTempFromHomey: null,
       houseTargetFromHomey: null,
-      dataFromHomey: false,
+      mode: "demo",
     }),
   getters: {
+    dataFromHomey: (state): boolean => state.mode === "live",
     selectedRoom(state): Room {
       return state.rooms.find((r) => r.id === state.selectedRoomId) ?? state.rooms[0];
     },
@@ -66,18 +57,19 @@ export const useRoomsStore = defineStore("rooms", {
       return state.washingWeatherOk ? "ok" : "alert";
     },
     outsideTemp(state): number | null {
-      if (state.dataFromHomey || state.outsideTempFromHomey !== null)
+      if (state.mode === "live" || state.outsideTempFromHomey !== null)
         return state.outsideTempFromHomey;
       return state.rooms.find((room) => room.id === "garden")?.temp ?? 0;
     },
     houseTemp(state): number | null {
-      if (state.dataFromHomey || state.houseTempFromHomey !== null) return state.houseTempFromHomey;
+      if (state.mode === "live" || state.houseTempFromHomey !== null)
+        return state.houseTempFromHomey;
       const inside = state.rooms.filter((r) => r.id !== "garden");
       const avg = inside.reduce((sum, r) => sum + (r.temp ?? 0), 0) / inside.length;
       return Math.round(avg * 2) / 2;
     },
     houseTarget(state): number | null {
-      if (state.dataFromHomey || state.houseTargetFromHomey !== null)
+      if (state.mode === "live" || state.houseTargetFromHomey !== null)
         return state.houseTargetFromHomey;
       const targets = state.rooms.filter((r) => r.id !== "garden").map((r) => r.target ?? 0);
       return Math.max(...targets);

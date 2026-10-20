@@ -5,7 +5,6 @@ import { subscribeHomeyZones } from "@/services/homeyZones";
 import { TestHomey } from "@/services/homeyTestSupport";
 import { useZonesStore } from "@/stores/zones";
 import { connectHomey, disconnectHomey } from "@/services/homeyClient";
-import { applyDevices } from "@/services/homeySync";
 import { useSettingsStore } from "@/stores/settings";
 import { useHomeyStore } from "@/stores/homey";
 
@@ -41,7 +40,7 @@ describe("Homey zone activity", () => {
     useSettingsStore().url = "https://homey.example";
     useSettingsStore().token = "test-token";
     try {
-      expect(await connectHomey(applyDevices, async () => homey)).toBe(true);
+      expect(await connectHomey(async () => homey)).toBe(true);
       expect(useHomeyStore().status).toBe("connected");
       expect(useZonesStore().unavailable).toBe(true);
       expect(useZonesStore().zones).toEqual({});

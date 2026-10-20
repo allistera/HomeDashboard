@@ -1,11 +1,12 @@
+import ToggleSwitch from "@/components/ToggleSwitch";
 import { computed, defineComponent } from "vue";
 
 import RoomDeviceDetails from "@/components/RoomDeviceDetails";
 import RoomCamera from "@/components/RoomCamera";
-import ToggleSwitch from "@/components/ToggleSwitch";
+import RoomLighting from "@/components/RoomLighting";
 import TopBar from "@/components/TopBar";
 import { roomDeviceIds } from "@/services/homeyBindings/homeyGlobalBindings";
-import { temperatureText } from "@/services/homeySync";
+import { temperatureText } from "@/utils/temperature";
 import { useActivityStore } from "@/stores/activity";
 import { useRoomsStore, type Room, type Scene } from "@/stores/rooms";
 
@@ -149,49 +150,7 @@ export default defineComponent({
                       )}
                     </div>
                   </section>
-                  <div class="section-head">
-                    <span class="label">Lights</span>
-                  </div>
-                  <div class="rows">
-                    {room.lights.map((light) => (
-                      <div
-                        key={light.id}
-                        class={["row", { "row--dim": light.level === 0 }]}
-                        style={{
-                          gridTemplateColumns: "minmax(0, 1fr) minmax(100px, 140px) 52px 44px",
-                          gap: "16px",
-                        }}
-                      >
-                        <span class="row__name" style={{ fontSize: "19px" }}>
-                          {light.name}
-                        </span>
-                        <input
-                          class="brightness-slider"
-                          type="range"
-                          min="0"
-                          max="100"
-                          step="1"
-                          value={light.level}
-                          aria-label={`${light.name} brightness`}
-                          aria-valuetext={light.level > 0 ? `${light.level}%` : "Off"}
-                          onInput={(event) => {
-                            if (!(event.target instanceof HTMLInputElement)) return;
-                            rooms.setLightLevel(room.id, light.id, Number(event.target.value));
-                          }}
-                        />
-                        <span class="row__meta" style={{ textAlign: "right" }}>
-                          {light.level > 0 ? `${light.level}%` : "OFF"}
-                        </span>
-                        <ToggleSwitch
-                          modelValue={light.level > 0}
-                          label={`${light.name} power`}
-                          onUpdate:modelValue={(value: boolean) =>
-                            rooms.setLightPower(room.id, light.id, value)
-                          }
-                        />
-                      </div>
-                    ))}
-                  </div>
+                  <RoomLighting room={room} />
 
                   <div class="col-foot" style={{ padding: "20px 40px", gap: "34px" }}>
                     <div>
