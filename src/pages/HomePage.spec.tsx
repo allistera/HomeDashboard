@@ -50,11 +50,32 @@ describe("HomePage headline", () => {
   it("shows the bound outdoor temperature in the climate summary", () => {
     useRoomsStore().setHomeClimateValues(8.4, 20.7, 21.5);
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
-    const climateSummary = wrapper.get(".homepage-footer");
+    const climateSummary = wrapper.get(".homepage-climate");
 
-    expect(climateSummary.text()).toContain("Outdoor Temp");
+    expect(climateSummary.findAll(".label").map((label) => label.text())).toEqual([
+      "Target",
+      "Outdoor Temp",
+    ]);
+    expect(climateSummary.findAll(".big-number").map((value) => value.text())).toEqual([
+      "21.5°",
+      "8.4°",
+    ]);
+    expect(wrapper.find(".homepage-footer").exists()).toBe(false);
+    expect(wrapper.text()).toContain("OUTSIDE 8°");
     expect(climateSummary.text()).toContain("8.4°");
     expect(climateSummary.text()).not.toContain("House temp");
     expect(climateSummary.text()).not.toContain("20.7°");
+  });
+  it("preserves unavailable readings in the shared climate row", () => {
+    const rooms = useRoomsStore();
+    rooms.dataFromHomey = true;
+    rooms.setHomeClimateValues(null, null, null);
+    const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
+    expect(
+      wrapper
+        .get(".homepage-climate")
+        .findAll(".big-number")
+        .map((value) => value.text()),
+    ).toEqual(["—", "—"]);
   });
 });

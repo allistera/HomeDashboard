@@ -186,15 +186,6 @@ export default defineComponent({
                   );
                 })}
             </div>
-
-            <div class="col-foot" style={{ padding: "20px 40px", gap: "34px" }}>
-              <div>
-                <div class="label">Target</div>
-                <div class="big-number big-number--accent" style={{ fontSize: "54px" }}>
-                  {temperatureText(rooms.houseTarget)}
-                </div>
-              </div>
-            </div>
           </div>
 
           <div class="col">
@@ -284,10 +275,14 @@ export default defineComponent({
           </div>
         </div>
 
-        <footer class="homepage-footer">
-          <div class="label">Outdoor Temp</div>
-          <div class="big-number" style={{ fontSize: "40px" }}>
-            {temperatureText(rooms.outsideTemp)}
+        <footer class="homepage-climate">
+          <div>
+            <div class="label">Target</div>
+            <div class="big-number big-number--accent">{temperatureText(rooms.houseTarget)}</div>
+          </div>
+          <div>
+            <div class="label">Outdoor Temp</div>
+            <div class="big-number">{temperatureText(rooms.outsideTemp)}</div>
           </div>
         </footer>
 
