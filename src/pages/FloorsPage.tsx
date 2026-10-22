@@ -51,6 +51,10 @@ interface FloorPlan {
   markers?: PlanMarker[];
 }
 
+// Each callout dot sits at the centre of its room; the room temperature is
+// printed on the floor just below it when a reading is available.
+const floorTempOffset = 26;
+
 // Isometric grid: p(a, b) = (660 + (a - b) * 38, 140 + (a + b) * 22) on a
 // 1300 x 800 canvas. Geometry traced from the real Dedridge floor plan:
 // ground floor is an L-shape (kitchen block raised top-left, lounge/dining
@@ -314,12 +318,25 @@ export default defineComponent({
                 </text>
               ))}
 
-              {floor.value.callouts.map((callout) => (
-                <g key={callout.roomId}>
-                  <path d={callout.line} class="plan__lead" fill="none" />
-                  <circle cx={callout.dot[0]} cy={callout.dot[1]} r="5" class="plan__dot" />
-                </g>
-              ))}
+              {floor.value.callouts.map((callout) => {
+                const temp = roomById(callout.roomId)?.temp ?? null;
+                return (
+                  <g key={callout.roomId}>
+                    <path d={callout.line} class="plan__lead" fill="none" />
+                    <circle cx={callout.dot[0]} cy={callout.dot[1]} r="5" class="plan__dot" />
+                    {temp !== null && (
+                      <text
+                        x={callout.dot[0]}
+                        y={callout.dot[1] + floorTempOffset}
+                        class="plan__temp"
+                        data-room={callout.roomId}
+                      >
+                        {temperatureText(temp)}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
 
               {(floor.value.markers ?? []).map((marker) => (
                 <g key={marker.label}>

@@ -15,7 +15,8 @@ type carries the hierarchy.
   type and availability. Light controls remain below the inventory. Device counts include all
   listed devices; additions, removals, renames, and zone moves update live.
 - **Floors** (`/floors`) — the "God View": isometric floor plans of the ground
-  and first floors with live room callouts (lights, media, windows),
+  and first floors with live room callouts (lights, media, windows), each room's
+  current temperature printed on its floor when a reading is available,
   a floor switcher, and a stairs shortcut. `/energy` redirects here.
 - **Security** (`/security`) — arm state, camera wall, every door and window as
   a ruled row, presence, and today's events.
