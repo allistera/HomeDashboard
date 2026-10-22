@@ -100,7 +100,7 @@ describe("Homey client", () => {
     await flushPromises();
     expect(requestedIds).toEqual(["homey:manager:weather:temperature"]);
     expect(useRoomsStore().outsideTemp).toBe(12.5);
-    expect(wrapper.get(".homepage-footer .big-number").text()).toBe("12.5°");
+    expect(wrapper.get(".homepage-climate > div:last-child .big-number").text()).toBe("12.5°");
 
     speaker.emit("speaker_track", "Second track");
     expect(useRoomsStore().outsideTemp).toBe(12.5);
@@ -108,32 +108,32 @@ describe("Homey client", () => {
     if (connected) listeners[0]?.({ id: "homey:manager:weather:temperature" });
     await flushPromises();
     expect(useRoomsStore().outsideTemp).toBe(14);
-    expect(wrapper.get(".homepage-footer .big-number").text()).toBe("14.0°");
+    expect(wrapper.get(".homepage-climate > div:last-child .big-number").text()).toBe("14.0°");
 
     for (const invalid of [null, true, false, "", " ", "unavailable", NaN, Infinity]) {
       value = invalid;
       listeners[0]?.({ id: "homey:manager:weather:temperature" });
       await flushPromises();
-      expect(wrapper.get(".homepage-footer .big-number").text()).toBe("—");
+      expect(wrapper.get(".homepage-climate > div:last-child .big-number").text()).toBe("—");
     }
 
     value = 0;
     homey.emit("reconnect");
     await flushPromises();
-    expect(wrapper.get(".homepage-footer .big-number").text()).toBe("0.0°");
+    expect(wrapper.get(".homepage-climate > div:last-child .big-number").text()).toBe("0.0°");
 
     homey.flowtoken.getFlowTokenValue = async () => {
       throw new Error("Unavailable");
     };
     listeners[0]?.({ id: "homey:manager:weather:temperature" });
     await flushPromises();
-    expect(wrapper.get(".homepage-footer .big-number").text()).toBe("—");
+    expect(wrapper.get(".homepage-climate > div:last-child .big-number").text()).toBe("—");
     expect(useHomeyStore().status).toBe("connected");
 
     disconnectHomey();
     await flushPromises();
     expect(listeners).toHaveLength(0);
-    expect(wrapper.get(".homepage-footer .big-number").text()).toBe("—");
+    expect(wrapper.get(".homepage-climate > div:last-child .big-number").text()).toBe("—");
     wrapper.unmount();
   });
 
