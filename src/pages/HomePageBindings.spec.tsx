@@ -3,6 +3,8 @@ import { createPinia, setActivePinia, type Pinia } from "pinia";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import HomePage from "@/pages/HomePage";
+import { applyEntities } from "@/services/haSync";
+import { entity, entityStates } from "@/services/haTestSupport";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
 
@@ -51,6 +53,19 @@ describe("HomePage bindings", () => {
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
     expect(document.body.style.overflow).toBe("");
     wrapper.unmount();
+  });
+
+  it("shows the live temperature in Jaicob's homepage room row", () => {
+    const temperature = entity("sensor.jaicob_s_room_temperature", "18.4", {
+      unit_of_measurement: "°C",
+    });
+    applyEntities(entityStates(temperature), new Map());
+    const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
+    try {
+      expect(wrapper.get('[aria-label="View Jaicobs Room"] .row__meta').text()).toBe("18.4°");
+    } finally {
+      wrapper.unmount();
+    }
   });
 
   it("controls the bound media player from the homepage", async () => {
