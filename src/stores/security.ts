@@ -3,16 +3,13 @@ import { defineStore } from "pinia";
 
 import type { ArmState, Entry, SecurityState } from "@/models/security";
 export type { ArmState, Entry, Camera, Person, SecurityEvent } from "@/models/security";
-import {
-  entryBindings,
-  securityPageBindings,
-} from "@/services/homeyBindings/homeySecurityBindings";
-import { setHomeyCapability } from "@/services/homeyCommands";
+import { entryBindings, securityPageBindings } from "@/config/homeAssistant";
+import { haCallService } from "@/services/haClient";
 
 export const useSecurityStore = defineStore("security", {
   state: (): SecurityState => structuredClone(demoSecurity),
   getters: {
-    dataFromHomey: (state): boolean => state.mode === "live",
+    hasLiveData: (state): boolean => state.mode === "live",
     peopleHome(state): number {
       return state.people.filter(
         (p) => !p.guest && (state.mode === "live" ? p.home === true : p.home !== false),
@@ -22,7 +19,8 @@ export const useSecurityStore = defineStore("security", {
       return state.entries.filter((e) => e.open);
     },
     allSecure(state): boolean {
-      if (state.mode === "live" && state.entries.length === 0) return false;
+      if (state.mode === "live" && !state.entries.some((entry) => entry.lockAvailable))
+        return false;
       return state.entries.every((e) => e.locked && !e.open);
     },
     armLabel(state): string {
@@ -40,18 +38,15 @@ export const useSecurityStore = defineStore("security", {
   actions: {
     async arm(state: ArmState) {
       const alarm = securityPageBindings.alarmControlPanel;
-      if (this.dataFromHomey && (!alarm || !this.alarmAvailable)) return;
+      if (this.hasLiveData && !this.alarmAvailable) return;
       const previous = this.armState;
       this.armState = state;
-      if (!alarm) return;
-      const result = await setHomeyCapability(
-        alarm.deviceId,
-        alarm.capabilityId,
-        alarm.states[state],
-      );
-      if (result !== "sent") this.armState = previous;
+      if (!this.hasLiveData) return;
+      const service = { home: "alarm_arm_home", away: "alarm_arm_away", disarmed: "alarm_disarm" };
+      const result = await haCallService(alarm, service[state]);
+      if (result !== "sent" && this.armState === state) this.armState = previous;
     },
-    setArmStateFromHomey(state: ArmState, changedAt: string) {
+    setArmStateFromHa(state: ArmState, changedAt: string) {
       this.armState = state;
       this.secureSince = changedAt;
     },
@@ -59,7 +54,7 @@ export const useSecurityStore = defineStore("security", {
       const entry = this.entries.find((e) => e.id === id);
       if (!entry) return;
       const lock = entryBindings.find((b) => b.entryId === id)?.lock;
-      if (this.dataFromHomey && !lock) return;
+      if (this.hasLiveData && (!lock || !entry.lockAvailable)) return;
       const previousLocked = entry.locked;
       const previousDetail = entry.detail;
 
@@ -72,8 +67,8 @@ export const useSecurityStore = defineStore("security", {
           : "LOCKED · JUST NOW"
         : "UNLOCKED · JUST NOW";
 
-      if (!lock) return;
-      const result = await setHomeyCapability(lock.deviceId, lock.capabilityId, locked);
+      if (!this.hasLiveData || !lock) return;
+      const result = await haCallService(lock, locked ? "lock" : "unlock");
       if (result !== "sent") {
         entry.locked = previousLocked;
         entry.detail = previousDetail;

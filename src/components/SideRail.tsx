@@ -1,7 +1,7 @@
 import { defineComponent } from "vue";
 import { RouterLink } from "vue-router";
 
-import { useHomeyStore } from "@/stores/homey";
+import { useHaStore } from "@/stores/ha";
 
 const links = [
   { label: "HOME", to: "/" },
@@ -13,14 +13,14 @@ const links = [
 export default defineComponent({
   name: "SideRail",
   setup() {
-    const homey = useHomeyStore();
+    const ha = useHaStore();
     return () => (
       <nav class="rail" aria-label="Main">
         <div
-          class={["rail__dot", { "rail__dot--connected": homey.status === "connected" }]}
+          class={["rail__dot", { "rail__dot--connected": ha.status === "connected" }]}
           role="status"
-          aria-label={`Homey: ${homey.status}`}
-          title={`Homey: ${homey.status}`}
+          aria-label={`Home Assistant: ${ha.status}`}
+          title={`Home Assistant: ${ha.status}`}
         />
         <div class="rail__links">
           {links.map((link) => (

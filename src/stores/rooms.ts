@@ -2,12 +2,12 @@ import { defineStore } from "pinia";
 
 import { demoRooms } from "@/data/demo/rooms";
 import type { MediaCommand, Room, Scene, RoomsState } from "@/models/rooms";
-import { roomBindingFor } from "@/services/homeyBindings/homeyRoomsBindings";
-import { setHomeyCapability, setHomeyLight } from "@/services/homeyCommands";
+import { roomBindingFor } from "@/config/homeAssistant";
+import { haCallService } from "@/services/haClient";
 
 export type { MediaCommand, Room, Scene, RoomsState } from "@/models/rooms";
 
-// Homey links are stable device IDs; UI light IDs stay page-owned.
+// UI light IDs remain independent of Home Assistant entity IDs.
 function pushLight(roomId: string, lightId: string, level: number): void {
   const rooms = useRoomsStore();
   const light = rooms.rooms
@@ -15,13 +15,16 @@ function pushLight(roomId: string, lightId: string, level: number): void {
     ?.lights.find((item) => item.id === lightId);
   const previous = light?.level ?? 0;
   if (light) light.level = level;
-  const deviceId = roomBindingFor(roomId)?.lights.find(
+  const entityId = roomBindingFor(roomId)?.lights.find(
     (light) => light.lightId === lightId,
-  )?.deviceId;
-  if (deviceId)
-    void setHomeyLight(deviceId, level).then((result) => {
-      if (rooms.dataFromHomey && result !== "sent" && light?.level === level)
-        light.level = previous;
+  )?.entityId;
+  if (rooms.hasLiveData && entityId)
+    void haCallService(
+      entityId,
+      level === 0 ? "turn_off" : "turn_on",
+      level > 0 && light?.dimmable ? { brightness_pct: level } : undefined,
+    ).then((result) => {
+      if (rooms.hasLiveData && result !== "sent" && light?.level === level) light.level = previous;
     });
 }
 
@@ -32,13 +35,13 @@ export const useRoomsStore = defineStore("rooms", {
       rooms: demoRooms,
       selectedRoomId: "living-room",
       washingWeatherOk: false,
-      outsideTempFromHomey: null,
-      houseTempFromHomey: null,
-      houseTargetFromHomey: null,
+      outsideTempFromHa: null,
+      houseTempFromHa: null,
+      houseTargetFromHa: null,
       mode: "demo",
     }),
   getters: {
-    dataFromHomey: (state): boolean => state.mode === "live",
+    hasLiveData: (state): boolean => state.mode === "live",
     selectedRoom(state): Room {
       return state.rooms.find((r) => r.id === state.selectedRoomId) ?? state.rooms[0];
     },
@@ -57,20 +60,17 @@ export const useRoomsStore = defineStore("rooms", {
       return state.washingWeatherOk ? "ok" : "alert";
     },
     outsideTemp(state): number | null {
-      if (state.mode === "live" || state.outsideTempFromHomey !== null)
-        return state.outsideTempFromHomey;
+      if (state.mode === "live" || state.outsideTempFromHa !== null) return state.outsideTempFromHa;
       return state.rooms.find((room) => room.id === "garden")?.temp ?? 0;
     },
     houseTemp(state): number | null {
-      if (state.mode === "live" || state.houseTempFromHomey !== null)
-        return state.houseTempFromHomey;
+      if (state.mode === "live" || state.houseTempFromHa !== null) return state.houseTempFromHa;
       const inside = state.rooms.filter((r) => r.id !== "garden");
       const avg = inside.reduce((sum, r) => sum + (r.temp ?? 0), 0) / inside.length;
       return Math.round(avg * 2) / 2;
     },
     houseTarget(state): number | null {
-      if (state.mode === "live" || state.houseTargetFromHomey !== null)
-        return state.houseTargetFromHomey;
+      if (state.mode === "live" || state.houseTargetFromHa !== null) return state.houseTargetFromHa;
       const targets = state.rooms.filter((r) => r.id !== "garden").map((r) => r.target ?? 0);
       return Math.max(...targets);
     },
@@ -81,15 +81,9 @@ export const useRoomsStore = defineStore("rooms", {
       temperature: number | null,
       target: number | null,
     ) {
-      this.outsideTempFromHomey = outsideTemperature;
-      this.houseTempFromHomey = temperature;
-      this.houseTargetFromHomey = target;
-    },
-    setOutsideTemperature(value: number | null) {
-      this.outsideTempFromHomey = value;
-    },
-    setWashingWeather(ok: boolean) {
-      this.washingWeatherOk = ok;
+      this.outsideTempFromHa = outsideTemperature;
+      this.houseTempFromHa = temperature;
+      this.houseTargetFromHa = target;
     },
     selectRoom(id: string) {
       if (this.rooms.some((r) => r.id === id)) {
@@ -127,13 +121,10 @@ export const useRoomsStore = defineStore("rooms", {
         const previous = room.target;
         room.target = Math.round((room.target + delta) * 2) / 2;
         const climate = roomBindingFor(roomId)?.climate;
-        if (climate) {
-          const result = await setHomeyCapability(
-            climate.deviceId,
-            climate.capabilityId,
-            room.target,
-          );
-          if (result !== "sent") room.target = previous;
+        if (this.hasLiveData && climate) {
+          const target = room.target;
+          const result = await haCallService(climate, "set_temperature", { temperature: target });
+          if (result !== "sent" && room.target === target) room.target = previous;
         }
       }
     },
@@ -151,22 +142,21 @@ export const useRoomsStore = defineStore("rooms", {
     },
     async controlMedia(roomId: string, command: MediaCommand) {
       const room = this.rooms.find((item) => item.id === roomId);
-      const deviceId = roomBindingFor(roomId)?.media;
-      if (!room?.media || !deviceId) return;
+      const entityId = roomBindingFor(roomId)?.media;
+      if (!room?.media || !entityId) return;
 
-      const capability = {
-        previous: "speaker_prev",
-        toggle: "speaker_playing",
-        next: "speaker_next",
-      } satisfies Record<MediaCommand, string>;
       const previous = room.media.playing;
-      if (command === "toggle") room.media.playing = !room.media.playing;
-      const result = await setHomeyCapability(
-        deviceId,
-        capability[command],
-        command === "toggle" ? room.media.playing : true,
-      );
-      if (this.dataFromHomey && result !== "sent") room.media.playing = previous;
+      if (command === "toggle") room.media.playing = !previous;
+      if (!this.hasLiveData) return;
+      const service = {
+        previous: "media_previous_track",
+        toggle: previous ? "media_pause" : "media_play",
+        next: "media_next_track",
+      } satisfies Record<MediaCommand, string>;
+      const result = await haCallService(entityId, service[command]);
+      if (command === "toggle" && result !== "sent" && room.media.playing !== previous) {
+        room.media.playing = previous;
+      }
     },
   },
 });

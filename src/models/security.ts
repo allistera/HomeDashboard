@@ -1,11 +1,12 @@
-import type { AlarmArmState } from "@/services/homeyTypes";
-export type ArmState = AlarmArmState;
+export type ArmState = "home" | "away" | "disarmed";
 
 export interface Entry {
   id: string;
   name: string;
   kind: "door" | "window" | "garage";
   locked: boolean;
+  lockAvailable?: boolean;
+  statusKnown?: boolean;
   open: boolean;
   detail: string;
 }
@@ -16,7 +17,7 @@ export interface Camera {
   live: boolean;
   available?: boolean;
   note?: string;
-  deviceId?: string;
+  entityId?: string;
   snapshotUrl?: string;
   streamUrl?: string;
 }

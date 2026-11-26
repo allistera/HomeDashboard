@@ -1,7 +1,7 @@
 import { computed, defineComponent, ref } from "vue";
 
 import TopBar from "@/components/TopBar";
-import { floorsPageBindings } from "@/services/homeyBindings/homeyFloorsBindings";
+import { floorsPageBindings } from "@/config/homeAssistant";
 import FloorPlanCanvas, { type Chip } from "@/components/FloorPlanCanvas";
 import { floors, type FloorId } from "@/data/floors";
 import "./FloorsPage.css";

@@ -1,36 +1,34 @@
 import { computed, defineComponent, ref } from "vue";
 
 import TopBar from "@/components/TopBar";
-import { connectHomey, disconnectHomey } from "@/services/homeyClient";
-import { useHomeyStore } from "@/stores/homey";
-import { useZonesStore } from "@/stores/zones";
+import { connectHa, disconnectHa } from "@/services/haClient";
+import { useHaStore } from "@/stores/ha";
 import { useSettingsStore } from "@/stores/settings";
 
 export default defineComponent({
   name: "SettingsPage",
   setup() {
     const settings = useSettingsStore();
-    const homey = useHomeyStore();
-    const zones = useZonesStore();
+    const ha = useHaStore();
     const url = ref(settings.url);
     const token = ref(settings.token);
 
     const submit = async (event: Event) => {
       event.preventDefault();
       const saved = await settings.validateAndSave(url.value, token.value);
-      if (saved) await connectHomey();
+      if (saved) await connectHa();
     };
 
     const clear = () => {
-      disconnectHomey();
+      disconnectHa();
       settings.clear();
       url.value = "";
       token.value = "";
     };
 
     const connectionLine = computed(() => {
-      const parts = [homey.status.toUpperCase()];
-      if (homey.deviceCount > 0) parts.push(`${homey.deviceCount} DEVICES`);
+      const parts = [ha.status.toUpperCase()];
+      if (ha.entityCount > 0) parts.push(`${ha.entityCount} ENTITIES`);
       return parts.join(" · ");
     });
 
@@ -38,7 +36,7 @@ export default defineComponent({
       <main class="main">
         <TopBar
           left={["INTEGRATIONS"]}
-          status={homey.status === "connected" ? "HOMEY CONNECTED" : "NOT CONNECTED"}
+          status={ha.status === "connected" ? "HOME ASSISTANT CONNECTED" : "NOT CONNECTED"}
         />
 
         <div class="hero">
@@ -46,32 +44,32 @@ export default defineComponent({
             <div class="label">Integrations</div>
             <h1 class="hero__title">Settings</h1>
             <p class="hero__sub">
-              Point the dashboard at your Homey instance. The URL and token are validated against
-              its API and stored only in this browser.
+              Point the dashboard at your Home Assistant instance. The URL and token are validated
+              against its API and stored only in this browser.
             </p>
           </div>
         </div>
 
         <form class="settings-form" onSubmit={submit}>
           <div class="field">
-            <label class="label" for="homey-url">
-              Homey URL
+            <label class="label" for="ha-url">
+              Home Assistant URL
             </label>
             <input
-              id="homey-url"
+              id="ha-url"
               class="field__input"
               type="text"
-              placeholder="https://your-homey-address"
+              placeholder="https://home-assistant.example.com"
               v-model={url.value}
             />
           </div>
 
           <div class="field">
-            <label class="label" for="homey-token">
-              Personal access token
+            <label class="label" for="ha-token">
+              Long-lived access token
             </label>
             <input
-              id="homey-token"
+              id="ha-token"
               class="field__input"
               type="password"
               placeholder="eyJhbGciOi…"
@@ -79,9 +77,7 @@ export default defineComponent({
               v-model={token.value}
             />
             <p class="field__hint">
-              Create one in the Homey Web App under Settings → API Keys. Grant device read and
-              control, zone read, Insights read for activity history, and Flow read for Homey's
-              outdoor temperature.
+              Create a long-lived access token in your Home Assistant user profile under Security.
             </p>
           </div>
 
@@ -117,10 +113,8 @@ export default defineComponent({
           )}
 
           <div class="connection">
-            {zones.unavailable && (
-              <p role="status">
-                Zone activity unavailable. Check the API key's zone read permission and reconnect.
-              </p>
+            {ha.inventoryUnavailable && (
+              <p role="status">Home Assistant room inventory is unavailable.</p>
             )}
             <div class="label">Live connection</div>
             <p
@@ -128,21 +122,21 @@ export default defineComponent({
                 "settings-form__status",
                 "mono",
                 {
-                  "settings-form__status--ok": homey.status === "connected",
-                  "settings-form__status--error": homey.status === "error",
+                  "settings-form__status--ok": ha.status === "connected",
+                  "settings-form__status--error": ha.status === "error",
                 },
               ]}
               role="status"
             >
               {connectionLine.value}
-              {homey.message !== "" && ` — ${homey.message}`}
+              {ha.message !== "" && ` — ${ha.message}`}
             </p>
-            {settings.configured && homey.status !== "connected" && (
+            {settings.configured && ha.status !== "connected" && (
               <button
                 type="button"
                 class="btn btn--small"
                 style={{ alignSelf: "flex-start" }}
-                onClick={() => void connectHomey()}
+                onClick={() => void connectHa()}
               >
                 Reconnect
               </button>

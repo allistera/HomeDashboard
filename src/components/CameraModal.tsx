@@ -11,7 +11,7 @@ import {
 } from "vue";
 
 import { useDocumentVisible } from "@/composables/useDocumentVisible";
-import { startCameraStream, type WebRtcSession, type WebRtcStarter } from "@/services/cameraStream";
+import { startHaWebRtcStream, type WebRtcSession, type WebRtcStarter } from "@/services/haWebRtc";
 import type { Camera } from "@/stores/security";
 
 type StreamMode = "webrtc" | "mjpeg";
@@ -23,7 +23,7 @@ export default defineComponent({
     camera: { type: Object as PropType<Camera>, required: true },
     // A camera integration may supply WebRTC; otherwise use its stream URL.
     // SAFETY: Vue's runtime Function constructor is narrowed to the starter signature by PropType.
-    startStream: { type: Function as PropType<WebRtcStarter>, default: startCameraStream },
+    startStream: { type: Function as PropType<WebRtcStarter>, default: startHaWebRtcStream },
   },
   emits: ["close"],
   setup(props, { emit }) {
@@ -49,14 +49,14 @@ export default defineComponent({
     const startWebRtc = () => {
       stopWebRtc();
       webRtcStream.value = null;
-      const deviceId = props.camera.deviceId;
-      if (!deviceId) {
+      const entityId = props.camera.entityId;
+      if (!entityId) {
         mode.value = "mjpeg";
         return;
       }
       const current = ++generation;
       let failed = false;
-      const started = props.startStream(deviceId, {
+      const started = props.startStream(entityId, {
         onStream: (stream) => {
           if (current === generation) webRtcStream.value = stream;
         },

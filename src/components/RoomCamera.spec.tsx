@@ -7,7 +7,7 @@ import { useSettingsStore } from "@/stores/settings";
 describe("Room camera snapshots", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
-    useSettingsStore().url = "https://homey.example";
+    useSettingsStore().url = "https://ha.example";
     useSettingsStore().token = "test-token";
     vi.stubGlobal(
       "fetch",
@@ -30,7 +30,7 @@ describe("Room camera snapshots", () => {
     vi.useRealTimers();
   });
 
-  it("keeps the image and refresh schedule when Homey rebuilds unchanged camera metadata", async () => {
+  it("keeps the image and refresh schedule when Home Assistant rebuilds unchanged camera metadata", async () => {
     vi.useFakeTimers();
     const camera = {
       id: "camera",
@@ -137,7 +137,7 @@ describe("Room camera snapshots", () => {
     wrapper.unmount();
   });
 
-  it("loads a Homey image with authorization and releases it on unmount", async () => {
+  it("loads a Home Assistant image with authorization and releases it on unmount", async () => {
     const wrapper = mount(RoomCamera, {
       props: {
         camera: {
@@ -150,7 +150,7 @@ describe("Room camera snapshots", () => {
     });
     await flushPromises();
     expect(fetch).toHaveBeenCalledWith(
-      "https://homey.example/api/image/camera",
+      "https://ha.example/api/image/camera",
       expect.objectContaining({
         headers: { Authorization: "Bearer test-token" },
         redirect: "error",
@@ -161,7 +161,7 @@ describe("Room camera snapshots", () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:snapshot");
   });
 
-  it("never sends the Homey token to an external image source", async () => {
+  it("never sends the Home Assistant token to an external image source", async () => {
     const wrapper = mount(RoomCamera, {
       props: {
         camera: {

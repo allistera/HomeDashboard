@@ -6,7 +6,7 @@ import CameraTile from "@/components/CameraTile";
 import EventFeed from "@/components/EventFeed";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
-import { securityPageBindings } from "@/services/homeyBindings/homeySecurityBindings";
+import { entryBindings, roomBindings } from "@/config/homeAssistant";
 import { useActivityStore } from "@/stores/activity";
 import { useSecurityStore, type ArmState, type Camera } from "@/stores/security";
 
@@ -32,15 +32,22 @@ export default defineComponent({
     };
 
     const headline = computed(() =>
-      security.dataFromHomey && !security.alarmAvailable
+      security.hasLiveData && !security.alarmAvailable
         ? "Alarm unavailable"
         : security.armState === "disarmed"
           ? "Perimeter disarmed"
           : `Secure since ${security.secureSince}`,
     );
     const subline = computed(() => {
-      if (security.dataFromHomey && security.entries.length === 0)
-        return "No door or lock devices are linked in Homey.";
+      if (security.hasLiveData) {
+        const known = security.entries.filter((entry) => entry.statusKnown);
+        if (known.length === 0) return "Door and lock status unavailable.";
+        const open = known.filter((entry) => entry.open);
+        if (open.length > 0) return `Open: ${open.map((entry) => entry.name).join(", ")}.`;
+        return known.length === security.entries.length
+          ? "All monitored entries are closed."
+          : "Some entry sensors are unavailable.";
+      }
       const open = security.openEntries;
       const locks = `All ${security.entries.length} locks engaged`;
       if (open.length === 0) {
@@ -54,7 +61,7 @@ export default defineComponent({
       <main class="main">
         <TopBar
           left={[
-            `${security.dataFromHomey ? security.cameras.filter((camera) => camera.deviceId).length : security.cameras.length} CAMERAS · ${securityPageBindings.sensorCount} SENSORS`,
+            `${security.hasLiveData ? security.cameras.filter((camera) => camera.entityId).length : security.cameras.length} CAMERAS · ${entryBindings.filter((binding) => binding.sensor).length + roomBindings.filter((binding) => binding.motion).length} SENSORS`,
           ]}
           showPeople
           status={security.armLabel}
@@ -76,7 +83,7 @@ export default defineComponent({
                 type="button"
                 key={option.id}
                 class={["btn", { "btn--primary": security.armState === option.id }]}
-                disabled={security.dataFromHomey && !security.alarmAvailable}
+                disabled={security.hasLiveData && !security.alarmAvailable}
                 onClick={() => security.arm(option.id)}
               >
                 {option.name}
@@ -90,7 +97,7 @@ export default defineComponent({
             <div class="section-head">
               <span class="label">Cameras</span>
               <span class="label" style={{ letterSpacing: "normal" }}>
-                {security.dataFromHomey
+                {security.hasLiveData
                   ? `${security.cameras.length} CAMERAS FOUND`
                   : "RECORDING ON MOTION"}
               </span>
@@ -103,15 +110,15 @@ export default defineComponent({
                 gap: "12px",
               }}
             >
-              {security.dataFromHomey && security.cameras.length === 0 && (
-                <p class="row__meta">No cameras found in Homey.</p>
+              {security.hasLiveData && security.cameras.length === 0 && (
+                <p class="row__meta">No cameras found in Home Assistant.</p>
               )}
               {security.cameras.map((camera) =>
-                security.dataFromHomey ? (
+                security.hasLiveData ? (
                   <RoomCamera
                     key={camera.id}
                     camera={{
-                      id: camera.deviceId ?? camera.id,
+                      id: camera.entityId ?? camera.id,
                       name: camera.name,
                       available: camera.available ?? false,
                       snapshotUrl: camera.snapshotUrl,
@@ -145,11 +152,13 @@ export default defineComponent({
                 >
                   <span class="row__name">{entry.name}</span>
                   <span class="row__meta">{entry.detail}</span>
-                  <ToggleSwitch
-                    modelValue={entry.locked}
-                    label={`${entry.name} lock`}
-                    onUpdate:modelValue={(value: boolean) => security.setLocked(entry.id, value)}
-                  />
+                  {(!security.hasLiveData || entry.lockAvailable) && (
+                    <ToggleSwitch
+                      modelValue={entry.locked}
+                      label={`${entry.name} lock`}
+                      onUpdate:modelValue={(value: boolean) => security.setLocked(entry.id, value)}
+                    />
+                  )}
                 </div>
               ))}
             </div>
@@ -194,12 +203,12 @@ export default defineComponent({
             </div>
 
             <div class="section-head" style={{ padding: "22px 36px 8px" }}>
-              <span class="label">Events · {security.dataFromHomey ? "Live" : "Today"}</span>
+              <span class="label">Events · {security.hasLiveData ? "Live" : "Today"}</span>
             </div>
             <div style={{ padding: "0 36px" }}>
               <EventFeed
                 events={
-                  security.dataFromHomey
+                  security.hasLiveData
                     ? activity.events.filter((event) => event.accent)
                     : security.events
                 }

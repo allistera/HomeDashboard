@@ -2,6 +2,7 @@ export interface Light {
   id: string;
   name: string;
   level: number;
+  dimmable?: boolean;
 }
 
 export interface RoomEvent {
@@ -57,8 +58,8 @@ export interface RoomsState {
   rooms: Room[];
   selectedRoomId: string;
   washingWeatherOk: boolean | null;
-  outsideTempFromHomey: number | null;
-  houseTempFromHomey: number | null;
-  houseTargetFromHomey: number | null;
+  outsideTempFromHa: number | null;
+  houseTempFromHa: number | null;
+  houseTargetFromHa: number | null;
   mode: "demo" | "live";
 }

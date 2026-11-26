@@ -1,13 +1,13 @@
 import { defineStore } from "pinia";
 
-import type { ActivityEvent } from "@/services/homeyActivity";
+import type { ActivityEvent } from "@/services/haActivity";
 
 export type ActivityStatus = "offline" | "loading" | "live" | "error";
 
 interface ActivityState {
   events: ActivityEvent[];
   status: ActivityStatus;
-  hydratedFromHomey: boolean;
+  hydratedFromHa: boolean;
 }
 
 const seedActivity: ActivityEvent[] = [
@@ -46,18 +46,18 @@ export const useActivityStore = defineStore("activity", {
   state: (): ActivityState => ({
     events: structuredClone(seedActivity),
     status: "offline",
-    hydratedFromHomey: false,
+    hydratedFromHa: false,
   }),
   actions: {
     beginLoading() {
       this.status = "loading";
-      this.hydratedFromHomey = false;
+      this.hydratedFromHa = false;
       this.events = [];
     },
     receive(events: ActivityEvent[]) {
-      if (!this.hydratedFromHomey) {
+      if (!this.hydratedFromHa) {
         this.events = [];
-        this.hydratedFromHomey = true;
+        this.hydratedFromHa = true;
       }
 
       const byId = new Map(this.events.map((event) => [event.id, event]));
@@ -78,7 +78,7 @@ export const useActivityStore = defineStore("activity", {
     },
     disconnect() {
       this.status = "offline";
-      this.hydratedFromHomey = false;
+      this.hydratedFromHa = false;
     },
   },
 });

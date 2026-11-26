@@ -121,7 +121,7 @@ export default defineComponent({
               id: props.camera.id,
               name: props.camera.name,
               live: true,
-              deviceId: props.camera.id,
+              entityId: props.camera.id,
               snapshotUrl: image.value,
               note: status.value,
             }}

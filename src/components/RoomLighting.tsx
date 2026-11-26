@@ -27,6 +27,7 @@ export default defineComponent({
                 <input
                   class="brightness-slider"
                   type="range"
+                  disabled={light.dimmable === false}
                   min="0"
                   max="100"
                   step="1"

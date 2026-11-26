@@ -29,10 +29,10 @@ export default defineComponent({
           </span>
         </summary>
         <div class="device-details__body">
-          {!props.device.available && <p class="row__meta">Offline · last known values</p>}
+          {!props.device.available && <p class="row__meta">Entity unavailable</p>}
           <dl class="device-properties">
             <div class="device-properties__item">
-              <dt>Device ID</dt>
+              <dt>Entity ID</dt>
               <dd>{props.device.id}</dd>
             </div>
             {(props.device.properties ?? []).map((property) => (
@@ -43,7 +43,7 @@ export default defineComponent({
             ))}
           </dl>
           {!props.device.properties?.length && (
-            <p class="row__meta">No properties reported by Homey.</p>
+            <p class="row__meta">No properties reported by Home Assistant.</p>
           )}
         </div>
       </details>

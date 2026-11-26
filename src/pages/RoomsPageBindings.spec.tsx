@@ -1,37 +1,52 @@
-import { flushPromises, mount } from "@vue/test-utils";
+import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it } from "vitest";
+import { nextTick } from "vue";
 
 import RoomsPage from "@/pages/RoomsPage";
+import { applyEntities } from "@/services/haSync";
 import { useRoomsStore } from "@/stores/rooms";
-import { connectHomey, disconnectHomey } from "@/services/homeyClient";
-import { applyDevices } from "@/services/homeySync";
-import { TestDevice, TestHomey } from "@/services/homeyTestSupport";
-import { homePageBindings } from "@/services/homeyBindings/homeyHomeBindings";
-import { useSettingsStore } from "@/stores/settings";
+import { entity, entityStates } from "@/services/haTestSupport";
 
-describe("RoomsPage bindings", () => {
+describe("RoomsPage Home Assistant inventory", () => {
+  let pinia = createPinia();
   beforeEach(() => {
-    setActivePinia(createPinia());
+    pinia = createPinia();
+    setActivePinia(pinia);
   });
+  it("displays entities in the room, with current state and updated membership", async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const sensor = entity("sensor.demo_temperature", "18", {
+      friendly_name: "Room temperature",
+      unit_of_measurement: "°C",
+    });
+    const other = entity("sensor.demo_humidity", "50", { friendly_name: "Other humidity" });
+    const access = new Map([
+      [sensor.entity_id, "Living Room"],
+      [other.entity_id, "Kitchen"],
+    ]);
+    applyEntities(entityStates(sensor, other), access);
 
-  it("shows the zone camera without a media player and removes it when leaving the room", async () => {
-    const camera = new TestDevice("room-camera", {});
-    camera.class = "camera";
-    camera.name = "Hall camera";
-    camera.zone = homePageBindings.roomZoneIds.hallway!;
-    applyDevices(new Map([[camera.id, camera]]));
-    const rooms = useRoomsStore();
-    rooms.selectRoom("hallway");
-    const wrapper = mount(RoomsPage);
-    expect(wrapper.find('[aria-label="Hall camera camera"]').exists()).toBe(true);
-    expect(wrapper.text()).toContain("Camera image unavailable");
-    expect(wrapper.text()).not.toContain("now playing artwork");
-    expect(rooms.selectedRoom.media).toBeUndefined();
-    rooms.selectRoom("kitchen");
-    await flushPromises();
-    expect(wrapper.find(".camera").exists()).toBe(false);
-    wrapper.unmount();
+    const wrapper = mount(RoomsPage, { global: { plugins: [pinia] } });
+    try {
+      expect(wrapper.text()).toContain("Room temperature");
+      expect(wrapper.text()).not.toContain("Other humidity");
+      const details = wrapper
+        .findAll("summary")
+        .find((summary) => summary.text().includes("Room temperature"));
+      await details?.trigger("click");
+      expect(wrapper.text()).toContain("18 °C");
+
+      access.set(sensor.entity_id, "Kitchen");
+      access.set(other.entity_id, "Living Room");
+      applyEntities(entityStates(sensor, other), access);
+      await nextTick();
+      expect(wrapper.text()).not.toContain("Room temperature");
+      expect(wrapper.text()).toContain("Other humidity");
+    } finally {
+      wrapper.unmount();
+    }
   });
 
   it("renders the configured outside temperature", () => {
@@ -84,99 +99,5 @@ describe("RoomsPage bindings", () => {
     expect(light.level).toBe(35);
     expect(brightness.attributes("aria-valuetext")).toBe("35%");
     expect(wrapper.text()).toContain("35%");
-  });
-
-  it("expands device properties and keeps unbound sensor readings current", async () => {
-    const sensor = new TestDevice("room-sensor", {
-      measure_temperature: 0,
-      alarm_motion: false,
-      measure_battery: null,
-    });
-    sensor.name = "Room sensor";
-    sensor.class = "sensor";
-    sensor.zone = homePageBindings.roomZoneIds["living-room"];
-    sensor.capabilitiesObj.measure_temperature.title = "Temperature";
-    sensor.capabilitiesObj.measure_temperature.units = "°C";
-    useSettingsStore().url = "https://homey.example";
-    useSettingsStore().token = "test-token";
-    const wrapper = mount(RoomsPage);
-    try {
-      await connectHomey(async () => new TestHomey([sensor]));
-      await flushPromises();
-      const details = wrapper.get<HTMLDetailsElement>("details.device-details");
-      expect(details.element.open).toBe(false);
-      details.get<HTMLElement>("summary").element.click();
-      expect(details.element.open).toBe(true);
-      expect(details.text()).toContain("Temperature");
-      expect(details.text()).toContain("0 °C");
-      expect(details.text()).toContain("No");
-      expect(details.text()).toContain("Unknown");
-      sensor.emit("measure_temperature", 22.5);
-      await flushPromises();
-      expect(details.element.open).toBe(true);
-      expect(details.text()).toContain("22.5 °C");
-      details.get<HTMLElement>("summary").element.click();
-      expect(details.element.open).toBe(false);
-    } finally {
-      wrapper.unmount();
-      disconnectHomey();
-    }
-  });
-
-  it("lists every zone device and follows inventory changes without adding controls", async () => {
-    const inventory = ["light", "sensor", "speaker", "camera", "washer"].map((type) => {
-      const device = new TestDevice(`unbound-${type}`, {});
-      device.name = `Room ${type}`;
-      device.class = type;
-      device.zone = homePageBindings.roomZoneIds["living-room"];
-      return device;
-    });
-    inventory[1].available = false;
-    const elsewhere = new TestDevice("elsewhere", {});
-    elsewhere.name = "Other room device";
-    elsewhere.zone = homePageBindings.roomZoneIds.kitchen;
-    const homey = new TestHomey([...inventory, elsewhere]);
-    useSettingsStore().url = "https://homey.example";
-    useSettingsStore().token = "test-token";
-    const wrapper = mount(RoomsPage);
-    try {
-      await connectHomey(async () => homey);
-      await flushPromises();
-      const list = wrapper.get('[aria-label="Room devices"]');
-      expect(list.findAll(".row")).toHaveLength(5);
-      for (const device of inventory) expect(list.text()).toContain(device.name);
-      expect(list.text()).not.toContain(elsewhere.name);
-      expect(list.text()).toContain("OFFLINE");
-      expect(wrapper.text()).toContain("5 devices · 1 offline");
-      expect(list.findAll("button")).toHaveLength(0);
-
-      inventory[1].name = "Renamed sensor";
-      inventory[1].available = true;
-      homey.emitDevice("device.update", inventory[1]);
-      await flushPromises();
-      expect(list.text()).toContain("Renamed sensor");
-      expect(wrapper.text()).toContain("5 devices · 0 offline");
-      inventory[1].zone = homePageBindings.roomZoneIds.kitchen;
-      homey.emitDevice("device.update", inventory[1]);
-      homey.emitDevice("device.delete", inventory[0]);
-      await flushPromises();
-      expect(list.findAll(".row")).toHaveLength(3);
-      expect(list.text()).not.toContain("Renamed sensor");
-      const added = new TestDevice("new-device", {});
-      added.name = "New fan";
-      added.class = "fan";
-      added.zone = homePageBindings.roomZoneIds["living-room"];
-      homey.emitDevice("device.create", added);
-      await flushPromises();
-      expect(list.text()).toContain("New fan");
-      useRoomsStore().selectRoom("kitchen");
-      await flushPromises();
-      expect(list.findAll(".row")).toHaveLength(2);
-      expect(list.text()).toContain("Renamed sensor");
-      expect(list.text()).not.toContain("New fan");
-    } finally {
-      wrapper.unmount();
-      disconnectHomey();
-    }
   });
 });

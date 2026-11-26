@@ -92,7 +92,7 @@ describe("rooms store", () => {
     expect(rooms.washingLabel).toBe("DO NOT PUT OUT THE WASHING");
     expect(rooms.washingTone).toBe("alert");
 
-    rooms.setWashingWeather(true);
+    rooms.washingWeatherOk = true;
     expect(rooms.washingLabel).toBe("PUT OUT THE WASHING");
     expect(rooms.washingTone).toBe("ok");
   });
