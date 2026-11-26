@@ -2,7 +2,7 @@ import { defineComponent, type PropType } from "vue";
 
 import { useRoomsStore } from "@/stores/rooms";
 import { useClock } from "@/composables/useClock";
-import { useHomeyStore } from "@/stores/homey";
+import { useHaStore } from "@/stores/ha";
 import { useSettingsStore } from "@/stores/settings";
 import { useSecurityStore } from "@/stores/security";
 import { useThemeStore } from "@/stores/theme";
@@ -26,7 +26,7 @@ export default defineComponent({
   setup(props) {
     const rooms = useRoomsStore();
     const theme = useThemeStore();
-    const homey = useHomeyStore();
+    const ha = useHaStore();
     const settings = useSettingsStore();
     const security = useSecurityStore();
     const clock = useClock();
@@ -47,7 +47,7 @@ export default defineComponent({
             ))}
             {props.showPeople && (
               <span class="topbar__people" tabindex={0}>
-                {security.dataFromHomey &&
+                {security.hasLiveData &&
                 security.people.every((person) => person.status === "UNAVAILABLE")
                   ? "PRESENCE UNAVAILABLE"
                   : `${security.peopleHome} ${security.peopleHome === 1 ? "PERSON" : "PEOPLE"} HOME`}
@@ -64,7 +64,7 @@ export default defineComponent({
                       ))}
                     {security.people.length === 0 && (
                       <span class="topbar__popover-row">
-                        {homey.status === "connected"
+                        {ha.status === "connected"
                           ? "No person devices found."
                           : "Presence unavailable."}
                       </span>
@@ -86,17 +86,17 @@ export default defineComponent({
             </button>
           </div>
         </header>
-        {(homey.message || homey.status === "error" || homey.status === "disconnected") && (
-          <div class="homey-warning" role="alert">
-            <strong>Homey communication issue.</strong>{" "}
-            {homey.message ||
+        {(ha.message || ha.status === "error" || ha.status === "disconnected") && (
+          <div class="connection-warning" role="alert">
+            <strong>Home Assistant communication issue.</strong>{" "}
+            {ha.message ||
               (settings.configured ? (
-                "Unable to communicate with Homey. Check your connection and Homey settings."
+                "Unable to communicate with Home Assistant. Check your connection and Home Assistant settings."
               ) : (
                 <>
-                  Homey is not connected.{" "}
-                  <a href={`${import.meta.env.BASE_URL}settings#homey-url`}>
-                    Add your Homey address and access token in Settings
+                  Home Assistant is not connected.{" "}
+                  <a href={`${import.meta.env.BASE_URL}settings#ha-url`}>
+                    Add your Home Assistant address and access token in Settings
                   </a>
                   .
                 </>

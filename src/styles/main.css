@@ -159,7 +159,7 @@ a {
   color: var(--muted);
 }
 
-.homey-warning {
+.connection-warning {
   width: 100%;
   padding: 14px clamp(16px, 3vw, 40px);
   background: #f8d7da;
@@ -170,7 +170,7 @@ a {
   overflow-wrap: anywhere;
 }
 
-.homey-warning a {
+.connection-warning a {
   color: inherit;
   text-decoration: underline;
   text-underline-offset: 2px;

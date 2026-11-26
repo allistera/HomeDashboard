@@ -1,6 +1,8 @@
 import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { applyEntities } from "@/services/haSync";
+import { entity, entityStates } from "@/services/haTestSupport";
 import { useRoomsStore } from "@/stores/rooms";
 
 describe("rooms store", () => {
@@ -87,14 +89,21 @@ describe("rooms store", () => {
     expect(livingRoom.media!.playing).toBe(true);
   });
 
-  it("switches the washing reminder on the drying-weather flag", () => {
+  it("renders the drying reminder from the Home Assistant binary sensor", () => {
     const rooms = useRoomsStore();
+    const sensorId = "binary_sensor.good_drying_weather";
+
+    applyEntities(entityStates(entity(sensorId, "off")));
     expect(rooms.washingLabel).toBe("DO NOT PUT OUT THE WASHING");
     expect(rooms.washingTone).toBe("alert");
 
-    rooms.setWashingWeather(true);
+    applyEntities(entityStates(entity(sensorId, "on")));
     expect(rooms.washingLabel).toBe("PUT OUT THE WASHING");
     expect(rooms.washingTone).toBe("ok");
+
+    applyEntities(entityStates(entity(sensorId, "unavailable")));
+    expect(rooms.washingLabel).toBe("DRYING WEATHER UNAVAILABLE");
+    expect(rooms.washingTone).toBe("neutral");
   });
 
   it("ignores selecting a room that does not exist", () => {

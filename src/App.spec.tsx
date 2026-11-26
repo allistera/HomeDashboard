@@ -24,23 +24,23 @@ describe("App", () => {
     const links = wrapper.findAll(".rail__link").map((link) => link.text());
     expect(links).toEqual(["HOME", "ROOMS", "FLOORS", "SECURITY"]);
     const warning = wrapper.get('[role="alert"]');
-    expect(warning.text()).toContain("Homey is not connected.");
+    expect(warning.text()).toContain("Home Assistant is not connected.");
     expect(wrapper.get(".topbar").element.nextElementSibling).toBe(warning.element);
     expect(wrapper.text()).toContain("Front door unlocked by Allister.");
   });
 
-  it("links the Homey warning directly to the Homey URL setting", async () => {
+  it("links the Home Assistant warning directly to the Home Assistant URL setting", async () => {
     const { wrapper, router } = mountApp();
     try {
       await router.isReady();
-      const link = wrapper.get(".homey-warning a");
-      expect(link.text()).toBe("Add your Homey address and access token in Settings");
-      expect(link.attributes("href")).toBe("/settings#homey-url");
+      const link = wrapper.get(".connection-warning a");
+      expect(link.text()).toBe("Add your Home Assistant address and access token in Settings");
+      expect(link.attributes("href")).toBe("/settings#ha-url");
       await router.push(link.attributes("href")!);
       await flushPromises();
       expect(router.currentRoute.value.path).toBe("/settings");
-      expect(router.currentRoute.value.hash).toBe("#homey-url");
-      expect(wrapper.get("#homey-url").element.tagName).toBe("INPUT");
+      expect(router.currentRoute.value.hash).toBe("#ha-url");
+      expect(wrapper.get("#ha-url").element.tagName).toBe("INPUT");
     } finally {
       wrapper.unmount();
     }

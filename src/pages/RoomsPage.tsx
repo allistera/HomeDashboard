@@ -5,7 +5,7 @@ import RoomDeviceDetails from "@/components/RoomDeviceDetails";
 import RoomCamera from "@/components/RoomCamera";
 import RoomLighting from "@/components/RoomLighting";
 import TopBar from "@/components/TopBar";
-import { roomDeviceIds } from "@/services/homeyBindings/homeyGlobalBindings";
+import { roomEntityIds } from "@/config/homeAssistant";
 import { temperatureText } from "@/utils/temperature";
 import { useActivityStore } from "@/stores/activity";
 import { useRoomsStore, type Room, type Scene } from "@/stores/rooms";
@@ -16,8 +16,11 @@ export default defineComponent({
     const rooms = useRoomsStore();
     const activity = useActivityStore();
     const roomEvents = computed(() => {
-      if (!rooms.dataFromHomey) return rooms.selectedRoom.events;
-      const ids = new Set(roomDeviceIds(rooms.selectedRoomId));
+      if (!rooms.hasLiveData) return rooms.selectedRoom.events;
+      const ids = new Set([
+        ...roomEntityIds(rooms.selectedRoomId),
+        ...(rooms.selectedRoom.activityEntityIds ?? []),
+      ]);
       return activity.events.filter((event) => ids.has(event.sourceId));
     });
 
@@ -97,7 +100,7 @@ export default defineComponent({
               </div>
               <div class="col-foot" style={{ padding: "22px 28px", alignItems: "center" }}>
                 <span class="label">All lights</span>
-                {(!rooms.dataFromHomey || rooms.rooms.some((room) => room.lights.length > 0)) && (
+                {(!rooms.hasLiveData || rooms.rooms.some((room) => room.lights.length > 0)) && (
                   <ToggleSwitch
                     modelValue={rooms.anyLightOn}
                     label="All lights"
@@ -143,8 +146,8 @@ export default defineComponent({
                       ))}
                       {!room.devices?.length && (
                         <p class="row__meta">
-                          {!rooms.dataFromHomey
-                            ? "Connect Homey to see room devices."
+                          {!rooms.hasLiveData
+                            ? "Connect Home Assistant to see room devices."
                             : "No devices available for this room."}
                         </p>
                       )}
@@ -275,7 +278,7 @@ export default defineComponent({
 
                   <div class="section-head" style={{ padding: "18px 36px 8px" }}>
                     <span class="label">
-                      {rooms.dataFromHomey ? "In this room · Live" : "In this room today"}
+                      {rooms.hasLiveData ? "In this room · Live" : "In this room today"}
                     </span>
                   </div>
                   <div style={{ padding: "0 36px" }}>

@@ -31,97 +31,46 @@ type carries the hierarchy.
 - [oxfmt](https://oxc.rs) formats TypeScript/TSX; [Prettier](https://prettier.io)
   formats CSS, HTML, JSON, and Markdown
 
-## Application structure
+## Home Assistant connection
 
-- `pages/` composes route screens; `components/` owns reusable UI sections and
-  their feature styles. Shared tokens and layout rules live in `styles/main.css`.
-- `models/` defines room and security state independently of Pinia.
-- `stores/` owns reactive state and user actions. Each Homey store owns its own
-  transport; connection state is not shared between Pinia instances.
-- `services/homeyTransport.ts` handles commands and camera lookup without stores.
-  `homeyCommands.ts` connects store actions to that transport. `homeyClient.ts`
-  orchestrates connections, subscriptions, weather and activity updates.
-- `homeyRoomMapping.ts` and `homeySecurityMapping.ts` transform snapshots without
-  mutating their inputs; `homeySync.ts` applies their results to stores.
-- `config/homey.yaml` is decoded and validated before use, including required
-  fields, value types, room references, and camera references. Invalid settings
-  fail with a configuration path. YAML anchors remain supported.
-- `data/rooms.ts` holds room identities; `data/demo/` holds demonstration readings.
-  Stores explicitly distinguish demo and live mode. The top bar labels demo data;
-  disconnecting after a live connection clears readings and stays in live mode.
-- `data/floors.ts` holds floor geometry; `utils/` holds display formatting.
+Open **Settings** in the dashboard and enter the base URL of your Home Assistant instance and a
+long-lived access token from **Profile → Security**. The dashboard stores these values in the current
+browser. An HTTPS dashboard needs an HTTPS Home Assistant URL.
 
-Tests live beside the modules they exercise. CI checks lint, formatting, the
-production build (including TypeScript), and the Vitest suite.
+The dashboard uses the [Home Assistant WebSocket API](https://developers.home-assistant.io/docs/api/websocket/)
+to validate credentials, subscribe to entity updates, and send actions. It labels the disconnected
+view as demo data. The warning below the top bar reports connection failures, reconnect attempts,
+and failed actions.
 
-## Homey connection
+## Home Assistant bindings
 
-Settings connects directly to the [Homey Web API](https://athombv.github.io/node-homey-api/HomeyAPI.html)
-using a Homey address and personal access token (API key). Create the key in the Homey Web App's
-Settings → API Keys and grant `homey.device.readonly`, `homey.device.control`, `homey.zone.readonly`, `homey.insights.readonly`, and `homey.flow.readonly` permissions.
-Use a browser-reachable Homey address; an HTTPS dashboard requires HTTPS to avoid mixed-content
-blocking. Check LAN reachability, TLS and browser access if connection validation fails.
-The address and token are saved only in this browser under `dedridge.homey.*` keys. Existing
-Home Assistant settings are not reused. No token belongs in source code or build-time variables.
+The dashboard's room, weather, presence, and security bindings are in
+[`src/config/homeAssistant.ts`](src/config/homeAssistant.ts). Edit a room's `deviceAllowlist` to
+choose which Home Assistant entity IDs appear in its **Devices** list and counts. Each row displays
+the entity’s current state, including its unit when available. An empty list shows no devices. Room cameras and activity use Home Assistant area assignments.
+Room lighting controls use the room's light bindings. Main Bedroom uses its temperature and humidity
+sensor and Hue Tap Dial entities. The security camera wall discovers camera
+entities. Contact sensors report open or closed. Lock controls appear only for an available
+lock entity.
 
-A full-width pastel red warning below the top bar reports Homey connection failures,
-reconnect attempts, and failed device commands. It clears when the connection recovers
-or a subsequent device command succeeds. When Homey is not configured in this browser,
-the warning directs you to add its address and access token in Settings.
+The drying-weather reminder reads `binary_sensor.good_drying_weather`. In Home Assistant,
+**Update Drying Weather Forecast** checks the hourly forecast from `weather.home` through local
+midnight every 15 minutes. The reminder displays unavailable when the forecast cannot determine
+whether it will rain. The house target displays as unavailable until an entity is mapped.
 
-## Homey device bindings
-
-The central runtime mapping is [`src/config/homey.yaml`](src/config/homey.yaml).
-Edit its `home`, `rooms`, `floors`, and `security` sections to map screen items to
-Homey device IDs, capability properties, and zones. YAML anchors reuse device IDs
-across screens. Comments list the standard light, media, and camera properties,
-and explain dynamic zone discovery and unbound items. Optional property bindings
-use `{ deviceId, capabilityId }`; omit unavailable bindings rather than inventing IDs.
-Changes take effect through Vite during development or after rebuilding for deployment.
-The TypeScript page modules expose this shared configuration to existing consumers.
-
-The current inventory binds Livingroom Light and Livingroom Light 2 (power and brightness),
-the downstairs and upstairs hallway lights, Bedroom Light, Toilet Light, living-room Apple TV, hallway motion sensor,
-and toilet motion sensor. The homepage Hallway toggle controls both hallway lights and shows
-on when either is on. The Bedroom toggle controls Bedroom Light; the Toilet toggle controls Toilet Light. Living-room, hallway, and toilet light power changes appear in the live activity
-feed. Add devices to the central YAML file after verifying their IDs and
-capabilities in Homey; names are display labels and never lookup keys. Lights use `onoff` and
-`dim` (0–1), temperatures use `measure_temperature` / `target_temperature`, and media controls
-use `speaker_playing`, `speaker_prev`, and `speaker_next`.
-
-The outdoor temperature at the bottom of the homepage comes from Homey's
-`homey:manager:weather:temperature` Flow token and refreshes on live updates and reconnects.
-Grant `homey.flow.readonly` to read it; if unavailable, Homey controls remain connected and the
-temperature shows as unavailable. Homepage room rows show mapped temperature and live media
-status. Motion remains available in room details. If zone access is denied, light controls remain
-connected and Settings explains the required zone read permission.
-
-The dashboard subscribes to device capability updates, reconciles device changes/deletions,
-and destroys listeners on disconnect. Unbound or unavailable readings show as unavailable once
-connected. The initial disconnected view remains a demonstration, not live home state.
-
-Presence is discovered from Homey devices with the boolean `presence` capability, across all
-zones. The top-menu people dropdown lists their device names with Home, Away, or Unavailable
-labels and counts only confirmed home readings. Device additions, renames, removals, and
-presence changes update live. Room occupancy and motion sensors are not counted as people.
-This uses the existing device-read permission; no separate presence permission is needed.
+The Get Jaicob shortcut is disabled in live mode until it has a Home Assistant action. The Away
+shortcut turns off the mapped lights and can arm the configured alarm panel.
 
 ## Activity and cameras
 
-The activity feed loads recent Insights history and then follows live capability changes for
-`homePageBindings.activityDeviceIds`. Grant `homey.insights.readonly` for history; without it,
-the live feed still works. Home Assistant's previous 24-hour logbook is not retained.
-
-Room cameras are discovered from their Homey zones and display refreshing snapshots. Opening
-a camera starts live WebRTC video when its Homey integration exposes a camera video. The
-stream stops when the overlay closes or the tab is hidden. Cameras without a live video, or
-whose stream cannot connect, fall back to snapshots. This uses Homey’s video offer and
-keep-alive endpoints with the existing device-read token permission; no microphone or local
-camera permission is needed. The homepage Front door tile uses the bound G5 Turret Camera
-device. Camera bindings may also supply independent MJPEG stream URLs. Alarm, washing-weather, and scene helpers must be explicitly mapped to real
-Homey devices/capabilities before use; no old HA entity IDs are kept as substitute device IDs.
+The activity feed subscribes to the previous 24 hours of Home Assistant logbook history and follows
+new events for `homePageBindings.activityEntityIds`. Camera previews refresh using Home Assistant's
+camera-specific snapshot URLs. The expanded view uses WebRTC when the camera supports it and
+falls back to the latest available snapshot.
 
 ## Commands
+
+Use Node.js 22.22.2 or newer in the 22.x line, 24.15.0 or newer in the 24.x line, or 26 and newer.
 
 ```sh
 npm install

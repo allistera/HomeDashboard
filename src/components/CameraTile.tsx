@@ -34,7 +34,10 @@ export default defineComponent({
       stopRefresh();
       if (props.refreshMs <= 0 || props.imageUrl === "") return;
       timer = setInterval(() => {
-        if (visible.value) bust.value = Date.now();
+        if (visible.value) {
+          streamFailed.value = false;
+          bust.value = Date.now();
+        }
       }, props.refreshMs);
     };
 

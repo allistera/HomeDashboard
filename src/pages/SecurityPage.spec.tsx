@@ -1,71 +1,46 @@
-import { flushPromises, mount } from "@vue/test-utils";
+import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it } from "vitest";
+import { nextTick } from "vue";
 
-import { applyDevices } from "@/services/homeySync";
-import { TestDevice } from "@/services/homeyTestSupport";
-import type { HomeyDevice } from "@/services/homeyTypes";
 import SecurityPage from "@/pages/SecurityPage";
+import { applyEntities } from "@/services/haSync";
+import { entity, entityStates } from "@/services/haTestSupport";
 import { useSecurityStore } from "@/stores/security";
 
 function setVisibility(state: DocumentVisibilityState): void {
-  Object.defineProperty(document, "visibilityState", {
-    configurable: true,
-    get: () => state,
-  });
+  Object.defineProperty(document, "visibilityState", { configurable: true, get: () => state });
   document.dispatchEvent(new Event("visibilitychange"));
 }
 
-describe("SecurityPage cameras", () => {
+describe("SecurityPage Home Assistant entities", () => {
   beforeEach(() => {
-    localStorage.clear();
     setActivePinia(createPinia());
     setVisibility("visible");
   });
+  it("discovers cameras and shows a contact sensor without a lock control", async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const garden = entity("camera.garden", "recording", { friendly_name: "Garden camera" });
+    const doorbell = entity("camera.doorbell", "unavailable", { friendly_name: "Doorbell" });
+    const contact = entity("binary_sensor.front_door_contact", "on", {
+      friendly_name: "Front door contact",
+    });
+    applyEntities(entityStates(garden, doorbell, contact));
 
-  it("shows all Homey cameras across zones and reconciles updates and removals", async () => {
-    const garden: HomeyDevice = new TestDevice("garden-camera", {});
-    garden.class = "camera";
-    garden.name = "Garden camera";
-    garden.zone = "unmapped-garden";
-    garden.images = [{ imageObj: { url: "/api/image/garden" } }];
-    const doorbell: HomeyDevice = new TestDevice("doorbell", {});
-    doorbell.class = "doorbell";
-    doorbell.name = "Doorbell";
-    doorbell.available = false;
-    doorbell.videos = [{ type: "camera", videoObj: { id: "doorbell-video" } }];
-    const speaker = new TestDevice("speaker", {});
-    const inventory = new Map([
-      [garden.id, garden],
-      [doorbell.id, doorbell],
-      [speaker.id, speaker],
-    ]);
-    applyDevices(inventory);
-    const wrapper = mount(SecurityPage);
+    const wrapper = mount(SecurityPage, { global: { plugins: [pinia] } });
     try {
-      expect(wrapper.findAll("button.camera")).toHaveLength(2);
       expect(wrapper.text()).toContain("2 CAMERAS FOUND");
       expect(wrapper.text()).toContain("Garden camera");
-      expect(wrapper.text()).toContain("Doorbell · Camera offline");
-      expect(
-        useSecurityStore().cameras.find((camera) => camera.id === garden.id)?.snapshotUrl,
-      ).toBe("/api/image/garden");
-      expect(useSecurityStore().cameras.some((camera) => camera.id === "front-door")).toBe(false);
-      await wrapper.get('[aria-label="Garden camera camera"]').trigger("click");
-      expect(wrapper.get('[role="dialog"]').text()).toContain("Garden camera");
-      garden.name = "Back garden";
-      applyDevices(inventory);
-      await flushPromises();
-      expect(wrapper.get('[role="dialog"]').text()).toContain("Back garden");
-      inventory.delete(garden.id);
-      applyDevices(inventory);
-      await flushPromises();
-      expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
-      expect(wrapper.findAll("button.camera")).toHaveLength(1);
-      applyDevices(new Map());
-      await flushPromises();
-      expect(wrapper.findAll("button.camera")).toHaveLength(0);
-      expect(wrapper.text()).toContain("No cameras found in Homey.");
+      expect(wrapper.text()).toContain("Camera offline");
+      expect(wrapper.text()).toContain("OPEN");
+      expect(wrapper.find('[aria-label="Front door lock"]').exists()).toBe(false);
+      applyEntities(entityStates(doorbell, contact));
+      await nextTick();
+      expect(wrapper.text()).not.toContain("Garden camera");
+      applyEntities(entityStates(contact));
+      await nextTick();
+      expect(wrapper.text()).toContain("No cameras found in Home Assistant.");
     } finally {
       wrapper.unmount();
     }

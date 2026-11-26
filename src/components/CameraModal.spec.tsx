@@ -2,7 +2,7 @@ import { mount } from "@vue/test-utils";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import CameraModal from "@/components/CameraModal";
-import type { WebRtcSession, WebRtcStreamHandlers } from "@/services/cameraStream";
+import type { WebRtcSession, WebRtcStreamHandlers } from "@/services/haWebRtc";
 import type { Camera } from "@/stores/security";
 
 function setVisibility(state: DocumentVisibilityState): void {
@@ -23,7 +23,7 @@ const camera: Camera = {
   id: "front-door",
   name: "front door",
   live: true,
-  deviceId: "11111111-1111-4111-8111-111111111111",
+  entityId: "11111111-1111-4111-8111-111111111111",
   snapshotUrl: "http://camera.local/front-door-snap",
   streamUrl: "http://camera.local/front-door-stream",
 };
@@ -32,8 +32,8 @@ function fakeStarter() {
   const calls: string[] = [];
   const handlers: WebRtcStreamHandlers[] = [];
   let stopped = 0;
-  const start = (deviceId: string, streamHandlers: WebRtcStreamHandlers): WebRtcSession => {
-    calls.push(deviceId);
+  const start = (entityId: string, streamHandlers: WebRtcStreamHandlers): WebRtcSession => {
+    calls.push(entityId);
     handlers.push(streamHandlers);
     return {
       stop: () => {
@@ -101,7 +101,7 @@ describe("CameraModal", () => {
   it("does not try WebRTC for a camera without a bound device", () => {
     const starter = fakeStarter();
     const wrapper = mount(CameraModal, {
-      props: { camera: { ...camera, deviceId: undefined }, startStream: starter.start },
+      props: { camera: { ...camera, entityId: undefined }, startStream: starter.start },
     });
 
     expect(starter.calls).toEqual([]);

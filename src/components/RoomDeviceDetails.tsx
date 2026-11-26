@@ -1,4 +1,4 @@
-import { defineComponent, type PropType } from "vue";
+import { computed, defineComponent, type PropType } from "vue";
 import type { DeviceProperty, RoomDevice } from "@/models/rooms";
 
 function propertyValue(property: DeviceProperty): string {
@@ -16,6 +16,15 @@ export default defineComponent({
     device: { type: Object as PropType<RoomDevice>, required: true },
   },
   setup(props) {
+    const stateLabel = computed(() => {
+      const state = props.device.properties?.find((property) => property.id === "state");
+      if (!state) return "Unknown";
+      return propertyValue({
+        ...state,
+        units: props.device.available ? state.units : undefined,
+      });
+    });
+
     return () => (
       <details class="device-details">
         <summary class={["row", { "row--dim": !props.device.available }]}>
@@ -23,16 +32,16 @@ export default defineComponent({
             <span class="row__name">{props.device.name}</span>
             <div class="row__meta">{props.device.type.replace(/_/g, " ")}</div>
           </div>
-          <span class="row__meta">{props.device.available ? "AVAILABLE" : "OFFLINE"}</span>
+          <span class="row__meta">{stateLabel.value}</span>
           <span class="device-details__arrow" aria-hidden="true">
             ›
           </span>
         </summary>
         <div class="device-details__body">
-          {!props.device.available && <p class="row__meta">Offline · last known values</p>}
+          {!props.device.available && <p class="row__meta">Entity unavailable</p>}
           <dl class="device-properties">
             <div class="device-properties__item">
-              <dt>Device ID</dt>
+              <dt>Entity ID</dt>
               <dd>{props.device.id}</dd>
             </div>
             {(props.device.properties ?? []).map((property) => (
@@ -43,7 +52,7 @@ export default defineComponent({
             ))}
           </dl>
           {!props.device.properties?.length && (
-            <p class="row__meta">No properties reported by Homey.</p>
+            <p class="row__meta">No properties reported by Home Assistant.</p>
           )}
         </div>
       </details>

@@ -7,10 +7,11 @@ import EventFeed from "@/components/EventFeed";
 import RoomCamera from "@/components/RoomCamera";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
-import { homePageBindings } from "@/services/homeyBindings/homeyHomeBindings";
-import { roomBindingFor } from "@/services/homeyBindings/homeyRoomsBindings";
+import { homePageBindings } from "@/config/homeAssistant";
+import { roomBindingFor } from "@/config/homeAssistant";
 import { temperatureText } from "@/utils/temperature";
 import { useActivityStore } from "@/stores/activity";
+import { useSettingsStore } from "@/stores/settings";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore, type Camera } from "@/stores/security";
 
@@ -21,9 +22,10 @@ export default defineComponent({
     const rooms = useRoomsStore();
     const activity = useActivityStore();
     const security = useSecurityStore();
+    const settings = useSettingsStore();
     const selectedCamera = ref<Camera | null>(null);
     const homeCamera = computed(() =>
-      security.cameras.find((camera) => camera.id === homePageBindings.camera.cameraId),
+      security.cameras.find((camera) => camera.id === "front-door"),
     );
     const mediaRoom = computed(() =>
       rooms.rooms.find((room) => room.id === homePageBindings.mediaPlayer.roomId),
@@ -46,11 +48,19 @@ export default defineComponent({
     const summary = computed(() => {
       const lightsOn = rooms.rooms.reduce((sum, room) => sum + rooms.lightsOn(room), 0);
       const doors =
-        security.dataFromHomey && security.entries.length === 0
+        security.hasLiveData &&
+        !security.openEntries.length &&
+        !security.entries.every((entry) => entry.statusKnown)
           ? "Door status unavailable"
           : security.allSecure
             ? "Doors locked"
-            : "A window is open";
+            : security.openEntries.length > 0
+              ? security.hasLiveData
+                ? "A door is open"
+                : "A window is open"
+              : security.hasLiveData
+                ? "Doors closed"
+                : "A window is open";
       return `${doors}, ${lightsOn} lights on, temperature ${temperatureText(rooms.houseTemp)}.`;
     });
 
@@ -97,7 +107,7 @@ export default defineComponent({
             <button
               type="button"
               class="btn btn--primary"
-              disabled={rooms.dataFromHomey && !rooms.rooms.some((room) => room.lights.length > 0)}
+              disabled={settings.configured}
               onClick={goodNight}
             >
               Get Jaicob
@@ -105,7 +115,7 @@ export default defineComponent({
             <button
               type="button"
               class="btn"
-              disabled={rooms.dataFromHomey && !mediaRoom.value?.lights.length}
+              disabled={rooms.hasLiveData && !mediaRoom.value?.lights.length}
               onClick={movie}
             >
               Night Time
@@ -114,7 +124,7 @@ export default defineComponent({
               type="button"
               class="btn"
               disabled={
-                rooms.dataFromHomey &&
+                rooms.hasLiveData &&
                 !security.alarmAvailable &&
                 !rooms.rooms.some((room) => room.lights.length > 0)
               }
@@ -210,10 +220,10 @@ export default defineComponent({
               </span>
             </div>
             <div style={{ padding: "0 40px" }}>
-              {homeCamera.value?.deviceId ? (
+              {homeCamera.value?.entityId ? (
                 <RoomCamera
                   camera={{
-                    id: homeCamera.value.deviceId,
+                    id: homeCamera.value.entityId,
                     name: homeCamera.value.name,
                     available: homeCamera.value.available ?? false,
                     snapshotUrl: homeCamera.value.snapshotUrl,
@@ -234,7 +244,9 @@ export default defineComponent({
               )}
             </div>
             <div class="section-head" style={{ padding: "20px 40px 8px" }}>
-              <span class="label">Activity{activity.status === "live" ? " · Homey" : ""}</span>
+              <span class="label">
+                Activity{activity.status === "live" ? " · Home Assistant" : ""}
+              </span>
             </div>
             <div style={{ padding: "0 40px" }}>
               <EventFeed events={activity.events.slice(0, 4)} />
@@ -260,7 +272,7 @@ export default defineComponent({
                   type="button"
                   class="media-controls__btn"
                   aria-label="Previous track"
-                  disabled={rooms.dataFromHomey && !mediaRoom.value?.media}
+                  disabled={rooms.hasLiveData && !mediaRoom.value?.media}
                   onClick={() =>
                     rooms.controlMedia(homePageBindings.mediaPlayer.roomId, "previous")
                   }
@@ -271,7 +283,7 @@ export default defineComponent({
                   type="button"
                   class="media-controls__btn media-controls__btn--primary"
                   aria-label={mediaRoom.value?.media?.playing ? "Pause" : "Play"}
-                  disabled={rooms.dataFromHomey && !mediaRoom.value?.media}
+                  disabled={rooms.hasLiveData && !mediaRoom.value?.media}
                   onClick={() => rooms.controlMedia(homePageBindings.mediaPlayer.roomId, "toggle")}
                 >
                   {mediaRoom.value?.media?.playing ? "❚❚" : "▶"}
@@ -280,7 +292,7 @@ export default defineComponent({
                   type="button"
                   class="media-controls__btn"
                   aria-label="Next track"
-                  disabled={rooms.dataFromHomey && !mediaRoom.value?.media}
+                  disabled={rooms.hasLiveData && !mediaRoom.value?.media}
                   onClick={() => rooms.controlMedia(homePageBindings.mediaPlayer.roomId, "next")}
                 >
                   ▶
