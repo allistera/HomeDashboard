@@ -72,8 +72,9 @@ The homepage Activity feed shows Home Assistant logbook entries from the previou
 new events for `homePageBindings.activityEntityIds`. It shows the newest complete rows that fit above
 the media controls. The Home view starts the Back Garden high-resolution channel over WebRTC when
 it loads and reconnects once if video frames do not arrive. The enlarged Back Garden viewer reuses
-the homepage stream. Other camera viewers start WebRTC when supported. Camera previews and viewers
-fall back to the latest available snapshot.
+the homepage stream. The Security camera grid starts live previews for available Home Assistant
+cameras and shares each preview with its enlarged viewer. Camera previews and viewers fall back
+to the latest available snapshot.
 
 ## Commands
 

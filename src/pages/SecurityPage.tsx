@@ -8,6 +8,7 @@ import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
 import { entryBindings, roomBindings } from "@/config/homeAssistant";
 import { useActivityStore } from "@/stores/activity";
+import { useHaStore } from "@/stores/ha";
 import { useSecurityStore, type ArmState, type Camera } from "@/stores/security";
 
 const armOptions: { id: ArmState; name: string }[] = [
@@ -21,6 +22,7 @@ export default defineComponent({
   setup() {
     const security = useSecurityStore();
     const activity = useActivityStore();
+    const ha = useHaStore();
     const selectedCamera = ref<Camera | null>(null);
 
     const openCamera = (camera: Camera) => {
@@ -117,6 +119,7 @@ export default defineComponent({
                 security.hasLiveData ? (
                   <RoomCamera
                     key={camera.id}
+                    livePreview={ha.status === "connected"}
                     camera={{
                       id: camera.entityId ?? camera.id,
                       name: camera.name,

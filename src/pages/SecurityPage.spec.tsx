@@ -1,11 +1,13 @@
 import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 
 import SecurityPage from "@/pages/SecurityPage";
 import { applyEntities } from "@/services/haSync";
 import { entity, entityStates } from "@/services/haTestSupport";
+import * as webRtc from "@/services/haWebRtc";
+import { useHaStore } from "@/stores/ha";
 import { useSecurityStore } from "@/stores/security";
 
 function setVisibility(state: DocumentVisibilityState): void {
@@ -43,6 +45,52 @@ describe("SecurityPage Home Assistant entities", () => {
       expect(wrapper.text()).toContain("No cameras found in Home Assistant.");
     } finally {
       wrapper.unmount();
+    }
+  });
+
+  it("starts live previews for available cameras and shares the stream with the viewer", async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const garden = entity("camera.garden", "recording", { friendly_name: "Garden camera" });
+    const doorbell = entity("camera.doorbell", "unavailable", { friendly_name: "Doorbell" });
+    applyEntities(entityStates(garden, doorbell));
+    const ha = useHaStore();
+    const play = vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+    const stop = vi.fn();
+    const start = vi.spyOn(webRtc, "startHaWebRtcStream").mockReturnValue({ stop });
+    const wrapper = mount(SecurityPage, { global: { plugins: [pinia] } });
+    try {
+      expect(start).not.toHaveBeenCalled();
+      ha.status = "connected";
+      await nextTick();
+      expect(start).toHaveBeenCalledExactlyOnceWith("camera.garden", expect.any(Object));
+
+      const stream: Partial<MediaStream> = { id: "garden-stream" };
+      // SAFETY: jsdom does not implement MediaStream. Players only assign it to their video elements.
+      start.mock.calls[0]![1].onStream(stream as MediaStream);
+      await nextTick();
+      const tile = wrapper.get('[aria-label="Open Garden camera camera in larger view"]');
+      const video = tile.get<HTMLVideoElement>("video");
+      expect(video.element.srcObject).toBe(stream);
+      expect(tile.text()).toContain("Connecting…");
+      await video.trigger("playing");
+      expect(tile.text()).toContain("LIVE");
+
+      await tile.trigger("click");
+      expect(wrapper.get<HTMLVideoElement>('[role="dialog"] video').element.srcObject).toBe(stream);
+      expect(start).toHaveBeenCalledOnce();
+      await wrapper.get('[aria-label="Close camera view"]').trigger("click");
+
+      applyEntities(entityStates(garden, { ...doorbell, state: "recording" }));
+      await nextTick();
+      expect(start).toHaveBeenLastCalledWith("camera.doorbell", expect.any(Object));
+      ha.status = "connecting";
+      await nextTick();
+      expect(stop).toHaveBeenCalledTimes(2);
+    } finally {
+      wrapper.unmount();
+      play.mockRestore();
+      start.mockRestore();
     }
   });
 
