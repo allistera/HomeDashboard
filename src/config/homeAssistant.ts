@@ -9,6 +9,7 @@ interface RoomBinding {
   roomId: string;
   areas: string[];
   deviceAllowlist: EntityId[];
+  deviceNames?: Partial<Record<EntityId, string>>;
   name?: string;
   floor?: string;
   lights: { lightId: string; entityId: EntityId }[];
@@ -28,6 +29,7 @@ export const roomBindings: RoomBinding[] = [
       "media_player.living_room_apple_tv",
       "binary_sensor.living_room_presence_sensor_occupancy",
     ],
+    deviceNames: { "sensor.livingroom_temperature_temperature": "Livingroom Temperature" },
     lights: [
       { lightId: "livingroom-light", entityId: "light.living_room_livingroom_light" },
       { lightId: "livingroom-light-2", entityId: "light.living_room_livingroom_light_2" },

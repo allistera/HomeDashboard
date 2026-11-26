@@ -41,10 +41,10 @@ function cameraSnapshot(entity: HassEntityState, baseUrl: string): string | unde
   return `${baseUrl}/api/camera_proxy/${encodeURIComponent(entity.entity_id)}?token=${encodeURIComponent(token)}`;
 }
 
-function roomDevice(entity: HassEntityState): RoomDevice {
+function roomDevice(entity: HassEntityState, name = entityName(entity)): RoomDevice {
   return {
     id: entity.entity_id,
-    name: entityName(entity),
+    name,
     type: entity.entity_id.split(".")[0],
     available: available(entity),
     properties: [
@@ -82,7 +82,7 @@ function syncRoom(
   room.devices = [...new Set(binding?.deviceAllowlist)]
     .flatMap((id) => {
       const entity = entities[id];
-      return entity ? [roomDevice(entity)] : [];
+      return entity ? [roomDevice(entity, binding?.deviceNames?.[id])] : [];
     })
     .sort((a, b) => a.name.localeCompare(b.name));
   room.activityEntityIds = roomEntities.map((entity) => entity.entity_id);

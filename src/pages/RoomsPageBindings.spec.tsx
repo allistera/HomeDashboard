@@ -17,7 +17,7 @@ describe("RoomsPage Home Assistant inventory", () => {
   });
   it("shows the live state and availability count for allowlisted entities", async () => {
     const temperature = entity("sensor.livingroom_temperature_temperature", "18", {
-      friendly_name: "Room temperature",
+      friendly_name: "Livingroom Temperature Temperature",
       unit_of_measurement: "°C",
     });
     const media = entity("media_player.living_room_apple_tv", "unavailable", {
@@ -34,12 +34,12 @@ describe("RoomsPage Home Assistant inventory", () => {
     try {
       const devices = wrapper.get('[aria-label="Room devices"]');
       expect(devices.findAll("summary").map((row) => row.get(".row__name").text())).toEqual([
+        "Livingroom Temperature",
         "Room media",
-        "Room temperature",
       ]);
       const summaryStates = () =>
         devices.findAll("summary").map((row) => row.get("span.row__meta").text());
-      expect(summaryStates()).toEqual(["unavailable", "18 °C"]);
+      expect(summaryStates()).toEqual(["18 °C", "unavailable"]);
       expect(wrapper.text()).toContain("2 devices · 1 offline");
 
       const updatedTemperature = { ...temperature, state: "19" };
@@ -48,7 +48,7 @@ describe("RoomsPage Home Assistant inventory", () => {
         areas,
       );
       await nextTick();
-      expect(summaryStates()).toEqual(["playing", "19 °C"]);
+      expect(summaryStates()).toEqual(["19 °C", "playing"]);
 
       applyEntities(entityStates(updatedTemperature, diagnostic), areas);
       await nextTick();
