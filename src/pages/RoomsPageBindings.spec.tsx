@@ -61,6 +61,27 @@ describe("RoomsPage Home Assistant inventory", () => {
     }
   });
 
+  it("lists the Living Room lights only under lighting controls", () => {
+    const livingRoom = entity("light.living_room_livingroom_light", "on", {
+      friendly_name: "Livingroom Light",
+    });
+    const diningRoom = entity("light.living_room_livingroom_light_2", "off", {
+      friendly_name: "Dining Room",
+    });
+    applyEntities(entityStates(livingRoom, diningRoom));
+
+    const wrapper = mount(RoomsPage, { global: { plugins: [pinia] } });
+    try {
+      expect(wrapper.get('[aria-label="Room devices"]').findAll("summary")).toHaveLength(0);
+      expect(wrapper.findAll(".room-light .row__name").map((row) => row.text())).toEqual([
+        "Livingroom Light",
+        "Dining Room",
+      ]);
+    } finally {
+      wrapper.unmount();
+    }
+  });
+
   it("keeps area cameras and activity independent of the device allowlist", () => {
     const camera = entity("camera.living_room", "recording", {
       friendly_name: "Living room camera",

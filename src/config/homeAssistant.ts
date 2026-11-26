@@ -24,8 +24,6 @@ export const roomBindings: RoomBinding[] = [
     roomId: "living-room",
     areas: ["Living Room"],
     deviceAllowlist: [
-      "light.living_room_livingroom_light",
-      "light.living_room_livingroom_light_2",
       "sensor.livingroom_temperature_temperature",
       "media_player.living_room_apple_tv",
       "binary_sensor.living_room_presence_sensor_occupancy",
