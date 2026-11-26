@@ -45,6 +45,24 @@ export default defineComponent({
       rooms.rooms.find((room) => room.id === homePageBindings.mediaPlayer.roomId),
     );
 
+    const headline = computed(() => {
+      if (ha.status === "connecting") return "Connecting to Home Assistant…";
+      if (ha.status === "error") return "Home Assistant connection failed.";
+      if (ha.status === "disconnected") return "Home Assistant is not connected.";
+
+      const open = security.openEntries;
+      if (open.length === 1) return `${open[0]!.name} is open.`;
+      if (open.length > 1) return `${open.length} doors are open.`;
+      if (security.entries.some((entry) => !entry.statusKnown)) return "Door status unavailable.";
+
+      const litRooms = rooms.rooms.filter((room) => rooms.lightsOn(room) > 0);
+      if (litRooms.length === 1) return `${litRooms[0]!.name} lights are on.`;
+      if (litRooms.length > 1) return `Lights are on in ${litRooms.length} rooms.`;
+      return rooms.rooms.some((room) => room.lights.length > 0)
+        ? "All available lights are off."
+        : "Lighting status unavailable.";
+    });
+
     const summary = computed(() => {
       const lightsOn = rooms.rooms.reduce((sum, room) => sum + rooms.lightsOn(room), 0);
       const doors =
@@ -99,8 +117,8 @@ export default defineComponent({
 
         <div class="hero">
           <div>
-            <h1 class="hero__title hero__title--xl" style={{ fontSize: "34px" }}>
-              Check Home Assistant for issues with devices and authentication status.
+            <h1 class="hero__title hero__title--xl" style={{ fontSize: "34px" }} aria-live="polite">
+              {headline.value}
             </h1>
             <p class="hero__sub">{summary.value}</p>
           </div>

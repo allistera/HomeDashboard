@@ -34,10 +34,7 @@ export default defineComponent({
     );
 
     watch(
-      () =>
-        props.livePreview && props.camera.available && visible.value && !expanded.value
-          ? props.camera.id
-          : null,
+      () => (props.livePreview && props.camera.available && visible.value ? props.camera.id : null),
       (entityId, _, onCleanup) => {
         if (!entityId) return;
         let session: WebRtcSession | null = null;
@@ -77,6 +74,12 @@ export default defineComponent({
       { immediate: true },
     );
 
+    const onPreviewPlaying = () => {
+      if (previewState.value === "off") return;
+      clearTimeout(startupTimer);
+      previewState.value = "playing";
+    };
+
     return () => (
       <>
         <CameraTile
@@ -95,10 +98,7 @@ export default defineComponent({
           videoPreview={previewState.value !== "off"}
           videoStream={stream.value}
           live={previewState.value === "playing"}
-          onPlaying={() => {
-            clearTimeout(startupTimer);
-            previewState.value = "playing";
-          }}
+          onPlaying={onPreviewPlaying}
           onSelect={() => {
             expanded.value = true;
           }}
@@ -112,6 +112,8 @@ export default defineComponent({
               entityId: props.camera.available ? props.camera.id : undefined,
               snapshotUrl: props.camera.available ? props.camera.snapshotUrl : undefined,
             }}
+            previewStream={previewState.value === "off" ? undefined : stream.value}
+            onPlaying={onPreviewPlaying}
             onClose={() => {
               expanded.value = false;
             }}

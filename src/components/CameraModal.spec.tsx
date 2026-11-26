@@ -1,5 +1,5 @@
 import { mount } from "@vue/test-utils";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import CameraModal from "@/components/CameraModal";
 import type { WebRtcSession, WebRtcStreamHandlers } from "@/services/haWebRtc";
@@ -51,24 +51,32 @@ describe("CameraModal", () => {
 
   it("plays the WebRTC stream in a video element once it connects", async () => {
     const starter = fakeStarter();
+    const play = vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
     const wrapper = mount(CameraModal, { props: { camera, startStream: starter.start } });
 
-    expect(starter.calls).toEqual(["11111111-1111-4111-8111-111111111111"]);
-    expect(wrapper.text()).toContain("Connecting");
-    expect(wrapper.find("img.camera-modal__stream").exists()).toBe(false);
-    const video = wrapper.get<HTMLVideoElement>("video.camera-modal__stream");
-    expect(video.attributes("poster")).toBe("http://camera.local/front-door-snap");
-    expect(video.attributes("autoplay")).toBeDefined();
-    expect(video.attributes("playsinline")).toBeDefined();
+    try {
+      expect(starter.calls).toEqual(["11111111-1111-4111-8111-111111111111"]);
+      expect(wrapper.text()).toContain("Connecting");
+      expect(wrapper.find("img.camera-modal__stream").exists()).toBe(false);
+      const video = wrapper.get<HTMLVideoElement>("video.camera-modal__stream");
+      expect(video.attributes("poster")).toBe("http://camera.local/front-door-snap");
+      expect(video.attributes("autoplay")).toBeDefined();
+      expect(video.attributes("playsinline")).toBeDefined();
 
-    const stream = fakeStream();
-    starter.handlers[0]!.onStream(stream);
-    await wrapper.vm.$nextTick();
+      const stream = fakeStream();
+      starter.handlers[0]!.onStream(stream);
+      await wrapper.vm.$nextTick();
 
-    expect(video.element.srcObject).toBe(stream);
-    expect(wrapper.text()).toContain("Live");
-    expect(wrapper.find(".camera-modal__live").exists()).toBe(true);
-    wrapper.unmount();
+      expect(video.element.srcObject).toBe(stream);
+      expect(play).toHaveBeenCalledOnce();
+      expect(wrapper.text()).toContain("Connecting…");
+      await video.trigger("playing");
+      expect(wrapper.text()).toContain("Live");
+      expect(wrapper.find(".camera-modal__live").exists()).toBe(true);
+    } finally {
+      wrapper.unmount();
+      play.mockRestore();
+    }
   });
 
   it("falls back to the MJPEG proxy stream when WebRTC fails", async () => {

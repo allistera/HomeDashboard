@@ -72,6 +72,38 @@ describe("RoomCamera", () => {
     }
   });
 
+  it("opens the enlarged viewer with the same live session and keeps it on close", async () => {
+    const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
+    const play = vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+    const stop = vi.fn();
+    const start = vi.spyOn(webRtc, "startHaWebRtcStream").mockReturnValue({ stop });
+    const wrapper = mount(RoomCamera, { props: { camera, livePreview: true } });
+    try {
+      await wrapper.get(".camera").trigger("click");
+      expect(start).toHaveBeenCalledOnce();
+      expect(wrapper.get('[role="dialog"] .label').text()).toBe("Camera · Connecting…");
+
+      const stream: Partial<MediaStream> = { id: "preview-stream" };
+      // SAFETY: jsdom has no MediaStream; the players only assign it to their video elements.
+      start.mock.calls[0]![1].onStream(stream as MediaStream);
+      await nextTick();
+      const expanded = wrapper.get<HTMLVideoElement>('[role="dialog"] video');
+      expect(expanded.element.srcObject).toBe(stream);
+      await expanded.trigger("playing");
+      expect(wrapper.get('[role="dialog"] .label').text()).toBe("Camera · Live");
+
+      await wrapper.get('[aria-label="Close camera view"]').trigger("click");
+      expect(wrapper.get<HTMLVideoElement>(".camera > video").element.srcObject).toBe(stream);
+      expect(start).toHaveBeenCalledOnce();
+      expect(stop).not.toHaveBeenCalled();
+    } finally {
+      wrapper.unmount();
+      start.mockRestore();
+      visibility.mockRestore();
+      play.mockRestore();
+    }
+  });
+
   it("does not request a snapshot when the camera goes offline", async () => {
     const wrapper = mount(RoomCamera, { props: { camera } });
     try {

@@ -6,7 +6,7 @@ type carries the hierarchy.
 
 ## Pages
 
-- **Home** (`/`) — fixed headline, home status summary, room list with light toggles, house temp,
+- **Home** (`/`) — live headline, home status summary, room list with light toggles, house temp,
   Back Garden camera, activity feed, and scene shortcuts (Good night / Movie / Away).
 - **Rooms** (`/rooms`) — room list on the left, the selected room's lights,
   climate, media, and activity as ruled rows on the right.
@@ -53,7 +53,8 @@ sensor and Hue Tap Dial entities. The security camera wall discovers camera
 entities. Contact sensors report open or closed. Lock controls appear only for an available
 lock entity.
 
-The homepage status summary displays the indoor average from `sensor.average_indoor_temperature`.
+The homepage headline updates as Home Assistant reports connection, door, and lighting changes.
+The status summary displays the indoor average from `sensor.average_indoor_temperature`.
 
 The drying-weather reminder reads `binary_sensor.good_drying_weather`. In Home Assistant,
 **Update Drying Weather Forecast** checks the hourly forecast from `weather.home` through local
@@ -68,9 +69,9 @@ shortcut turns off the mapped lights and can arm the configured alarm panel.
 The homepage Activity feed shows Home Assistant logbook entries from the previous 24 hours and follows
 new events for `homePageBindings.activityEntityIds`. It shows the newest complete rows that fit above
 the media controls. The Home view starts the Back Garden high-resolution channel over WebRTC when
-it loads and reconnects once if video frames do not arrive. Camera previews use Home Assistant
-snapshots as a fallback. Opening a camera starts WebRTC
-when supported and falls back to the latest available snapshot.
+it loads and reconnects once if video frames do not arrive. The enlarged Back Garden viewer reuses
+the homepage stream. Other camera viewers start WebRTC when supported. Camera previews and viewers
+fall back to the latest available snapshot.
 
 ## Commands
 

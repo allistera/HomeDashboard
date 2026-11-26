@@ -5,7 +5,10 @@ import { nextTick } from "vue";
 
 import HomePage from "@/pages/HomePage";
 import { activityEventFromHa } from "@/services/haActivity";
+import { applyEntities } from "@/services/haSync";
+import { entity, entityStates, testLightId } from "@/services/haTestSupport";
 import { useActivityStore } from "@/stores/activity";
+import { useHaStore } from "@/stores/ha";
 import { useRoomsStore } from "@/stores/rooms";
 
 describe("HomePage headline", () => {
@@ -16,18 +19,46 @@ describe("HomePage headline", () => {
     setActivePinia(pinia);
   });
 
-  it("shows the requested headline regardless of home activity or light state", () => {
+  it("shows the current Home Assistant connection in the headline", async () => {
+    const ha = useHaStore();
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
-    const headline = "Check Home Assistant for issues with devices and authentication status.";
-    expect(wrapper.get("h1").text()).toBe(headline);
-    wrapper.unmount();
+    try {
+      expect(wrapper.get("h1").text()).toBe("Home Assistant is not connected.");
+      ha.status = "connecting";
+      await nextTick();
+      expect(wrapper.get("h1").text()).toBe("Connecting to Home Assistant…");
+      ha.status = "error";
+      await nextTick();
+      expect(wrapper.get("h1").text()).toBe("Home Assistant connection failed.");
+    } finally {
+      wrapper.unmount();
+    }
+  });
 
-    useActivityStore().events = [];
-    useRoomsStore().setAllLights(false);
-    const quietHome = mount(HomePage, { global: { plugins: [pinia] } });
-    expect(quietHome.get("h1").text()).toBe(headline);
-    expect(quietHome.get(".events").text()).toBe("Connect Home Assistant to see activity.");
-    quietHome.unmount();
+  it("updates the headline on live door and light changes without reloading", async () => {
+    const frontDoor = (state: string) =>
+      entity("binary_sensor.front_door_contact", state, { friendly_name: "Front door contact" });
+    const backDoor = (state: string) => entity("binary_sensor.back_door_contact", state);
+    const update = (front: string, back: string, light: string) =>
+      applyEntities(entityStates(frontDoor(front), backDoor(back), entity(testLightId, light)));
+
+    useHaStore().status = "connected";
+    update("off", "off", "on");
+    const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
+    try {
+      expect(wrapper.get("h1").text()).toBe("Living room lights are on.");
+      update("on", "unavailable", "on");
+      await nextTick();
+      expect(wrapper.get("h1").text()).toBe("Front door is open.");
+      update("off", "unavailable", "off");
+      await nextTick();
+      expect(wrapper.get("h1").text()).toBe("Door status unavailable.");
+      update("off", "off", "off");
+      await nextTick();
+      expect(wrapper.get("h1").text()).toBe("All available lights are off.");
+    } finally {
+      wrapper.unmount();
+    }
   });
 
   it("labels the homepage night button 'Get Jaicob'", () => {
