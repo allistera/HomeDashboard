@@ -11,6 +11,7 @@ import { homePageBindings } from "@/config/homeAssistant";
 import { roomBindingFor } from "@/config/homeAssistant";
 import { temperatureText } from "@/utils/temperature";
 import { useActivityStore } from "@/stores/activity";
+import { useHaStore } from "@/stores/ha";
 import { useSettingsStore } from "@/stores/settings";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore, type Camera } from "@/stores/security";
@@ -21,11 +22,17 @@ export default defineComponent({
     const router = useRouter();
     const rooms = useRoomsStore();
     const activity = useActivityStore();
+    const ha = useHaStore();
     const security = useSecurityStore();
     const settings = useSettingsStore();
     const selectedCamera = ref<Camera | null>(null);
+    const cameraBinding = homePageBindings.camera;
     const homeCamera = computed(() =>
-      security.cameras.find((camera) => camera.id === "front-door"),
+      security.cameras.find((camera) =>
+        security.hasLiveData
+          ? camera.entityId === cameraBinding.entityId
+          : camera.id === cameraBinding.demoId,
+      ),
     );
     const mediaRoom = computed(() =>
       rooms.rooms.find((room) => room.id === homePageBindings.mediaPlayer.roomId),
@@ -76,7 +83,8 @@ export default defineComponent({
     return () => (
       <main class="main homepage">
         <TopBar
-          left={[`OUTSIDE ${temperatureText(rooms.outsideTemp, 0)}`]}
+          left={[]}
+          showDate
           showPeople
           status={rooms.washingLabel}
           statusTone={rooms.washingTone}
@@ -199,7 +207,7 @@ export default defineComponent({
           <div class="col">
             <div class="section-head" style={{ padding: "16px 40px 12px" }}>
               <span class="label">
-                Front door · {homeCamera.value?.live ? "Live" : "Unavailable"}
+                {cameraBinding.label} · {homeCamera.value?.live ? "Live" : "Unavailable"}
               </span>
             </div>
             <div class="homepage-camera">
@@ -212,10 +220,11 @@ export default defineComponent({
                     snapshotUrl: homeCamera.value.snapshotUrl,
                   }}
                   height={250}
+                  livePreview={ha.status === "connected"}
                 />
               ) : (
                 <CameraTile
-                  name={`camera feed — ${homeCamera.value?.name ?? "front door"}`}
+                  name={`camera feed — ${homeCamera.value?.name ?? cameraBinding.label}`}
                   live={homeCamera.value?.live ?? false}
                   note={homeCamera.value?.note}
                   imageUrl={homeCamera.value?.snapshotUrl ?? ""}

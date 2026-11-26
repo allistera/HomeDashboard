@@ -7,7 +7,7 @@ type carries the hierarchy.
 ## Pages
 
 - **Home** (`/`) — fixed headline, home status summary, room list with light toggles, house temp,
-  front-door camera, activity feed, and scene shortcuts (Good night / Movie / Away).
+  Back Garden camera, activity feed, and scene shortcuts (Good night / Movie / Away).
 - **Rooms** (`/rooms`) — room list on the left, the selected room's lights,
   climate, media, and activity as ruled rows on the right.
   Click a room's name or status on Home to open its details; its light toggle stays independent.
@@ -67,9 +67,9 @@ shortcut turns off the mapped lights and can arm the configured alarm panel.
 
 The homepage Activity feed shows Home Assistant logbook entries from the previous 24 hours and follows
 new events for `homePageBindings.activityEntityIds`. It shows the newest complete rows that fit above
-the media controls. Camera previews refresh using Home Assistant's
-camera-specific snapshot URLs. The expanded view uses WebRTC when the camera supports it and
-falls back to the latest available snapshot.
+the media controls. The Home view plays the Back Garden high-resolution channel over WebRTC.
+Camera previews use Home Assistant snapshots as a fallback. Opening a camera starts WebRTC
+when supported and falls back to the latest available snapshot.
 
 ## Commands
 

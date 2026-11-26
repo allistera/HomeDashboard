@@ -1,7 +1,7 @@
 import { computed, defineComponent, type PropType } from "vue";
 
 import { useRoomsStore } from "@/stores/rooms";
-import { useClock } from "@/composables/useClock";
+import { formatClock, formatUkDate, useClock } from "@/composables/useClock";
 import { useHaStore } from "@/stores/ha";
 import { useSettingsStore } from "@/stores/settings";
 import { useSecurityStore } from "@/stores/security";
@@ -22,6 +22,7 @@ export default defineComponent({
     // SAFETY: same Vue PropType pattern as above.
     statusTone: { type: String as PropType<StatusTone>, default: "neutral" },
     showPeople: { type: Boolean, default: false },
+    showDate: { type: Boolean, default: false },
   },
   setup(props) {
     const rooms = useRoomsStore();
@@ -46,7 +47,8 @@ export default defineComponent({
           <div class="topbar__group">
             <span class="topbar__home">Dedridge</span>
             {rooms.mode === "demo" && <span>DEMO DATA</span>}
-            <span>{clock.value}</span>
+            <span>{formatClock(clock.value)}</span>
+            {props.showDate && <span>{formatUkDate(clock.value)}</span>}
             {props.left.map((item) => (
               <span key={item}>{item}</span>
             ))}

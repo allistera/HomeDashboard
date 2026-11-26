@@ -20,6 +20,8 @@ interface RoomBinding {
   vacuum?: EntityId;
 }
 
+const backGardenCamera: EntityId = "camera.back_garden_back_garden_high_resolution_channel";
+
 export const roomBindings: RoomBinding[] = [
   {
     roomId: "living-room",
@@ -106,7 +108,7 @@ export const roomBindings: RoomBinding[] = [
   {
     roomId: "garden",
     areas: ["Back Garden"],
-    deviceAllowlist: ["camera.back_garden_back_garden_high_resolution_channel"],
+    deviceAllowlist: [backGardenCamera],
     lights: [],
   },
   {
@@ -168,6 +170,7 @@ interface HomeBindings {
   houseTemperature: EntityProperty;
   houseTarget?: EntityProperty;
   washingWeather?: EntityProperty;
+  camera: { entityId: EntityId; label: string; demoId: string };
   mediaPlayer: { roomId: string };
   excludedRoomIds: string[];
   activityEntityIds: string[];
@@ -177,6 +180,7 @@ export const homePageBindings: HomeBindings = {
   outsideTemperature: { entityId: "weather.home", attribute: "temperature" },
   houseTemperature: { entityId: "sensor.average_indoor_temperature" },
   washingWeather: { entityId: "binary_sensor.good_drying_weather" },
+  camera: { entityId: backGardenCamera, label: "Back Garden", demoId: "back-garden" },
   mediaPlayer: { roomId: "living-room" },
   excludedRoomIds: ["garden"],
   activityEntityIds: [

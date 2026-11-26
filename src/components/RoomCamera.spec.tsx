@@ -1,7 +1,9 @@
 import { mount } from "@vue/test-utils";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { nextTick } from "vue";
 
 import RoomCamera from "@/components/RoomCamera";
+import * as webRtc from "@/services/haWebRtc";
 
 const camera = {
   id: "camera.front_door",
@@ -27,6 +29,32 @@ describe("RoomCamera", () => {
       expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
     } finally {
       wrapper.unmount();
+    }
+  });
+
+  it("plays the live preview and returns to snapshots when the preview is stopped", async () => {
+    const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
+    const stop = vi.fn();
+    const stream: Partial<MediaStream> = { id: "preview-stream" };
+    const start = vi.spyOn(webRtc, "startHaWebRtcStream").mockImplementation((_, handlers) => {
+      // SAFETY: jsdom has no MediaStream; the tile only assigns it to the video element.
+      handlers.onStream(stream as MediaStream);
+      return { stop };
+    });
+    const wrapper = mount(RoomCamera, { props: { camera, livePreview: true } });
+    try {
+      await nextTick();
+      expect(start).toHaveBeenCalledWith(camera.id, expect.any(Object));
+      expect(wrapper.get<HTMLVideoElement>("video.camera__stream").element.srcObject).toBe(stream);
+
+      await wrapper.setProps({ livePreview: false });
+      expect(stop).toHaveBeenCalledOnce();
+      expect(wrapper.find("video").exists()).toBe(false);
+      expect(wrapper.get("img.camera__stream").attributes("src")).toContain(camera.snapshotUrl);
+    } finally {
+      wrapper.unmount();
+      start.mockRestore();
+      visibility.mockRestore();
     }
   });
 
