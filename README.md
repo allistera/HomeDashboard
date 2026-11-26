@@ -69,6 +69,8 @@ falls back to the latest available snapshot.
 
 ## Commands
 
+Use Node.js 22.22.2 or newer in the 22.x line, 24.15.0 or newer in the 24.x line, or 26 and newer.
+
 ```sh
 npm install
 npm run dev          # start the dev server
