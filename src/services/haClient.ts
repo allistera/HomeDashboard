@@ -41,12 +41,14 @@ export async function connectHa(): Promise<boolean> {
   const ha = useHaStore();
   const activity = useActivityStore();
   ha.status = "connecting";
+  activity.beginLoading();
   let client: Connection;
   try {
     client = await openHaConnection(settings.url, settings.token);
   } catch (error) {
     if (current !== generation) return false;
     ha.status = "error";
+    activity.fail();
     ha.message =
       error === ERR_INVALID_AUTH
         ? "Home Assistant rejected the token."
@@ -87,12 +89,14 @@ export async function connectHa(): Promise<boolean> {
   client.addEventListener("disconnected", () => {
     if (current !== generation) return;
     entities = undefined;
+    activity.beginLoading();
     ha.status = "connecting";
     ha.message = "Connection lost. Reconnecting…";
   });
   client.addEventListener("reconnect-error", () => {
     if (current !== generation) return;
     ha.status = "error";
+    activity.fail();
     ha.message = "Home Assistant could not reconnect. Check the saved connection.";
   });
   client.addEventListener("ready", () => {
@@ -126,7 +130,6 @@ export async function connectHa(): Promise<boolean> {
       if (current === generation) ha.areaAssignmentsUnavailable = true;
     });
   }
-  activity.beginLoading();
   void register(
     subscribeHaActivity(
       client,

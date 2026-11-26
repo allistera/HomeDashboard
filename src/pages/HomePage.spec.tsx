@@ -1,8 +1,10 @@
 import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia, type Pinia } from "pinia";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { nextTick } from "vue";
 
 import HomePage from "@/pages/HomePage";
+import { activityEventFromHa } from "@/services/haActivity";
 import { useActivityStore } from "@/stores/activity";
 import { useRoomsStore } from "@/stores/rooms";
 
@@ -24,7 +26,7 @@ describe("HomePage headline", () => {
     useRoomsStore().setAllLights(false);
     const quietHome = mount(HomePage, { global: { plugins: [pinia] } });
     expect(quietHome.get("h1").text()).toBe(headline);
-    expect(quietHome.get(".events").text()).toBe("No recent activity.");
+    expect(quietHome.get(".events").text()).toBe("Connect Home Assistant to see activity.");
     quietHome.unmount();
   });
 
@@ -36,11 +38,38 @@ describe("HomePage headline", () => {
     );
   });
 
-  it("marks the activity feed as sourced from Home Assistant when live", () => {
-    useActivityStore().status = "live";
+  it("shows only complete Home Assistant activity rows that fit", async () => {
+    const activity = useActivityStore();
+    const bounds = vi
+      .spyOn(Element.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: Element) {
+        if (this.classList.contains("events--fit")) return new DOMRect(0, 0, 250, 100);
+        const index = Array.from(this.parentElement?.children ?? []).indexOf(this);
+        return new DOMRect(0, index * 44, 250, 44);
+      });
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
+    try {
+      expect(wrapper.get(".events").text()).toBe("Connect Home Assistant to see activity.");
+      activity.beginLoading();
+      await nextTick();
+      expect(wrapper.get(".events").text()).toBe("Loading Home Assistant activity…");
 
-    expect(wrapper.text()).toContain("Activity · Home Assistant");
+      activity.receive(
+        ["Hallway Light", "Apple TV", "Kitchen Light"].map((name, index) =>
+          activityEventFromHa({ when: 1_796_000_000 - index, name, state: "on" })!,
+        ),
+      );
+      await nextTick();
+      expect(wrapper.text()).toContain("Activity · Home Assistant");
+      const rows = wrapper.findAll(".events .event:not(.event--overflow) .event__text");
+      expect(rows.map((row) => row.text())).toEqual([
+        "Hallway Light turned on",
+        "Apple TV turned on",
+      ]);
+    } finally {
+      wrapper.unmount();
+      bounds.mockRestore();
+    }
   });
 
   it("shows the indoor average in the home summary and the outdoor temperature separately", () => {

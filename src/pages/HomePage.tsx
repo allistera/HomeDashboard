@@ -74,7 +74,7 @@ export default defineComponent({
     };
 
     return () => (
-      <main class="main">
+      <main class="main homepage">
         <TopBar
           left={[`OUTSIDE ${temperatureText(rooms.outsideTemp, 0)}`]}
           showPeople
@@ -144,10 +144,7 @@ export default defineComponent({
                     <div
                       key={room.id}
                       class={["row", { "row--dim": !on }]}
-                      style={{
-                        gridTemplateColumns: "1fr auto",
-                        padding: "16px 0",
-                      }}
+                      style={{ gridTemplateColumns: "1fr auto" }}
                     >
                       <button
                         type="button"
@@ -205,7 +202,7 @@ export default defineComponent({
                 Front door · {homeCamera.value?.live ? "Live" : "Unavailable"}
               </span>
             </div>
-            <div style={{ padding: "0 40px" }}>
+            <div class="homepage-camera">
               {homeCamera.value?.entityId ? (
                 <RoomCamera
                   camera={{
@@ -234,8 +231,8 @@ export default defineComponent({
                 Activity{activity.status === "live" ? " · Home Assistant" : ""}
               </span>
             </div>
-            <div style={{ padding: "0 40px" }}>
-              <EventFeed events={activity.events.slice(0, 4)} />
+            <div class="homepage-activity">
+              <EventFeed events={activity.events} emptyMessage={activity.emptyMessage} fit />
             </div>
             <div class="col-foot" style={{ padding: "18px 40px", alignItems: "center" }}>
               <div>

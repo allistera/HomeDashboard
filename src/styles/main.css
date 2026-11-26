@@ -273,6 +273,24 @@ a {
   border-left: 1px solid var(--border);
 }
 
+.homepage {
+  height: 100dvh;
+  min-height: 45rem;
+}
+
+.homepage > .cols {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.homepage .rows {
+  overflow-y: auto;
+}
+
+.homepage .rows > .row {
+  flex: none;
+  padding-block: clamp(6px, calc(10dvh - 70px), 16px);
+}
+
 /* ── Buttons & toggles ──────────────────────────────── */
 
 .btn {
@@ -616,6 +634,36 @@ a {
   flex-direction: column;
 }
 
+.homepage-camera {
+  flex: 0 1 250px;
+  min-height: 0;
+  padding-inline: 40px;
+}
+
+.homepage-camera .camera {
+  max-height: 100%;
+}
+
+.homepage-activity {
+  flex: 1;
+  min-height: 45px;
+  padding-inline: 40px;
+  contain: size;
+}
+
+.events--fit {
+  height: 100%;
+  overflow: hidden;
+}
+
+.events--fit > .event {
+  flex: none;
+}
+
+.event--overflow {
+  visibility: hidden;
+}
+
 .event {
   display: flex;
   gap: 16px;
@@ -691,6 +739,16 @@ a {
   padding: 20px 40px;
   align-items: baseline;
   gap: 34px;
+}
+
+@media (max-height: 900px) {
+  .homepage .hero {
+    padding-block: 30px 24px;
+  }
+
+  .homepage-climate {
+    padding-block: 14px;
+  }
 }
 
 .big-number {

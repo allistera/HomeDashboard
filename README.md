@@ -65,8 +65,9 @@ shortcut turns off the mapped lights and can arm the configured alarm panel.
 
 ## Activity and cameras
 
-The activity feed subscribes to the previous 24 hours of Home Assistant logbook history and follows
-new events for `homePageBindings.activityEntityIds`. Camera previews refresh using Home Assistant's
+The homepage Activity feed shows Home Assistant logbook entries from the previous 24 hours and follows
+new events for `homePageBindings.activityEntityIds`. It shows the newest complete rows that fit above
+the media controls. Camera previews refresh using Home Assistant's
 camera-specific snapshot URLs. The expanded view uses WebRTC when the camera supports it and
 falls back to the latest available snapshot.
 
