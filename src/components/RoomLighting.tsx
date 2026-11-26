@@ -24,23 +24,24 @@ export default defineComponent({
                 <span class="row__name" style={{ fontSize: "19px" }}>
                   {light.name}
                 </span>
-                <input
-                  class="brightness-slider"
-                  type="range"
-                  disabled={light.dimmable === false}
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={light.level}
-                  aria-label={`${light.name} brightness`}
-                  aria-valuetext={light.level > 0 ? `${light.level}%` : "Off"}
-                  onInput={(event) => {
-                    if (!(event.target instanceof HTMLInputElement)) return;
-                    rooms.setLightLevel(room.id, light.id, Number(event.target.value));
-                  }}
-                />
-                <span class="row__meta" style={{ textAlign: "right" }}>
-                  {light.level > 0 ? `${light.level}%` : "OFF"}
+                {light.dimmable !== false && (
+                  <input
+                    class="brightness-slider"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={light.level}
+                    aria-label={`${light.name} brightness`}
+                    aria-valuetext={light.level > 0 ? `${light.level}%` : "Off"}
+                    onInput={(event) => {
+                      if (!(event.target instanceof HTMLInputElement)) return;
+                      rooms.setLightLevel(room.id, light.id, Number(event.target.value));
+                    }}
+                  />
+                )}
+                <span class="row__meta room-light__status">
+                  {light.level === 0 ? "OFF" : light.dimmable === false ? "ON" : `${light.level}%`}
                 </span>
                 <ToggleSwitch
                   modelValue={light.level > 0}

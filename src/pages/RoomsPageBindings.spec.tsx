@@ -137,6 +137,25 @@ describe("RoomsPage Home Assistant inventory", () => {
     }
   });
 
+  it("shows the Kitchen light as a power-only control and includes it in Devices", () => {
+    const light = entity("switch.kitchen_light", "on", { friendly_name: "Kitchen Light" });
+    applyEntities(entityStates(light), new Map());
+    useRoomsStore().selectRoom("kitchen");
+
+    const wrapper = mount(RoomsPage, { global: { plugins: [pinia] } });
+    try {
+      expect(wrapper.get('[aria-label="Room devices"]').text()).toContain("Kitchen Light");
+      expect(wrapper.get('[aria-label="Kitchen Light power"]').attributes("aria-checked")).toBe(
+        "true",
+      );
+      expect(wrapper.get(".room-light__status").text()).toBe("ON");
+      expect(wrapper.find(".brightness-slider").exists()).toBe(false);
+      expect(wrapper.get(".hero__actions").text()).toBe("All off");
+    } finally {
+      wrapper.unmount();
+    }
+  });
+
   it("renders the configured outside temperature", () => {
     const rooms = useRoomsStore();
     rooms.setHomeClimateValues(8.4, null, null);

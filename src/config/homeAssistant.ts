@@ -42,10 +42,11 @@ export const roomBindings: RoomBinding[] = [
     roomId: "kitchen",
     areas: ["Kitchen"],
     deviceAllowlist: [
+      "switch.kitchen_light",
       "sensor.kitchen_temperature_temperature",
       "binary_sensor.kitchen_motion_occupancy",
     ],
-    lights: [],
+    lights: [{ lightId: "kitchen-light", entityId: "switch.kitchen_light" }],
     temperature: { entityId: "sensor.kitchen_temperature_temperature" },
     motion: "binary_sensor.kitchen_motion_occupancy",
   },

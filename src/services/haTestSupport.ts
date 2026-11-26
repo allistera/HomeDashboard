@@ -20,6 +20,7 @@ export function entityStates(...entities: HassEntityState[]): HassEntityStates {
 }
 
 export const testLightId = "light.living_room_livingroom_light";
+export const testKitchenLightId = "switch.kitchen_light";
 const temperature = "sensor.kitchen_temperature_temperature";
 
 interface Request {
@@ -88,6 +89,11 @@ export class HomeAssistantSocket extends EventTarget {
                 supported_color_modes: ["brightness"],
               },
               c: "light",
+              lc: 1795626720,
+            },
+            [testKitchenLightId]: {
+              s: "off",
+              a: { friendly_name: "Kitchen Light" },
               lc: 1795626720,
             },
             [temperature]: {
