@@ -23,12 +23,15 @@ describe("RoomsPage Home Assistant inventory", () => {
     const media = entity("media_player.living_room_apple_tv", "unavailable", {
       friendly_name: "Room media",
     });
+    const light = entity("light.living_room_livingroom_light", "on", {
+      friendly_name: "Room light",
+    });
     const diagnostic = entity("sensor.demo_signal", "50", { friendly_name: "Signal strength" });
     const areas = new Map([
       [temperature.entity_id, "Kitchen"],
       [diagnostic.entity_id, "Living Room"],
     ]);
-    applyEntities(entityStates(temperature, media, diagnostic), areas);
+    applyEntities(entityStates(temperature, media, light, diagnostic), areas);
 
     const wrapper = mount(RoomsPage, { global: { plugins: [pinia] } });
     try {
@@ -41,16 +44,19 @@ describe("RoomsPage Home Assistant inventory", () => {
         devices.findAll("summary").map((row) => row.get("span.row__meta").text());
       expect(summaryStates()).toEqual(["unavailable", "18 °C"]);
       expect(wrapper.text()).toContain("2 devices · 1 offline");
+      expect(wrapper.get('[aria-label="Room light power"]').attributes("aria-checked")).toBe(
+        "true",
+      );
 
       const updatedTemperature = { ...temperature, state: "19" };
       applyEntities(
-        entityStates(updatedTemperature, { ...media, state: "playing" }, diagnostic),
+        entityStates(updatedTemperature, { ...media, state: "playing" }, light, diagnostic),
         areas,
       );
       await nextTick();
       expect(summaryStates()).toEqual(["playing", "19 °C"]);
 
-      applyEntities(entityStates(updatedTemperature, diagnostic), areas);
+      applyEntities(entityStates(updatedTemperature, light, diagnostic), areas);
       await nextTick();
       expect(devices.text()).toContain("19 °C");
       expect(devices.text()).not.toContain("Room media");

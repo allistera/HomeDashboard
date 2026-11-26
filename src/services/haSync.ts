@@ -80,6 +80,7 @@ function syncRoom(
 ): void {
   const binding = roomBindingFor(room.id);
   room.devices = [...new Set(binding?.deviceAllowlist)]
+    .filter((id) => !id.startsWith("light."))
     .flatMap((id) => {
       const entity = entities[id];
       return entity ? [roomDevice(entity)] : [];
