@@ -87,8 +87,9 @@ export const roomBindings: RoomBinding[] = [
   {
     roomId: "jaicobs-room",
     areas: ["Jaicobs Room"],
-    deviceAllowlist: ["media_player.jaicobs_room_jaicobs_xbox"],
+    deviceAllowlist: ["media_player.jaicobs_room_jaicobs_xbox", "sensor.jaicob_s_room_temperature"],
     lights: [],
+    temperature: { entityId: "sensor.jaicob_s_room_temperature" },
     media: "media_player.jaicobs_room_jaicobs_xbox",
   },
   {

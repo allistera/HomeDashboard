@@ -143,6 +143,25 @@ describe("RoomsPage Home Assistant inventory", () => {
     }
   });
 
+  it("shows the live temperature for Jaicob's room in the summary and Devices", () => {
+    const temperature = entity("sensor.jaicob_s_room_temperature", "21.5", {
+      friendly_name: "Jaicob's Room Temperature",
+      unit_of_measurement: "°C",
+    });
+    applyEntities(entityStates(temperature), new Map([[temperature.entity_id, "Jaicobs Room"]]));
+    useRoomsStore().selectRoom("jaicobs-room");
+
+    const wrapper = mount(RoomsPage, { global: { plugins: [pinia] } });
+    try {
+      expect(wrapper.get(".hero__sub").text()).toContain("temperature 21.5°");
+      const device = wrapper.get('[aria-label="Room devices"] summary');
+      expect(device.get(".row__name").text()).toBe("Jaicob's Room Temperature");
+      expect(device.get("span.row__meta").text()).toBe("21.5 °C");
+    } finally {
+      wrapper.unmount();
+    }
+  });
+
   it("renders the configured outside temperature", () => {
     const rooms = useRoomsStore();
     rooms.setHomeClimateValues(8.4, null, null);
