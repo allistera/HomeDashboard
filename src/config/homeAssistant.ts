@@ -74,8 +74,19 @@ export const roomBindings: RoomBinding[] = [
   {
     roomId: "bedroom",
     areas: ["Main Bedroom"],
-    deviceAllowlist: ["light.main_bedroom_bedrooms"],
-    lights: [{ lightId: "bedroom-light", entityId: "light.main_bedroom_bedrooms" }],
+    deviceAllowlist: [
+      "sensor.bedroom_temperature_temperature",
+      "sensor.bedroom_temperature_humidity",
+      "sensor.bedroom_temperature_battery",
+      "sensor.main_bedroom_bedroom_switch_battery",
+      "event.main_bedroom_bedroom_switch_button_1",
+      "event.main_bedroom_bedroom_switch_button_2",
+      "event.main_bedroom_bedroom_switch_button_3",
+      "event.main_bedroom_bedroom_switch_button_4",
+      "event.main_bedroom_bedroom_switch_rotary",
+    ],
+    lights: [],
+    temperature: { entityId: "sensor.bedroom_temperature_temperature" },
   },
   {
     roomId: "jaicobs-room",

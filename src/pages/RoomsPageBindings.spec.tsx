@@ -97,6 +97,46 @@ describe("RoomsPage Home Assistant inventory", () => {
     }
   });
 
+  it("shows Main Bedroom's verified devices and uses its temperature sensor", () => {
+    const temperature = entity("sensor.bedroom_temperature_temperature", "20", {
+      friendly_name: "Bedroom Temperature",
+      unit_of_measurement: "°C",
+    });
+    const humidity = entity("sensor.bedroom_temperature_humidity", "44", {
+      friendly_name: "Bedroom Humidity",
+      unit_of_measurement: "%",
+    });
+    const dial = entity("event.main_bedroom_bedroom_switch_rotary", "2026-11-26T09:45:00+00:00", {
+      friendly_name: "Bedroom Switch Rotary",
+    });
+    const groupedLight = entity("light.main_bedroom_bedrooms", "on", {
+      friendly_name: "Bedrooms",
+      entity_id: ["light.elsies_bedroom_elsies_light"],
+    });
+    const bedroomEntities = [temperature, humidity, dial, groupedLight];
+    applyEntities(
+      entityStates(...bedroomEntities),
+      new Map(bedroomEntities.map((item) => [item.entity_id, "Main Bedroom"])),
+    );
+    const rooms = useRoomsStore();
+    rooms.selectRoom("bedroom");
+
+    const wrapper = mount(RoomsPage, { global: { plugins: [pinia] } });
+    try {
+      expect(wrapper.get("h1").text()).toBe("Main Bedroom");
+      expect(rooms.selectedRoom.temp).toBe(20);
+      const devices = wrapper.get('[aria-label="Room devices"]');
+      expect(devices.findAll("summary").map((row) => row.get(".row__name").text())).toEqual([
+        "Bedroom Humidity",
+        "Bedroom Switch Rotary",
+        "Bedroom Temperature",
+      ]);
+      expect(wrapper.find(".brightness-slider").exists()).toBe(false);
+    } finally {
+      wrapper.unmount();
+    }
+  });
+
   it("renders the configured outside temperature", () => {
     const rooms = useRoomsStore();
     rooms.setHomeClimateValues(8.4, null, null);
