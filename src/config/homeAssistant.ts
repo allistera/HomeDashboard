@@ -133,6 +133,7 @@ interface HomeBindings {
 export const homePageBindings: HomeBindings = {
   outsideTemperature: { entityId: "weather.home", attribute: "temperature" },
   houseTemperature: { entityId: "sensor.kitchen_temperature_temperature" },
+  washingWeather: { entityId: "binary_sensor.good_drying_weather" },
   mediaPlayer: { roomId: "living-room" },
   excludedRoomIds: ["garden"],
   activityEntityIds: [

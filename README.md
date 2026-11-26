@@ -51,9 +51,13 @@ Room lighting controls target the listed light entities, while the security came
 camera entities. Contact sensors report open or closed. Lock controls appear only for an available
 lock entity.
 
-Optional readings such as the house target and drying weather display as unavailable until an
-entity is mapped. The Get Jaicob shortcut is disabled in live mode until it has a Home Assistant
-action. The Away shortcut turns off the mapped lights and can arm the configured alarm panel.
+The drying-weather reminder reads `binary_sensor.good_drying_weather`. In Home Assistant,
+**Update Drying Weather Forecast** checks the hourly forecast from `weather.home` through local
+midnight every 15 minutes. The reminder displays unavailable when the forecast cannot determine
+whether it will rain. The house target displays as unavailable until an entity is mapped.
+
+The Get Jaicob shortcut is disabled in live mode until it has a Home Assistant action. The Away
+shortcut turns off the mapped lights and can arm the configured alarm panel.
 
 ## Activity and cameras
 
