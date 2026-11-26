@@ -14,9 +14,18 @@ describe("HomePage headline", () => {
     setActivePinia(pinia);
   });
 
-  it("surfaces the most recent activity when lights are on", () => {
+  it("shows the requested headline regardless of home activity or light state", () => {
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
-    expect(wrapper.get("h1").text()).toBe("Front door unlocked by Allister.");
+    const headline = "Check Home Assistant for issues with devices and authentication status.";
+    expect(wrapper.get("h1").text()).toBe(headline);
+    wrapper.unmount();
+
+    useActivityStore().events = [];
+    useRoomsStore().setAllLights(false);
+    const quietHome = mount(HomePage, { global: { plugins: [pinia] } });
+    expect(quietHome.get("h1").text()).toBe(headline);
+    expect(quietHome.get(".events").text()).toBe("No recent activity.");
+    quietHome.unmount();
   });
 
   it("labels the homepage night button 'Get Jaicob'", () => {
@@ -25,19 +34,6 @@ describe("HomePage headline", () => {
     expect(wrapper.findAll(".hero__actions button").map((button) => button.text())).toContain(
       "Night Time",
     );
-  });
-
-  it("falls back to 'Everything's quiet.' when there is no recent activity", () => {
-    useActivityStore().events = [];
-    const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
-    expect(wrapper.get("h1").text()).toBe("Everything's quiet.");
-    expect(wrapper.get(".events").text()).toBe("No recent activity.");
-  });
-
-  it("shows 'Lights out.' when every light is off, regardless of activity", () => {
-    useRoomsStore().setAllLights(false);
-    const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
-    expect(wrapper.get("h1").text()).toBe("Lights out.");
   });
 
   it("marks the activity feed as sourced from Home Assistant when live", () => {

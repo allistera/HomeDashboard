@@ -6,7 +6,7 @@ type carries the hierarchy.
 
 ## Pages
 
-- **Home** (`/`) — headline status, room list with light toggles, house temp,
+- **Home** (`/`) — fixed headline, home status summary, room list with light toggles, house temp,
   front-door camera, activity feed, and scene shortcuts (Good night / Movie / Away).
 - **Rooms** (`/rooms`) — room list on the left, the selected room's lights,
   climate, media, and activity as ruled rows on the right.
