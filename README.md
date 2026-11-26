@@ -53,6 +53,8 @@ sensor and Hue Tap Dial entities. The security camera wall discovers camera
 entities. Contact sensors report open or closed. Lock controls appear only for an available
 lock entity.
 
+The homepage status summary displays the indoor average from `sensor.average_indoor_temperature`.
+
 The drying-weather reminder reads `binary_sensor.good_drying_weather`. In Home Assistant,
 **Update Drying Weather Forecast** checks the hourly forecast from `weather.home` through local
 midnight every 15 minutes. The reminder displays unavailable when the forecast cannot determine

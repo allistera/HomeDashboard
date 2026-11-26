@@ -47,7 +47,7 @@ export default defineComponent({
               : security.hasLiveData
                 ? "Doors closed"
                 : "A window is open";
-      return `${doors}, ${lightsOn} lights on, temperature ${temperatureText(rooms.houseTemp)}.`;
+      return `${doors}, ${lightsOn} lights on, average indoor temperature ${temperatureText(rooms.houseTemp)}.`;
     });
 
     const goodNight = () => {

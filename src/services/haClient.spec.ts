@@ -31,7 +31,8 @@ describe("Home Assistant connection", () => {
     const rooms = useRoomsStore();
     await vi.waitFor(() => {
       expect(ha.status).toBe("connected");
-      expect(rooms.houseTemp).toBe(20.5);
+      expect(rooms.houseTemp).toBe(20.4);
+      expect(rooms.rooms.find((room) => room.id === "kitchen")?.temp).toBe(20.5);
       expect(rooms.selectedRoom.lights[0].level).toBe(50);
       expect(rooms.selectedRoom.activityEntityIds).toContain("sensor.example");
       expect(rooms.selectedRoom.devices?.map((item) => item.name)).toEqual(["Living Room Light"]);

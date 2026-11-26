@@ -20,7 +20,8 @@ export function entityStates(...entities: HassEntityState[]): HassEntityStates {
 }
 
 export const testLightId = "light.living_room_livingroom_light";
-const temperature = "sensor.kitchen_temperature_temperature";
+const kitchenTemperature = "sensor.kitchen_temperature_temperature";
+const indoorAverage = "sensor.average_indoor_temperature";
 
 interface Request {
   type: string;
@@ -90,8 +91,14 @@ export class HomeAssistantSocket extends EventTarget {
               c: "light",
               lc: 1795626720,
             },
-            [temperature]: {
+            [kitchenTemperature]: {
               s: "20.5",
+              a: { unit_of_measurement: "°C" },
+              c: "temperature",
+              lc: 1795626720,
+            },
+            [indoorAverage]: {
+              s: "20.4",
               a: { unit_of_measurement: "°C" },
               c: "temperature",
               lc: 1795626720,

@@ -43,11 +43,12 @@ describe("HomePage headline", () => {
     expect(wrapper.text()).toContain("Activity · Home Assistant");
   });
 
-  it("shows the bound outdoor temperature in the climate summary", () => {
+  it("shows the indoor average in the home summary and the outdoor temperature separately", () => {
     useRoomsStore().setHomeClimateValues(8.4, 20.7, 21.5);
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
     const climateSummary = wrapper.get(".homepage-climate");
 
+    expect(wrapper.get(".hero__sub").text()).toContain("average indoor temperature 20.7°");
     expect(climateSummary.findAll(".label").map((label) => label.text())).toEqual([
       "Target",
       "Outdoor Temp",
