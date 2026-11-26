@@ -35,6 +35,7 @@ describe("RoomCamera", () => {
   it("retries a live preview without frames, then keeps the active player", async () => {
     vi.useFakeTimers();
     const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
+    const play = vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
     const stop = vi.fn();
     const stream: Partial<MediaStream> = { id: "preview-stream" };
     const start = vi.spyOn(webRtc, "startHaWebRtcStream").mockImplementation((_, handlers) => {
@@ -47,6 +48,7 @@ describe("RoomCamera", () => {
       await nextTick();
       expect(start).toHaveBeenCalledWith(camera.id, expect.any(Object));
       expect(wrapper.get<HTMLVideoElement>("video.camera__stream").element.srcObject).toBe(stream);
+      expect(play).toHaveBeenCalledOnce();
       expect(wrapper.text()).toContain("Connecting…");
 
       await vi.advanceTimersByTimeAsync(12_000);
@@ -64,6 +66,7 @@ describe("RoomCamera", () => {
     } finally {
       wrapper.unmount();
       start.mockRestore();
+      play.mockRestore();
       visibility.mockRestore();
       vi.useRealTimers();
     }

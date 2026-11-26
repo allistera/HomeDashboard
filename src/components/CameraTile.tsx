@@ -66,7 +66,10 @@ export default defineComponent({
     );
 
     watchEffect(() => {
-      if (video.value) video.value.srcObject = props.videoStream;
+      const player = video.value;
+      if (!player) return;
+      player.srcObject = props.videoStream;
+      if (props.videoStream) void player.play().catch(() => undefined);
     });
 
     onScopeDispose(stopRefresh);
