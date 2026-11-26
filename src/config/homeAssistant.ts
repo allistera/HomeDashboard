@@ -35,6 +35,7 @@ export const roomBindings: RoomBinding[] = [
     lights: [
       { lightId: "livingroom-light", entityId: "light.living_room_livingroom_light" },
       { lightId: "livingroom-light-2", entityId: "light.living_room_livingroom_light_2" },
+      { lightId: "tv-backlight", entityId: "light.living_room_tv_backlight" },
     ],
     temperature: { entityId: "sensor.livingroom_temperature_temperature" },
     media: "media_player.living_room_apple_tv",

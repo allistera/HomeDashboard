@@ -61,14 +61,17 @@ describe("RoomsPage Home Assistant inventory", () => {
     }
   });
 
-  it("lists the Living Room lights only under lighting controls", () => {
+  it("lists the Living Room lights, including TV Backlight, only under lighting controls", async () => {
     const livingRoom = entity("light.living_room_livingroom_light", "on", {
       friendly_name: "Livingroom Light",
     });
     const diningRoom = entity("light.living_room_livingroom_light_2", "off", {
       friendly_name: "Dining Room",
     });
-    applyEntities(entityStates(livingRoom, diningRoom));
+    const backlight = entity("light.living_room_tv_backlight", "on", {
+      friendly_name: "TV Backlight",
+    });
+    applyEntities(entityStates(livingRoom, diningRoom, backlight));
 
     const wrapper = mount(RoomsPage, { global: { plugins: [pinia] } });
     try {
@@ -76,7 +79,13 @@ describe("RoomsPage Home Assistant inventory", () => {
       expect(wrapper.findAll(".room-light .row__name").map((row) => row.text())).toEqual([
         "Livingroom Light",
         "Dining Room",
+        "TV Backlight",
       ]);
+      const backlightToggle = wrapper.get('[aria-label="TV Backlight power"]');
+      expect(backlightToggle.attributes("aria-checked")).toBe("true");
+      applyEntities(entityStates(livingRoom, diningRoom, { ...backlight, state: "off" }));
+      await nextTick();
+      expect(backlightToggle.attributes("aria-checked")).toBe("false");
     } finally {
       wrapper.unmount();
     }
