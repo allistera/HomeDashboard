@@ -1,7 +1,7 @@
 import { demoSecurity } from "@/data/demo/security";
 import { defineStore } from "pinia";
 
-import type { ArmState, Entry, SecurityState } from "@/models/security";
+import type { ArmState, Entry, Person, SecurityState } from "@/models/security";
 export type { ArmState, Entry, Camera, Person, SecurityEvent } from "@/models/security";
 import { entryBindings, securityPageBindings } from "@/config/homeAssistant";
 import { haCallService } from "@/services/haClient";
@@ -10,10 +10,13 @@ export const useSecurityStore = defineStore("security", {
   state: (): SecurityState => structuredClone(demoSecurity),
   getters: {
     hasLiveData: (state): boolean => state.mode === "live",
-    peopleHome(state): number {
+    peopleAtHome(state): Person[] {
       return state.people.filter(
         (p) => !p.guest && (state.mode === "live" ? p.home === true : p.home !== false),
-      ).length;
+      );
+    },
+    peopleHome(): number {
+      return this.peopleAtHome.length;
     },
     openEntries(state): Entry[] {
       return state.entries.filter((e) => e.open);

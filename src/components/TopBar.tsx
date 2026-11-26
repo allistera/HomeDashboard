@@ -1,4 +1,4 @@
-import { defineComponent, type PropType } from "vue";
+import { computed, defineComponent, type PropType } from "vue";
 
 import { useRoomsStore } from "@/stores/rooms";
 import { useClock } from "@/composables/useClock";
@@ -30,6 +30,16 @@ export default defineComponent({
     const settings = useSettingsStore();
     const security = useSecurityStore();
     const clock = useClock();
+    const presenceUnavailable = computed(
+      () =>
+        security.hasLiveData && security.people.every((person) => person.status === "UNAVAILABLE"),
+    );
+    const emptyPresenceMessage = computed(() => {
+      if (security.people.length === 0 && ha.status === "connected")
+        return "No person devices found.";
+      if (presenceUnavailable.value || security.people.length === 0) return "Presence unavailable.";
+      return "No one home.";
+    });
     return () => (
       <>
         <header class="topbar">
@@ -47,27 +57,20 @@ export default defineComponent({
             ))}
             {props.showPeople && (
               <span class="topbar__people" tabindex={0}>
-                {security.hasLiveData &&
-                security.people.every((person) => person.status === "UNAVAILABLE")
+                {presenceUnavailable.value
                   ? "PRESENCE UNAVAILABLE"
                   : `${security.peopleHome} ${security.peopleHome === 1 ? "PERSON" : "PEOPLE"} HOME`}
                 <span class="topbar__popover" role="tooltip">
                   <span class="topbar__popover-box">
-                    {security.people
-                      .filter((person) => !person.guest)
-                      .map((person) => (
-                        <span key={person.id} class="topbar__popover-row">
-                          <span class="topbar__popover-dot" style={{ background: person.color }} />
-                          <span>{person.name}</span>
-                          <span class="topbar__popover-status">{person.status}</span>
-                        </span>
-                      ))}
-                    {security.people.length === 0 && (
-                      <span class="topbar__popover-row">
-                        {ha.status === "connected"
-                          ? "No person devices found."
-                          : "Presence unavailable."}
+                    {security.peopleAtHome.map((person) => (
+                      <span key={person.id} class="topbar__popover-row">
+                        <span class="topbar__popover-dot" style={{ background: person.color }} />
+                        <span>{person.name}</span>
+                        <span class="topbar__popover-status">{person.status}</span>
                       </span>
+                    ))}
+                    {security.peopleAtHome.length === 0 && (
+                      <span class="topbar__popover-row">{emptyPresenceMessage.value}</span>
                     )}
                   </span>
                 </span>

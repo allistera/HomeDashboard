@@ -39,7 +39,7 @@ describe("Home Assistant status and presence", () => {
     }
   });
 
-  it("counts only known household members and clears live presence on disconnect", async () => {
+  it("shows only household members who are home and clears live presence on disconnect", async () => {
     const home = entity("person.allister_antosik", "home", { friendly_name: "Allister" });
     const away = entity("person.tonnii_antosik", "not_home", { friendly_name: "Tonnii" });
     const unknown = entity("person.jaicob_antosik", "unknown", { friendly_name: "Jaicob" });
@@ -49,14 +49,21 @@ describe("Home Assistant status and presence", () => {
       global: { plugins: [pinia] },
     });
     try {
+      const popover = wrapper.get('[role="tooltip"]');
       expect(wrapper.text()).toContain("1 PERSON HOME");
-      expect(wrapper.get('[role="tooltip"]').text()).toContain("TonniiAWAY");
-      expect(wrapper.get('[role="tooltip"]').text()).toContain("JaicobUNAVAILABLE");
-      expect(wrapper.text()).not.toContain("ha mcp");
+      expect(popover.findAll(".topbar__popover-row").map((row) => row.text())).toEqual([
+        "AllisterHOME",
+      ]);
+
+      applyEntities(entityStates(away, unknown));
+      await nextTick();
+      expect(wrapper.text()).toContain("0 PEOPLE HOME");
+      expect(popover.text()).toBe("No one home.");
 
       applyEntities(entityStates(unknown));
       await nextTick();
       expect(wrapper.text()).toContain("PRESENCE UNAVAILABLE");
+      expect(popover.text()).toBe("Presence unavailable.");
       disconnectHa();
       await nextTick();
       expect(wrapper.text()).toContain("DEMO DATA");
