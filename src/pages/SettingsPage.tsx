@@ -113,8 +113,8 @@ export default defineComponent({
           )}
 
           <div class="connection">
-            {ha.inventoryUnavailable && (
-              <p role="status">Home Assistant room inventory is unavailable.</p>
+            {ha.areaAssignmentsUnavailable && (
+              <p role="status">Home Assistant area assignments are unavailable.</p>
             )}
             <div class="label">Live connection</div>
             <p

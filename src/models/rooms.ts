@@ -16,6 +16,7 @@ export interface Room {
   floor: string;
   lights: Light[];
   devices?: RoomDevice[];
+  activityEntityIds?: string[];
   camera?: RoomCamera;
   temp: number | null;
   target: number | null;

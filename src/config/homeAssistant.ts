@@ -8,6 +8,7 @@ export interface EntityProperty {
 interface RoomBinding {
   roomId: string;
   areas: string[];
+  deviceAllowlist: EntityId[];
   name?: string;
   floor?: string;
   lights: { lightId: string; entityId: EntityId }[];
@@ -22,6 +23,13 @@ export const roomBindings: RoomBinding[] = [
   {
     roomId: "living-room",
     areas: ["Living Room"],
+    deviceAllowlist: [
+      "light.living_room_livingroom_light",
+      "light.living_room_livingroom_light_2",
+      "sensor.livingroom_temperature_temperature",
+      "media_player.living_room_apple_tv",
+      "binary_sensor.living_room_presence_sensor_occupancy",
+    ],
     lights: [
       { lightId: "livingroom-light", entityId: "light.living_room_livingroom_light" },
       { lightId: "livingroom-light-2", entityId: "light.living_room_livingroom_light_2" },
@@ -33,6 +41,10 @@ export const roomBindings: RoomBinding[] = [
   {
     roomId: "kitchen",
     areas: ["Kitchen"],
+    deviceAllowlist: [
+      "sensor.kitchen_temperature_temperature",
+      "binary_sensor.kitchen_motion_occupancy",
+    ],
     lights: [],
     temperature: { entityId: "sensor.kitchen_temperature_temperature" },
     motion: "binary_sensor.kitchen_motion_occupancy",
@@ -40,6 +52,12 @@ export const roomBindings: RoomBinding[] = [
   {
     roomId: "hallway",
     areas: ["Downstairs Hallway", "Upstairs Hallway"],
+    deviceAllowlist: [
+      "light.downstairs_hallway_downstairs_hallway_light",
+      "light.upstairs_hallway_upstairs_hallway_light",
+      "sensor.hallway_temperature_temperature",
+      "binary_sensor.hallway_motion_occupancy",
+    ],
     lights: [
       {
         lightId: "downstairs-hallway-light",
@@ -56,26 +74,39 @@ export const roomBindings: RoomBinding[] = [
   {
     roomId: "bedroom",
     areas: ["Main Bedroom"],
+    deviceAllowlist: ["light.main_bedroom_bedrooms"],
     lights: [{ lightId: "bedroom-light", entityId: "light.main_bedroom_bedrooms" }],
   },
   {
     roomId: "jaicobs-room",
     areas: ["Jaicobs Room"],
+    deviceAllowlist: ["media_player.jaicobs_room_jaicobs_xbox"],
     lights: [],
     media: "media_player.jaicobs_room_jaicobs_xbox",
   },
   {
     roomId: "elsies-room",
     areas: ["Elsies Room", "Elsie’s bedroom"],
+    deviceAllowlist: ["light.elsies_bedroom_elsies_light", "sensor.elsie_s_room_temperature"],
     lights: [{ lightId: "ceiling", entityId: "light.elsies_bedroom_elsies_light" }],
     temperature: { entityId: "sensor.elsie_s_room_temperature" },
   },
-  { roomId: "garden", areas: ["Back Garden"], lights: [] },
+  {
+    roomId: "garden",
+    areas: ["Back Garden"],
+    deviceAllowlist: ["camera.back_garden_back_garden_high_resolution_channel"],
+    lights: [],
+  },
   {
     roomId: "toilet",
     name: "Toilet",
     floor: "Ground floor",
     areas: ["Toilet"],
+    deviceAllowlist: [
+      "light.toilet_toilet_light",
+      "sensor.toilet_temperature_temperature",
+      "binary_sensor.toilet_motion_occupancy",
+    ],
     lights: [{ lightId: "toilet_toilet_light", entityId: "light.toilet_toilet_light" }],
     temperature: { entityId: "sensor.toilet_temperature_temperature" },
     motion: "binary_sensor.toilet_motion_occupancy",

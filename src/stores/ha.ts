@@ -6,7 +6,7 @@ interface HaState {
   status: HaStatus;
   message: string;
   entityCount: number;
-  inventoryUnavailable: boolean;
+  areaAssignmentsUnavailable: boolean;
 }
 
 export const useHaStore = defineStore("ha", {
@@ -14,6 +14,6 @@ export const useHaStore = defineStore("ha", {
     status: "disconnected",
     message: "",
     entityCount: 0,
-    inventoryUnavailable: false,
+    areaAssignmentsUnavailable: false,
   }),
 });

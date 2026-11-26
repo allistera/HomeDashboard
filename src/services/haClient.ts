@@ -71,10 +71,11 @@ export async function connectHa(): Promise<boolean> {
       const result = await getEntityAreas(client);
       if (generation !== current || request !== registryRequest) return;
       areas = result;
-      ha.inventoryUnavailable = false;
+      ha.areaAssignmentsUnavailable = false;
       update();
     } catch {
-      if (generation === current && request === registryRequest) ha.inventoryUnavailable = true;
+      if (generation === current && request === registryRequest)
+        ha.areaAssignmentsUnavailable = true;
     }
   };
   const register = async (subscription: Promise<() => void>) => {
@@ -122,7 +123,7 @@ export async function connectHa(): Promise<boolean> {
           void end().catch(() => undefined);
         }),
     ).catch(() => {
-      if (current === generation) ha.inventoryUnavailable = true;
+      if (current === generation) ha.areaAssignmentsUnavailable = true;
     });
   }
   activity.beginLoading();

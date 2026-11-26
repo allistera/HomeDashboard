@@ -3,6 +3,7 @@ import type { HassEntityState, HassEntityStates } from "home-assistant-js-websoc
 import {
   entryBindings,
   homePageBindings,
+  roomBindingFor,
   roomBindings,
   roomEntityIds,
   securityPageBindings,
@@ -77,8 +78,14 @@ function syncRoom(
   entities: HassEntityStates,
   baseUrl: string,
 ): void {
-  const binding = roomBindings.find((item) => item.roomId === room.id);
-  room.devices = roomEntities.map(roomDevice).sort((a, b) => a.name.localeCompare(b.name));
+  const binding = roomBindingFor(room.id);
+  room.devices = [...new Set(binding?.deviceAllowlist)]
+    .flatMap((id) => {
+      const entity = entities[id];
+      return entity ? [roomDevice(entity)] : [];
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+  room.activityEntityIds = roomEntities.map((entity) => entity.entity_id);
   room.deviceCount = room.devices.length;
   room.offlineCount = room.devices.filter((device) => !device.available).length;
   const camera = roomEntities.find((entity) => entity.entity_id.startsWith("camera."));
@@ -225,7 +232,7 @@ export function applyEntities(entities: HassEntityStates, areas = new Map<string
   }
   const currentStates = Object.values(entities);
   for (const room of rooms.rooms) {
-    const binding = roomBindings.find((item) => item.roomId === room.id);
+    const binding = roomBindingFor(room.id);
     const explicit = new Set(roomEntityIds(room.id));
     const roomEntities = currentStates.filter(
       (entity) =>

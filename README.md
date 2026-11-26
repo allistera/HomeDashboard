@@ -45,10 +45,11 @@ and failed actions.
 ## Home Assistant bindings
 
 The dashboard's room, weather, presence, and security bindings are in
-[`src/config/homeAssistant.ts`](src/config/homeAssistant.ts). The room inventory follows Home
-Assistant area and device assignments, in addition to entities explicitly bound to the room.
-Room lighting controls target the listed light entities, while the security camera wall discovers
-camera entities. Contact sensors report open or closed. Lock controls appear only for an available
+[`src/config/homeAssistant.ts`](src/config/homeAssistant.ts). Edit a room's `deviceAllowlist` to
+choose which Home Assistant entity IDs appear in its **Devices** list and counts. An empty list
+shows no devices. Room cameras and activity use Home Assistant area assignments.
+Room lighting controls use the room's light bindings. The security camera wall discovers camera
+entities. Contact sensors report open or closed. Lock controls appear only for an available
 lock entity.
 
 The drying-weather reminder reads `binary_sensor.good_drying_weather`. In Home Assistant,

@@ -5,8 +5,9 @@ import { nextTick } from "vue";
 
 import RoomsPage from "@/pages/RoomsPage";
 import { applyEntities } from "@/services/haSync";
-import { useRoomsStore } from "@/stores/rooms";
 import { entity, entityStates } from "@/services/haTestSupport";
+import { useActivityStore } from "@/stores/activity";
+import { useRoomsStore } from "@/stores/rooms";
 
 describe("RoomsPage Home Assistant inventory", () => {
   let pinia = createPinia();
@@ -14,36 +15,73 @@ describe("RoomsPage Home Assistant inventory", () => {
     pinia = createPinia();
     setActivePinia(pinia);
   });
-  it("displays entities in the room, with current state and updated membership", async () => {
-    const pinia = createPinia();
-    setActivePinia(pinia);
-    const sensor = entity("sensor.demo_temperature", "18", {
+  it("shows only allowed devices and counts their live availability", async () => {
+    const temperature = entity("sensor.livingroom_temperature_temperature", "18", {
       friendly_name: "Room temperature",
       unit_of_measurement: "°C",
     });
-    const other = entity("sensor.demo_humidity", "50", { friendly_name: "Other humidity" });
-    const access = new Map([
-      [sensor.entity_id, "Living Room"],
-      [other.entity_id, "Kitchen"],
+    const media = entity("media_player.living_room_apple_tv", "unavailable", {
+      friendly_name: "Room media",
+    });
+    const diagnostic = entity("sensor.demo_signal", "50", { friendly_name: "Signal strength" });
+    const areas = new Map([
+      [temperature.entity_id, "Kitchen"],
+      [diagnostic.entity_id, "Living Room"],
     ]);
-    applyEntities(entityStates(sensor, other), access);
+    applyEntities(entityStates(temperature, media, diagnostic), areas);
 
     const wrapper = mount(RoomsPage, { global: { plugins: [pinia] } });
     try {
-      expect(wrapper.text()).toContain("Room temperature");
-      expect(wrapper.text()).not.toContain("Other humidity");
-      const details = wrapper
-        .findAll("summary")
-        .find((summary) => summary.text().includes("Room temperature"));
-      await details?.trigger("click");
-      expect(wrapper.text()).toContain("18 °C");
+      const devices = wrapper.get('[aria-label="Room devices"]');
+      expect(devices.findAll("summary").map((row) => row.get(".row__name").text())).toEqual([
+        "Room media",
+        "Room temperature",
+      ]);
+      expect(devices.text()).toContain("18 °C");
+      expect(wrapper.text()).toContain("2 devices · 1 offline");
 
-      access.set(sensor.entity_id, "Kitchen");
-      access.set(other.entity_id, "Living Room");
-      applyEntities(entityStates(sensor, other), access);
+      applyEntities(entityStates({ ...temperature, state: "19" }, diagnostic), areas);
       await nextTick();
-      expect(wrapper.text()).not.toContain("Room temperature");
-      expect(wrapper.text()).toContain("Other humidity");
+      expect(devices.text()).toContain("19 °C");
+      expect(devices.text()).not.toContain("Room media");
+      expect(devices.text()).not.toContain("Signal strength");
+      expect(wrapper.text()).toContain("1 devices · 0 offline");
+    } finally {
+      wrapper.unmount();
+    }
+  });
+
+  it("keeps area cameras and activity independent of the device allowlist", () => {
+    const camera = entity("camera.living_room", "recording", {
+      friendly_name: "Living room camera",
+    });
+    const motion = entity("binary_sensor.other_room_motion", "on");
+    applyEntities(
+      entityStates(camera, motion),
+      new Map([
+        [camera.entity_id, "Living Room"],
+        [motion.entity_id, "Living Room"],
+      ]),
+    );
+    useActivityStore().receive([
+      {
+        id: "motion-event",
+        occurredAt: 1,
+        time: "11:30",
+        text: "Motion detected in the living room",
+        domain: "binary_sensor",
+        sourceId: motion.entity_id,
+        sourceName: "Motion",
+      },
+    ]);
+
+    const wrapper = mount(RoomsPage, { global: { plugins: [pinia] } });
+    try {
+      expect(wrapper.get('[aria-label="Room devices"]').find("summary").exists()).toBe(false);
+      expect(
+        wrapper.find('[aria-label="Open Living room camera camera in larger view"]').exists(),
+      ).toBe(true);
+      expect(wrapper.text()).toContain("Motion detected in the living room");
     } finally {
       wrapper.unmount();
     }

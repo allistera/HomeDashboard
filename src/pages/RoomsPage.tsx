@@ -19,7 +19,7 @@ export default defineComponent({
       if (!rooms.hasLiveData) return rooms.selectedRoom.events;
       const ids = new Set([
         ...roomEntityIds(rooms.selectedRoomId),
-        ...(rooms.selectedRoom.devices?.map((device) => device.id) ?? []),
+        ...(rooms.selectedRoom.activityEntityIds ?? []),
       ]);
       return activity.events.filter((event) => ids.has(event.sourceId));
     });

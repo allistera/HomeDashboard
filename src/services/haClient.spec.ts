@@ -33,7 +33,8 @@ describe("Home Assistant connection", () => {
       expect(ha.status).toBe("connected");
       expect(rooms.houseTemp).toBe(20.5);
       expect(rooms.selectedRoom.lights[0].level).toBe(50);
-      expect(rooms.selectedRoom.devices?.map((item) => item.name)).toContain("Additional sensor");
+      expect(rooms.selectedRoom.activityEntityIds).toContain("sensor.example");
+      expect(rooms.selectedRoom.devices?.map((item) => item.name)).toEqual(["Living Room Light"]);
       expect(useSecurityStore().peopleHome).toBe(1);
       expect(useActivityStore().events[0]?.text).toBe("Living Room Light turned on");
     });
