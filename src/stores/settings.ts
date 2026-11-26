@@ -1,3 +1,5 @@
+import { ERR_INVALID_AUTH } from "home-assistant-js-websocket";
+import { openHaConnection } from "@/services/haTransport";
 import { defineStore } from "pinia";
 
 export const HA_URL_KEY = "dedridge.ha.url";
@@ -49,25 +51,14 @@ export const useSettingsStore = defineStore("settings", {
       this.validation = "checking";
       this.message = "Checking connection…";
       try {
-        const response = await fetch(`${normalized}/api/`, {
-          headers: { Authorization: `Bearer ${trimmedToken}` },
-          redirect: "error",
-        });
-        if (response.status === 401 || response.status === 403) {
-          this.validation = "error";
-          this.message = "Home Assistant rejected the token. Check it and try again.";
-          return false;
-        }
-        if (!response.ok) {
-          this.validation = "error";
-          this.message = `Unexpected response from Home Assistant (HTTP ${response.status}).`;
-          return false;
-        }
-      } catch {
+        const connection = await openHaConnection(normalized, trimmedToken);
+        connection.close();
+      } catch (error) {
         this.validation = "error";
         this.message =
-          "Could not reach Home Assistant. Check the URL, and make sure this " +
-          "origin is allowed in its http.cors_allowed_origins setting.";
+          error === ERR_INVALID_AUTH
+            ? "Home Assistant rejected the token. Check it and try again."
+            : "Could not reach Home Assistant. Check the URL and that this browser can open it.";
         return false;
       }
 

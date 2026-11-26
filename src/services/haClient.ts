@@ -1,7 +1,5 @@
 import {
   callService,
-  createConnection,
-  createLongLivedTokenAuth,
   ERR_INVALID_AUTH,
   subscribeEntityStates,
   type Connection,
@@ -12,6 +10,7 @@ import { homePageBindings, type EntityId } from "@/config/homeAssistant";
 import { subscribeHaActivity } from "@/services/haActivity";
 import { getEntityAreas } from "@/services/haRegistry";
 import { applyEntities } from "@/services/haSync";
+import { openHaConnection } from "@/services/haTransport";
 import { useActivityStore } from "@/stores/activity";
 import { useHaStore } from "@/stores/ha";
 import { useRoomsStore } from "@/stores/rooms";
@@ -44,8 +43,7 @@ export async function connectHa(): Promise<boolean> {
   ha.status = "connecting";
   let client: Connection;
   try {
-    const auth = createLongLivedTokenAuth(settings.url, settings.token);
-    client = await createConnection({ auth });
+    client = await openHaConnection(settings.url, settings.token);
   } catch (error) {
     if (current !== generation) return false;
     ha.status = "error";

@@ -221,6 +221,7 @@ export default defineComponent({
                   class="camera-modal__stream"
                   src={props.camera.snapshotUrl}
                   alt={`${props.camera.name} snapshot enlarged`}
+                  referrerpolicy="no-referrer"
                   onError={() => {
                     streamFailed.value = true;
                   }}

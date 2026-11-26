@@ -12,6 +12,7 @@ import type { Room, RoomDevice } from "@/models/rooms";
 import type { Camera, Entry } from "@/models/security";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
+import { useSettingsStore } from "@/stores/settings";
 
 export function available(entity: HassEntityState | undefined): entity is HassEntityState {
   return !!entity && entity.state !== "unknown" && entity.state !== "unavailable";
@@ -33,8 +34,10 @@ function entityName(entity: HassEntityState): string {
   return entity.attributes.friendly_name ?? entity.entity_id.split(".")[1].replaceAll("_", " ");
 }
 
-function cameraSnapshot(entityId: string): string {
-  return `/api/camera_proxy/${encodeURIComponent(entityId)}`;
+function cameraSnapshot(entity: HassEntityState, baseUrl: string): string | undefined {
+  const token = entity.attributes.access_token;
+  if (!baseUrl || !token) return undefined;
+  return `${baseUrl}/api/camera_proxy/${encodeURIComponent(entity.entity_id)}?token=${encodeURIComponent(token)}`;
 }
 
 function roomDevice(entity: HassEntityState): RoomDevice {
@@ -68,7 +71,12 @@ function roomDevice(entity: HassEntityState): RoomDevice {
   };
 }
 
-function syncRoom(room: Room, roomEntities: HassEntityState[], entities: HassEntityStates): void {
+function syncRoom(
+  room: Room,
+  roomEntities: HassEntityState[],
+  entities: HassEntityStates,
+  baseUrl: string,
+): void {
   const binding = roomBindings.find((item) => item.roomId === room.id);
   room.devices = roomEntities.map(roomDevice).sort((a, b) => a.name.localeCompare(b.name));
   room.deviceCount = room.devices.length;
@@ -79,7 +87,7 @@ function syncRoom(room: Room, roomEntities: HassEntityState[], entities: HassEnt
         id: camera.entity_id,
         name: entityName(camera),
         available: available(camera) && camera.state !== "off",
-        snapshotUrl: cameraSnapshot(camera.entity_id),
+        snapshotUrl: cameraSnapshot(camera, baseUrl),
       }
     : undefined;
   room.lights = (binding?.lights ?? []).flatMap((light) => {
@@ -166,7 +174,7 @@ function entriesFrom(entities: HassEntityStates): Entry[] {
   });
 }
 
-function camerasFrom(entities: HassEntityStates): Camera[] {
+function camerasFrom(entities: HassEntityStates, baseUrl: string): Camera[] {
   return Object.values(entities)
     .filter((entity) => entity.entity_id.startsWith("camera."))
     .map((entity) => {
@@ -178,7 +186,7 @@ function camerasFrom(entities: HassEntityStates): Camera[] {
         name: frontDoor ? "Front door" : entityName(entity),
         available: online,
         live: online,
-        snapshotUrl: online ? cameraSnapshot(entity.entity_id) : undefined,
+        snapshotUrl: online ? cameraSnapshot(entity, baseUrl) : undefined,
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -187,6 +195,7 @@ function camerasFrom(entities: HassEntityStates): Camera[] {
 export function applyEntities(entities: HassEntityStates, areas = new Map<string, string>()): void {
   const rooms = useRoomsStore();
   const security = useSecurityStore();
+  const baseUrl = useSettingsStore().url;
   rooms.mode = "live";
   const washingBinding = homePageBindings.washingWeather;
   const washing = washingBinding && entities[washingBinding.entityId];
@@ -223,12 +232,12 @@ export function applyEntities(entities: HassEntityStates, areas = new Map<string
         explicit.has(entity.entity_id) ||
         binding?.areas.includes(areas.get(entity.entity_id) ?? ""),
     );
-    syncRoom(room, roomEntities, entities);
+    syncRoom(room, roomEntities, entities, baseUrl);
   }
 
   security.mode = "live";
   security.entries = entriesFrom(entities);
-  security.cameras = camerasFrom(entities);
+  security.cameras = camerasFrom(entities, baseUrl);
   security.events = [];
   const alarm = entities[securityPageBindings.alarmControlPanel];
   const states = { armed_home: "home", armed_away: "away", disarmed: "disarmed" } as const;

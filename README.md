@@ -35,13 +35,12 @@ type carries the hierarchy.
 
 Open **Settings** in the dashboard and enter the base URL of your Home Assistant instance and a
 long-lived access token from **Profile → Security**. The dashboard stores these values in the current
-browser. An HTTPS dashboard needs an HTTPS Home Assistant URL. For cross-origin access, add the
-dashboard origin (for example, `http://127.0.0.1:5173`) to Home Assistant's
-[`http.cors_allowed_origins`](https://www.home-assistant.io/integrations/http/#cors_allowed_origins).
+browser. An HTTPS dashboard needs an HTTPS Home Assistant URL.
 
 The dashboard uses the [Home Assistant WebSocket API](https://developers.home-assistant.io/docs/api/websocket/)
-for entity updates and actions. It labels the initial disconnected view as demo data. The warning
-below the top bar reports connection failures, reconnect attempts, and failed actions.
+to validate credentials, subscribe to entity updates, and send actions. It labels the disconnected
+view as demo data. The warning below the top bar reports connection failures, reconnect attempts,
+and failed actions.
 
 ## Home Assistant bindings
 
@@ -60,7 +59,7 @@ action. The Away shortcut turns off the mapped lights and can arm the configured
 
 The activity feed subscribes to the previous 24 hours of Home Assistant logbook history and follows
 new events for `homePageBindings.activityEntityIds`. Camera previews refresh using Home Assistant's
-authenticated snapshot endpoint. The expanded view uses WebRTC when the camera supports it and
+camera-specific snapshot URLs. The expanded view uses WebRTC when the camera supports it and
 falls back to the latest available snapshot.
 
 ## Commands
