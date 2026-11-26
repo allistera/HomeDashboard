@@ -15,7 +15,7 @@ describe("RoomsPage Home Assistant inventory", () => {
     pinia = createPinia();
     setActivePinia(pinia);
   });
-  it("shows only allowed devices and counts their live availability", async () => {
+  it("shows the live state and availability count for allowlisted entities", async () => {
     const temperature = entity("sensor.livingroom_temperature_temperature", "18", {
       friendly_name: "Room temperature",
       unit_of_measurement: "°C",
@@ -37,10 +37,20 @@ describe("RoomsPage Home Assistant inventory", () => {
         "Room media",
         "Room temperature",
       ]);
-      expect(devices.text()).toContain("18 °C");
+      const summaryStates = () =>
+        devices.findAll("summary").map((row) => row.get("span.row__meta").text());
+      expect(summaryStates()).toEqual(["unavailable", "18 °C"]);
       expect(wrapper.text()).toContain("2 devices · 1 offline");
 
-      applyEntities(entityStates({ ...temperature, state: "19" }, diagnostic), areas);
+      const updatedTemperature = { ...temperature, state: "19" };
+      applyEntities(
+        entityStates(updatedTemperature, { ...media, state: "playing" }, diagnostic),
+        areas,
+      );
+      await nextTick();
+      expect(summaryStates()).toEqual(["playing", "19 °C"]);
+
+      applyEntities(entityStates(updatedTemperature, diagnostic), areas);
       await nextTick();
       expect(devices.text()).toContain("19 °C");
       expect(devices.text()).not.toContain("Room media");
