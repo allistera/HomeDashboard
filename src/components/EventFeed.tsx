@@ -1,6 +1,7 @@
 import { defineComponent, onBeforeUnmount, onMounted, ref, watch, type PropType } from "vue";
 
 export interface FeedEvent {
+  id?: string;
   time: string;
   text: string;
   accent?: boolean;
@@ -47,7 +48,7 @@ export default defineComponent({
         )}
         {props.events.map((event, index) => (
           <div
-            key={`${event.time}-${event.text}`}
+            key={event.id ?? `${event.time}-${event.text}`}
             class={["event", { "event--overflow": props.fit && index >= visibleRows.value }]}
           >
             <span class="event__time">{event.time}</span>

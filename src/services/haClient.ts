@@ -73,6 +73,7 @@ export async function connectHa(): Promise<boolean> {
       const result = await getEntityAreas(client);
       if (generation !== current || request !== registryRequest) return;
       areas = result;
+      activity.entityAreas = result;
       ha.areaAssignmentsUnavailable = false;
       update();
     } catch {

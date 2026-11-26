@@ -37,7 +37,9 @@ describe("Home Assistant connection", () => {
       expect(rooms.selectedRoom.activityEntityIds).toContain("sensor.example");
       expect(rooms.selectedRoom.devices).toEqual([]);
       expect(useSecurityStore().peopleHome).toBe(1);
-      expect(useActivityStore().events[0]?.text).toBe("Living Room Light turned on");
+      const activity = useActivityStore();
+      expect(activity.events[0]?.text).toBe("Living Room Livingroom Light turned on");
+      expect(activity.homepageEvents[0]?.text).toBe("Livingroom Light turned on");
     });
 
     HomeAssistantSocket.active.changeLight("off");

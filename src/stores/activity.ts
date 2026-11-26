@@ -6,6 +6,7 @@ export type ActivityStatus = "offline" | "loading" | "live" | "error";
 
 interface ActivityState {
   events: ActivityEvent[];
+  entityAreas: Map<string, string>;
   status: ActivityStatus;
 }
 
@@ -19,10 +20,25 @@ const emptyMessages = {
 export const useActivityStore = defineStore("activity", {
   state: (): ActivityState => ({
     events: [],
+    entityAreas: new Map(),
     status: "offline",
   }),
   getters: {
     emptyMessage: (state): string => emptyMessages[state.status],
+    homepageEvents: (state): ActivityEvent[] =>
+      state.events.map((event) => {
+        const area = state.entityAreas.get(event.sourceId);
+        if (!area) return event;
+
+        const prefix = `${area} `.toLowerCase();
+        if (
+          !event.sourceName.toLowerCase().startsWith(prefix) ||
+          !event.text.toLowerCase().startsWith(prefix)
+        ) {
+          return event;
+        }
+        return { ...event, text: event.text.slice(prefix.length).trimStart() };
+      }),
   },
   actions: {
     beginLoading() {

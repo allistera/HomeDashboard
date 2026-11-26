@@ -125,13 +125,23 @@ export class HomeAssistantSocket extends EventTarget {
         result([{ id: "device", area_id: "living_room" }]);
         break;
       case "config/entity_registry/list_for_display":
-        result({ entities: [{ ei: "sensor.example", di: "device" }] });
+        result({
+          entities: [
+            { ei: "sensor.example", di: "device" },
+            { ei: testLightId, di: "device" },
+          ],
+        });
         break;
       case "logbook/event_stream":
         result(null);
         event({
           events: [
-            { when: 1795626720, name: "Living Room Light", entity_id: testLightId, state: "on" },
+            {
+              when: 1795626720,
+              name: "Living Room Livingroom Light",
+              entity_id: testLightId,
+              state: "on",
+            },
           ],
         });
         break;

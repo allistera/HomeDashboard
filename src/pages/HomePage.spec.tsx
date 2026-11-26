@@ -54,13 +54,22 @@ describe("HomePage headline", () => {
       await nextTick();
       expect(wrapper.get(".events").text()).toBe("Loading Home Assistant activity…");
 
+      const hallwayLight = "light.downstairs_hallway_downstairs_hallway_light";
+      const sources = [
+        { entity_id: hallwayLight, name: "Downstairs Hallway Hallway Light" },
+        { entity_id: "media_player.living_room_apple_tv", name: "Apple TV" },
+        { entity_id: "switch.kitchen_light", name: "Kitchen Light" },
+      ];
       activity.receive(
-        ["Hallway Light", "Apple TV", "Kitchen Light"].map((name, index) =>
-          activityEventFromHa({ when: 1_796_000_000 - index, name, state: "on" })!,
+        sources.map((source, index) =>
+          activityEventFromHa({ ...source, when: 1_796_000_000 - index, state: "on" })!,
         ),
       );
+      activity.entityAreas.set(hallwayLight, "Downstairs Hallway");
       await nextTick();
-      expect(wrapper.text()).toContain("Activity · Home Assistant");
+      expect(
+        wrapper.get(".homepage-activity").element.previousElementSibling?.textContent?.trim(),
+      ).toBe("Activity");
       const rows = wrapper.findAll(".events .event:not(.event--overflow) .event__text");
       expect(rows.map((row) => row.text())).toEqual([
         "Hallway Light turned on",

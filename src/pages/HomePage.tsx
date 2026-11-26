@@ -236,12 +236,14 @@ export default defineComponent({
               )}
             </div>
             <div class="section-head" style={{ padding: "20px 40px 8px" }}>
-              <span class="label">
-                Activity{activity.status === "live" ? " · Home Assistant" : ""}
-              </span>
+              <span class="label">Activity</span>
             </div>
             <div class="homepage-activity">
-              <EventFeed events={activity.events} emptyMessage={activity.emptyMessage} fit />
+              <EventFeed
+                events={activity.homepageEvents}
+                emptyMessage={activity.emptyMessage}
+                fit
+              />
             </div>
             <div class="col-foot" style={{ padding: "18px 40px", alignItems: "center" }}>
               <div>
