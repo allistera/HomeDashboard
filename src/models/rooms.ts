@@ -1,8 +1,25 @@
+export type HueSaturation = readonly [hue: number, saturation: number];
+
+export type LightColourSetting =
+  | { mode: "colour"; hs: HueSaturation }
+  | { mode: "temperature"; kelvin: number }
+  | { mode: "white" };
+
+export interface LightColour {
+  supportsColour: boolean;
+  temperature?: { min: number; max: number };
+  fixedWhite: boolean;
+  hs?: HueSaturation;
+  kelvin?: number;
+  swatch?: string;
+}
+
 export interface Light {
   id: string;
   name: string;
   level: number;
   dimmable?: boolean;
+  colour?: LightColour;
 }
 
 export interface RoomEvent {

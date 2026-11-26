@@ -67,4 +67,33 @@ describe("Home Assistant connection", () => {
     });
     expect(rooms.selectedRoom.lights[0].level).toBe(50);
   });
+
+  it("sends colour and white-temperature settings to compatible Home Assistant lights", async () => {
+    await connectHa();
+    const rooms = useRoomsStore();
+    await vi.waitFor(() => expect(rooms.selectedRoom.lights[0].colour?.swatch).toBe("#FF9752"));
+
+    await rooms.setLightColour("living-room", { mode: "colour", hs: [210, 70] });
+    await rooms.setLightColour("living-room", { mode: "temperature", kelvin: 6000 });
+
+    const commands = HomeAssistantSocket.active.requests.filter(
+      (item) => item.type === "call_service",
+    );
+    expect(commands).toMatchObject([
+      {
+        domain: "light",
+        service: "turn_on",
+        target: { entity_id: testLightId },
+        service_data: { hs_color: [210, 70] },
+      },
+      {
+        target: { entity_id: testLightId },
+        service_data: { color_temp_kelvin: 6000 },
+      },
+      {
+        target: { entity_id: "light.living_room_livingroom_light_2" },
+        service_data: { color_temp_kelvin: 5000 },
+      },
+    ]);
+  });
 });

@@ -154,7 +154,7 @@ export type ServiceCallResult = "sent" | "failed" | "offline";
 export async function haCallService(
   entityId: EntityId,
   service: string,
-  data?: Record<string, string | number | boolean>,
+  data?: Record<string, string | number | boolean | readonly number[]>,
 ): Promise<ServiceCallResult> {
   const client = haConnection();
   if (!client) return "offline";

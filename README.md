@@ -48,7 +48,9 @@ The dashboard's room, weather, presence, and security bindings are in
 [`src/config/homeAssistant.ts`](src/config/homeAssistant.ts). Edit a room's `deviceAllowlist` to
 choose which Home Assistant entity IDs appear in its **Devices** list and counts. Each row displays
 the entity’s current state, including its unit when available. An empty list shows no devices. Room cameras and activity use Home Assistant area assignments.
-Room lighting controls use the room's light bindings. Main Bedroom uses its temperature and humidity
+Room lighting controls use the room's light bindings. Select a light's colour swatch to adjust
+its colour or white temperature, depending on the modes the light reports. **Apply to room**
+sends the selected setting to every compatible light in that room. Main Bedroom uses its temperature and humidity
 sensor and Hue Tap Dial entities. The security camera wall discovers camera
 entities. Contact sensors report open or closed. Lock controls appear only for an available
 lock entity.

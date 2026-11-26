@@ -1,7 +1,14 @@
 import { defineStore } from "pinia";
 
 import { demoRooms } from "@/data/demo/rooms";
-import type { MediaCommand, Room, Scene, RoomsState } from "@/models/rooms";
+import type {
+  Light,
+  LightColourSetting,
+  MediaCommand,
+  Room,
+  Scene,
+  RoomsState,
+} from "@/models/rooms";
 import { roomBindingFor } from "@/config/homeAssistant";
 import { haCallService } from "@/services/haClient";
 
@@ -26,6 +33,28 @@ function pushLight(roomId: string, lightId: string, level: number): void {
     ).then((result) => {
       if (rooms.hasLiveData && result !== "sent" && light?.level === level) light.level = previous;
     });
+}
+
+function colourServiceData(
+  light: Light,
+  setting: LightColourSetting,
+): Record<string, number | readonly number[]> | undefined {
+  const colour = light.colour;
+  if (!colour) return;
+  switch (setting.mode) {
+    case "colour":
+      if (colour.supportsColour) return { hs_color: setting.hs };
+      return;
+    case "temperature":
+      if (colour.temperature) {
+        const { min, max } = colour.temperature;
+        return { color_temp_kelvin: Math.round(Math.min(max, Math.max(min, setting.kelvin))) };
+      }
+      return;
+    case "white":
+      if (colour.fixedWhite) return { white: Math.round((light.level || 100) * 2.55) };
+      return;
+  }
 }
 
 export const useRoomsStore = defineStore("rooms", {
@@ -114,6 +143,20 @@ export const useRoomsStore = defineStore("rooms", {
       if (light) {
         pushLight(roomId, lightId, Math.min(100, Math.max(0, level)));
       }
+    },
+    async setLightColour(roomId: string, setting: LightColourSetting, lightId?: string) {
+      const room = this.rooms.find((item) => item.id === roomId);
+      const bindings = roomBindingFor(roomId)?.lights;
+      if (!this.hasLiveData || !room || !bindings) return;
+
+      const lights = lightId ? room.lights.filter((light) => light.id === lightId) : room.lights;
+      await Promise.all(
+        lights.map((light) => {
+          const entityId = bindings.find((binding) => binding.lightId === light.id)?.entityId;
+          const data = colourServiceData(light, setting);
+          if (entityId && data) return haCallService(entityId, "turn_on", data);
+        }),
+      );
     },
     async adjustTarget(roomId: string, delta: number) {
       const room = this.rooms.find((r) => r.id === roomId);

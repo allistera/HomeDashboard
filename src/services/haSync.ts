@@ -9,11 +9,14 @@ import {
   securityPageBindings,
   type EntityProperty,
 } from "@/config/homeAssistant";
-import type { Room, RoomDevice } from "@/models/rooms";
+import type { HueSaturation, LightColour, Room, RoomDevice } from "@/models/rooms";
 import type { Camera, Entry } from "@/models/security";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
 import { useSettingsStore } from "@/stores/settings";
+import { hueSaturationHex, rgbHex, rgbHueSaturation } from "@/utils/lightColour";
+
+const colourModes = new Set(["hs", "xy", "rgb", "rgbw", "rgbww"]);
 
 export function available(entity: HassEntityState | undefined): entity is HassEntityState {
   return !!entity && entity.state !== "unknown" && entity.state !== "unavailable";
@@ -72,6 +75,53 @@ function roomDevice(entity: HassEntityState, name = entityName(entity)): RoomDev
   };
 }
 
+function lightColour(entity: HassEntityState, previous?: LightColour): LightColour | undefined {
+  const attrs = entity.attributes;
+  const modes = Array.isArray(attrs.supported_color_modes) ? attrs.supported_color_modes : [];
+  const supportsColour = modes.some((mode) => colourModes.has(mode));
+  const fixedWhite = modes.includes("white");
+  const temperature = modes.includes("color_temp")
+    ? {
+        min: numeric(attrs.min_color_temp_kelvin) ?? 2000,
+        max: numeric(attrs.max_color_temp_kelvin) ?? 6535,
+      }
+    : undefined;
+  if (!supportsColour && !temperature && !fixedWhite) return undefined;
+
+  const reportedHs = Array.isArray(attrs.hs_color) ? attrs.hs_color : [];
+  const hue = numeric(reportedHs[0]);
+  const saturation = numeric(reportedHs[1]);
+  const kelvin = temperature ? (numeric(attrs.color_temp_kelvin) ?? undefined) : undefined;
+  const rgb = Array.isArray(attrs.rgb_color) ? attrs.rgb_color : [];
+  const validRgb =
+    rgb.length === 3 && rgb.every((value) => Number.isFinite(value) && value >= 0 && value <= 255);
+  let hs: HueSaturation | undefined;
+  if (supportsColour && hue !== null && saturation !== null) {
+    hs = [hue, saturation];
+  } else if (supportsColour && validRgb) {
+    hs = rgbHueSaturation(rgb[0], rgb[1], rgb[2]);
+  }
+
+  const swatch = validRgb
+    ? rgbHex(rgb[0], rgb[1], rgb[2])
+    : hs
+      ? hueSaturationHex(hs)
+      : attrs.color_mode === "white"
+        ? "#FFFFFF"
+        : undefined;
+
+  // Most lights omit their colour attributes while off.
+  const last = entity.state === "off" ? previous : undefined;
+  return {
+    supportsColour,
+    temperature,
+    fixedWhite,
+    hs: hs ?? last?.hs,
+    kelvin: kelvin ?? last?.kelvin,
+    swatch: swatch ?? last?.swatch,
+  };
+}
+
 function syncRoom(
   room: Room,
   roomEntities: HassEntityState[],
@@ -100,16 +150,19 @@ function syncRoom(
   room.lights = (binding?.lights ?? []).flatMap((light) => {
     const entity = entities[light.entityId];
     if (!available(entity)) return [];
-    const colorModes = entity.attributes.supported_color_modes;
+    const modes = entity.attributes.supported_color_modes;
     const dimmable =
-      Array.isArray(colorModes) &&
-      colorModes.some((mode) => mode !== "onoff" && mode !== "unknown");
+      Array.isArray(modes) && modes.some((mode) => mode !== "onoff" && mode !== "unknown");
     const brightness = numeric(entity.attributes.brightness);
     return [
       {
         id: light.lightId,
-        name: entityName(entity),
+        name: entityName(entity).trim(),
         dimmable,
+        colour: lightColour(
+          entity,
+          room.lights.find((previous) => previous.id === light.lightId)?.colour,
+        ),
         level:
           entity.state === "on" ? (brightness === null ? 100 : Math.round(brightness / 2.55)) : 0,
       },

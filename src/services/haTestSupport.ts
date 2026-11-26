@@ -29,7 +29,7 @@ interface Request {
   access_token?: string;
   domain?: string;
   service?: string;
-  service_data?: { brightness_pct?: number };
+  service_data?: { brightness_pct?: number; hs_color?: number[]; color_temp_kelvin?: number };
   target?: { entity_id: string };
 }
 
@@ -86,8 +86,19 @@ export class HomeAssistantSocket extends EventTarget {
               a: {
                 friendly_name: "Living Room Light",
                 brightness: 128,
-                supported_color_modes: ["brightness"],
+                supported_color_modes: ["color_temp", "xy"],
+                min_color_temp_kelvin: 2000,
+                max_color_temp_kelvin: 6535,
+                color_mode: "xy",
+                hs_color: [24, 68],
+                rgb_color: [255, 151, 82],
               },
+              c: "light",
+              lc: 1795626720,
+            },
+            "light.living_room_livingroom_light_2": {
+              s: "off",
+              a: { supported_color_modes: ["color_temp"], max_color_temp_kelvin: 5000 },
               c: "light",
               lc: 1795626720,
             },

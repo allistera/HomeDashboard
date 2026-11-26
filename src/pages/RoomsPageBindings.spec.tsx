@@ -1,6 +1,6 @@
 import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 
 import RoomsPage from "@/pages/RoomsPage";
@@ -88,6 +88,81 @@ describe("RoomsPage Home Assistant inventory", () => {
       expect(backlightToggle.attributes("aria-checked")).toBe("false");
     } finally {
       wrapper.unmount();
+    }
+  });
+
+  it("opens an inline picker that follows the reported light colour and supports both modes", async () => {
+    const coloured = entity("light.living_room_livingroom_light", "on", {
+      friendly_name: "Livingroom Light",
+      supported_color_modes: ["xy", "color_temp"],
+      color_mode: "xy",
+      hs_color: [24, 68],
+      rgb_color: [255, 151, 82],
+      min_color_temp_kelvin: 2000,
+      max_color_temp_kelvin: 6500,
+    });
+    const dimmable = entity("light.living_room_livingroom_light_2", "on", {
+      supported_color_modes: ["brightness"],
+    });
+    const setColour = vi.spyOn(useRoomsStore(), "setLightColour").mockResolvedValue();
+    applyEntities(entityStates(coloured, dimmable));
+    const wrapper = mount(RoomsPage, { global: { plugins: [pinia] } });
+    try {
+      expect(wrapper.findAll(".room-light__swatch")).toHaveLength(1);
+      const swatch = wrapper.get('[aria-label="Change Livingroom Light colour"]');
+      expect(swatch.attributes("title")).toBe("Current colour #FF9752");
+      await swatch.trigger("click");
+      expect(swatch.attributes("aria-expanded")).toBe("true");
+      const picker = wrapper.get('[aria-label="Livingroom Light colour picker"]');
+      expect(picker.get(".colour-picker__values").text()).toContain("Hue 24° · Sat 68%");
+      expect(picker.get(".colour-picker__values").text()).toContain("#FF9752");
+
+      await picker.get('[aria-label="Blue"]').trigger("click");
+      expect(setColour).toHaveBeenLastCalledWith(
+        "living-room",
+        { mode: "colour", hs: [215, 79] },
+        "livingroom-light",
+      );
+      await picker.get(".colour-picker__apply").trigger("click");
+      expect(setColour).toHaveBeenLastCalledWith("living-room", { mode: "colour", hs: [215, 79] });
+
+      applyEntities(
+        entityStates(
+          {
+            ...coloured,
+            attributes: { ...coloured.attributes, hs_color: [120, 100], rgb_color: [0, 255, 0] },
+          },
+          dimmable,
+        ),
+      );
+      await nextTick();
+      expect(swatch.attributes("title")).toBe("Current colour #00FF00");
+      expect(picker.get(".colour-picker__values").text()).toContain("#00FF00");
+
+      await picker.findAll(".colour-picker__modes button")[1]!.trigger("click");
+      await picker.get('input[aria-label="White colour temperature"]').setValue(3200);
+      expect(setColour).toHaveBeenLastCalledWith(
+        "living-room",
+        { mode: "temperature", kelvin: 3200 },
+        "livingroom-light",
+      );
+      await picker.trigger("keydown", { key: "Escape" });
+      expect(swatch.attributes("aria-expanded")).toBe("false");
+
+      applyEntities(
+        entityStates(
+          entity(coloured.entity_id, "off", {
+            friendly_name: "Livingroom Light",
+            supported_color_modes: ["xy", "color_temp"],
+          }),
+          dimmable,
+        ),
+      );
+      await nextTick();
+      expect(swatch.attributes("title")).toBe("Last reported colour #00FF00");
+    } finally {
+      wrapper.unmount();
+      setColour.mockRestore();
     }
   });
 
