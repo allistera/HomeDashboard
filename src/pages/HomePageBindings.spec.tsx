@@ -80,7 +80,7 @@ describe("HomePage bindings", () => {
 
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
     try {
-      expect(wrapper.text()).toContain("Back Garden · Live");
+      expect(wrapper.text()).toContain("Back Garden · Preview");
       expect(wrapper.get(".camera__stream").attributes("src")).toContain(
         `/api/camera_proxy/${backGarden.entity_id}?`,
       );

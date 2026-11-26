@@ -4,7 +4,7 @@ import { useRouter } from "vue-router";
 import CameraModal from "@/components/CameraModal";
 import CameraTile from "@/components/CameraTile";
 import EventFeed from "@/components/EventFeed";
-import RoomCamera from "@/components/RoomCamera";
+import RoomCamera, { type CameraPreviewState } from "@/components/RoomCamera";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
 import { homePageBindings } from "@/config/homeAssistant";
@@ -26,6 +26,7 @@ export default defineComponent({
     const security = useSecurityStore();
     const settings = useSettingsStore();
     const selectedCamera = ref<Camera | null>(null);
+    const cameraPreview = ref<CameraPreviewState>("off");
     const cameraBinding = homePageBindings.camera;
     const homeCamera = computed(() =>
       security.cameras.find((camera) =>
@@ -34,6 +35,12 @@ export default defineComponent({
           : camera.id === cameraBinding.demoId,
       ),
     );
+    const cameraStatus = computed(() => {
+      const camera = homeCamera.value;
+      if (!camera?.live) return "Unavailable";
+      if (!camera.entityId || cameraPreview.value === "playing") return "Live";
+      return cameraPreview.value === "connecting" ? "Connecting…" : "Preview";
+    });
     const mediaRoom = computed(() =>
       rooms.rooms.find((room) => room.id === homePageBindings.mediaPlayer.roomId),
     );
@@ -207,7 +214,7 @@ export default defineComponent({
           <div class="col">
             <div class="section-head" style={{ padding: "16px 40px 12px" }}>
               <span class="label">
-                {cameraBinding.label} · {homeCamera.value?.live ? "Live" : "Unavailable"}
+                {cameraBinding.label} · {cameraStatus.value}
               </span>
             </div>
             <div class="homepage-camera">
@@ -221,6 +228,9 @@ export default defineComponent({
                   }}
                   height={250}
                   livePreview={ha.status === "connected"}
+                  onPreviewState={(state: CameraPreviewState) => {
+                    cameraPreview.value = state;
+                  }}
                 />
               ) : (
                 <CameraTile

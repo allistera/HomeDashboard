@@ -4,7 +4,10 @@ import CameraModal from "@/components/CameraModal";
 import CameraTile from "@/components/CameraTile";
 import { useDocumentVisible } from "@/composables/useDocumentVisible";
 import type { RoomCamera } from "@/models/rooms";
-import { startHaWebRtcStream } from "@/services/haWebRtc";
+import { startHaWebRtcStream, type WebRtcSession } from "@/services/haWebRtc";
+
+export type CameraPreviewState = "off" | "connecting" | "playing";
+const previewStartupTimeoutMs = 12_000;
 
 export default defineComponent({
   name: "RoomCamera",
@@ -14,10 +17,15 @@ export default defineComponent({
     height: { type: Number, default: 150 },
     livePreview: { type: Boolean, default: false },
   },
-  setup(props) {
+  emits: ["previewState"],
+  setup(props, { emit }) {
     const expanded = ref(false);
     const visible = useDocumentVisible();
     const stream = shallowRef<MediaStream | null>(null);
+    const previewState = ref<CameraPreviewState>("off");
+    let startupTimer: ReturnType<typeof setTimeout> | undefined;
+
+    watch(previewState, (state) => emit("previewState", state));
     watch(
       () => props.camera.id,
       () => {
@@ -32,18 +40,39 @@ export default defineComponent({
           : null,
       (entityId, _, onCleanup) => {
         if (!entityId) return;
-        const session = startHaWebRtcStream(entityId, {
-          onStream: (incoming) => {
-            stream.value = incoming;
-          },
-          onError: () => {
-            stream.value = null;
-          },
-        });
-        onCleanup(() => {
+        let session: WebRtcSession | null = null;
+        let canRetry = true;
+        const stop = () => {
+          clearTimeout(startupTimer);
           session?.stop();
+          session = null;
           stream.value = null;
+        };
+        const retryOrStop = () => {
+          stop();
+          if (canRetry) {
+            canRetry = false;
+            start();
+          } else {
+            previewState.value = "off";
+          }
+        };
+        const start = () => {
+          previewState.value = "connecting";
+          session = startHaWebRtcStream(entityId, {
+            onStream: (incoming) => {
+              stream.value = incoming;
+            },
+            onError: retryOrStop,
+          });
+          if (session) startupTimer = setTimeout(retryOrStop, previewStartupTimeoutMs);
+          else previewState.value = "off";
+        };
+        onCleanup(() => {
+          stop();
+          previewState.value = "off";
         });
+        start();
       },
       { immediate: true },
     );
@@ -53,15 +82,23 @@ export default defineComponent({
         <CameraTile
           name={props.camera.name}
           note={
-            props.camera.available
-              ? props.camera.snapshotUrl
-                ? ""
-                : "Snapshot unavailable"
-              : "Camera offline"
+            previewState.value === "connecting"
+              ? "Connecting…"
+              : props.camera.available
+                ? props.camera.snapshotUrl
+                  ? ""
+                  : "Snapshot unavailable"
+                : "Camera offline"
           }
           imageUrl={props.camera.available ? props.camera.snapshotUrl : undefined}
           height={props.height}
+          videoPreview={previewState.value !== "off"}
           videoStream={stream.value}
+          live={previewState.value === "playing"}
+          onPlaying={() => {
+            clearTimeout(startupTimer);
+            previewState.value = "playing";
+          }}
           onSelect={() => {
             expanded.value = true;
           }}

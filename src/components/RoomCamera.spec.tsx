@@ -32,7 +32,8 @@ describe("RoomCamera", () => {
     }
   });
 
-  it("plays the live preview and returns to snapshots when the preview is stopped", async () => {
+  it("retries a live preview without frames, then keeps the active player", async () => {
+    vi.useFakeTimers();
     const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
     const stop = vi.fn();
     const stream: Partial<MediaStream> = { id: "preview-stream" };
@@ -46,15 +47,25 @@ describe("RoomCamera", () => {
       await nextTick();
       expect(start).toHaveBeenCalledWith(camera.id, expect.any(Object));
       expect(wrapper.get<HTMLVideoElement>("video.camera__stream").element.srcObject).toBe(stream);
+      expect(wrapper.text()).toContain("Connecting…");
+
+      await vi.advanceTimersByTimeAsync(12_000);
+      expect(start).toHaveBeenCalledTimes(2);
+      expect(stop).toHaveBeenCalledOnce();
+      await wrapper.get("video").trigger("playing");
+      await vi.advanceTimersByTimeAsync(12_000);
+      expect(start).toHaveBeenCalledTimes(2);
+      expect(wrapper.text()).toContain("LIVE");
 
       await wrapper.setProps({ livePreview: false });
-      expect(stop).toHaveBeenCalledOnce();
+      expect(stop).toHaveBeenCalledTimes(2);
       expect(wrapper.find("video").exists()).toBe(false);
       expect(wrapper.get("img.camera__stream").attributes("src")).toContain(camera.snapshotUrl);
     } finally {
       wrapper.unmount();
       start.mockRestore();
       visibility.mockRestore();
+      vi.useRealTimers();
     }
   });
 

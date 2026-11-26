@@ -67,8 +67,9 @@ shortcut turns off the mapped lights and can arm the configured alarm panel.
 
 The homepage Activity feed shows Home Assistant logbook entries from the previous 24 hours and follows
 new events for `homePageBindings.activityEntityIds`. It shows the newest complete rows that fit above
-the media controls. The Home view plays the Back Garden high-resolution channel over WebRTC.
-Camera previews use Home Assistant snapshots as a fallback. Opening a camera starts WebRTC
+the media controls. The Home view starts the Back Garden high-resolution channel over WebRTC when
+it loads and reconnects once if video frames do not arrive. Camera previews use Home Assistant
+snapshots as a fallback. Opening a camera starts WebRTC
 when supported and falls back to the latest available snapshot.
 
 ## Commands
