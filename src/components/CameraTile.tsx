@@ -1,4 +1,4 @@
-import { defineComponent, onScopeDispose, ref, watch } from "vue";
+import { defineComponent, onScopeDispose, ref, watch, watchEffect, type PropType } from "vue";
 
 import { useDocumentVisible } from "@/composables/useDocumentVisible";
 
@@ -16,10 +16,14 @@ export default defineComponent({
     imageUrl: { type: String, default: "" },
     height: { type: Number, default: 126 },
     refreshMs: { type: Number, default: 8000 },
+    videoPreview: { type: Boolean, default: false },
+    // SAFETY: Vue validates the object shape and RoomCamera supplies the negotiated MediaStream.
+    videoStream: { type: Object as PropType<MediaStream | null>, default: null },
   },
-  emits: ["select"],
+  emits: ["select", "playing"],
   setup(props, { emit }) {
     const streamFailed = ref(false);
+    const video = ref<HTMLVideoElement | null>(null);
     const visible = useDocumentVisible();
     const bust = ref(Date.now());
     let timer: ReturnType<typeof setInterval> | undefined;
@@ -50,9 +54,9 @@ export default defineComponent({
     );
 
     watch(
-      () => [props.imageUrl, props.refreshMs, visible.value] as const,
-      ([, , isVisible]) => {
-        if (isVisible) {
+      () => [props.imageUrl, props.refreshMs, visible.value, props.videoPreview] as const,
+      ([, , isVisible, preview]) => {
+        if (isVisible && !preview) {
           startRefresh();
         } else {
           stopRefresh();
@@ -61,11 +65,19 @@ export default defineComponent({
       { immediate: true },
     );
 
+    watchEffect(() => {
+      const player = video.value;
+      if (!player) return;
+      player.srcObject = props.videoStream;
+      if (props.videoStream) void player.play().catch(() => undefined);
+    });
+
     onScopeDispose(stopRefresh);
 
     return () => {
       const url = props.imageUrl === "" ? "" : withCacheBust(props.imageUrl, bust.value);
-      const showImage = url !== "" && !streamFailed.value;
+      const showImage = !props.videoPreview && url !== "" && !streamFailed.value;
+      const note = !props.videoPreview && streamFailed.value ? "STREAM UNAVAILABLE" : props.note;
       return (
         <button
           type="button"
@@ -75,25 +87,35 @@ export default defineComponent({
           aria-haspopup="dialog"
           onClick={() => emit("select")}
         >
-          {showImage && (
-            <img
+          {props.videoPreview ? (
+            <video
               class="camera__stream"
-              src={url}
-              alt={`${props.name} camera`}
-              decoding="async"
-              referrerpolicy="no-referrer"
-              onError={() => {
-                streamFailed.value = true;
-              }}
+              ref={video}
+              autoplay
+              muted
+              playsinline
+              aria-hidden="true"
+              onPlaying={() => emit("playing")}
             />
+          ) : (
+            showImage && (
+              <img
+                class="camera__stream"
+                src={url}
+                alt={`${props.name} camera`}
+                decoding="async"
+                referrerpolicy="no-referrer"
+                onError={() => {
+                  streamFailed.value = true;
+                }}
+              />
+            )
           )}
           <span class="camera__tag">{props.name}</span>
-          {props.live && showImage && <span class="camera__tag camera__tag--live">LIVE</span>}
-          {(props.note || streamFailed.value) && (
-            <span class="camera__tag">
-              {streamFailed.value ? "STREAM UNAVAILABLE" : props.note}
-            </span>
+          {props.live && (props.videoPreview || showImage) && (
+            <span class="camera__tag camera__tag--live">LIVE</span>
           )}
+          {note && <span class="camera__tag">{note}</span>}
         </button>
       );
     };

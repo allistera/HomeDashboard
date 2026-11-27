@@ -21,7 +21,9 @@ export function entityStates(...entities: HassEntityState[]): HassEntityStates {
 
 export const testLightId = "light.living_room_livingroom_light";
 export const testKitchenLightId = "switch.kitchen_light";
-const temperature = "sensor.kitchen_temperature_temperature";
+const kitchenTemperature = "sensor.kitchen_temperature_temperature";
+const indoorAverage = "sensor.average_indoor_temperature";
+const gardenGateTemperature = "sensor.garden_gate_temperature";
 
 interface Request {
   type: string;
@@ -29,7 +31,7 @@ interface Request {
   access_token?: string;
   domain?: string;
   service?: string;
-  service_data?: { brightness_pct?: number };
+  service_data?: { brightness_pct?: number; hs_color?: number[]; color_temp_kelvin?: number };
   target?: { entity_id: string };
 }
 
@@ -86,20 +88,50 @@ export class HomeAssistantSocket extends EventTarget {
               a: {
                 friendly_name: "Living Room Light",
                 brightness: 128,
-                supported_color_modes: ["brightness"],
+                supported_color_modes: ["color_temp", "xy"],
+                min_color_temp_kelvin: 2000,
+                max_color_temp_kelvin: 6535,
+                color_mode: "xy",
+                hs_color: [24, 68],
+                rgb_color: [255, 151, 82],
               },
               c: "light",
+              lc: 1795626720,
+            },
+            "light.living_room_livingroom_light_2": {
+              s: "off",
+              a: { supported_color_modes: ["color_temp"], max_color_temp_kelvin: 5000 },
+              c: "light",
+              lc: 1795626720,
+            },
+            [kitchenTemperature]: {
+              s: "20.5",
+              a: { unit_of_measurement: "°C" },
+              c: "temperature",
               lc: 1795626720,
             },
             [testKitchenLightId]: {
               s: "off",
               a: { friendly_name: "Kitchen Light" },
+              c: "kitchen-switch",
               lc: 1795626720,
             },
-            [temperature]: {
-              s: "20.5",
+            [indoorAverage]: {
+              s: "20.4",
               a: { unit_of_measurement: "°C" },
               c: "temperature",
+              lc: 1795626720,
+            },
+            [gardenGateTemperature]: {
+              s: "8.4",
+              a: { unit_of_measurement: "°C" },
+              c: "garden-gate",
+              lc: 1795626720,
+            },
+            "weather.home": {
+              s: "cloudy",
+              a: { temperature: 12 },
+              c: "weather",
               lc: 1795626720,
             },
             "sensor.example": {
@@ -114,6 +146,12 @@ export class HomeAssistantSocket extends EventTarget {
               c: "person",
               lc: 1795626720,
             },
+            "alarm_control_panel.alarmo": {
+              s: "disarmed",
+              a: { friendly_name: "Alarmo", supported_features: 11 },
+              c: "alarmo",
+              lc: 1795626720,
+            },
           },
         });
         break;
@@ -124,13 +162,23 @@ export class HomeAssistantSocket extends EventTarget {
         result([{ id: "device", area_id: "living_room" }]);
         break;
       case "config/entity_registry/list_for_display":
-        result({ entities: [{ ei: "sensor.example", di: "device" }] });
+        result({
+          entities: [
+            { ei: "sensor.example", di: "device" },
+            { ei: testLightId, di: "device" },
+          ],
+        });
         break;
       case "logbook/event_stream":
         result(null);
         event({
           events: [
-            { when: 1795626720, name: "Living Room Light", entity_id: testLightId, state: "on" },
+            {
+              when: 1795626720,
+              name: "Living Room Livingroom Light",
+              entity_id: testLightId,
+              state: "on",
+            },
           ],
         });
         break;
@@ -156,6 +204,22 @@ export class HomeAssistantSocket extends EventTarget {
       type: "event",
       id: this.subscription,
       event: { c: { [testLightId]: { "+": { s: state } } } },
+    });
+  }
+
+  changeAlarm(state: string): void {
+    this.receive({
+      type: "event",
+      id: this.subscription,
+      event: { c: { "alarm_control_panel.alarmo": { "+": { s: state } } } },
+    });
+  }
+
+  changeOutdoorTemperature(state: string): void {
+    this.receive({
+      type: "event",
+      id: this.subscription,
+      event: { c: { [gardenGateTemperature]: { "+": { s: state } } } },
     });
   }
 

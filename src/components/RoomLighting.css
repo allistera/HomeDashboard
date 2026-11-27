@@ -1,9 +1,213 @@
+.room-lights {
+  container-type: inline-size;
+}
+
 .room-light {
-  grid-template-columns: minmax(0, 1fr) minmax(100px, 140px) 52px 44px;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) 24px minmax(48px, 140px) 40px 44px;
+  gap: clamp(8px, 1vw, 16px);
+}
+
+.room-light > .row__name {
+  overflow-wrap: anywhere;
+}
+
+.room-light > .brightness-slider {
+  grid-column: 3;
+  min-width: 0;
 }
 
 .room-light__status {
-  grid-column: 3;
+  grid-column: 4;
   text-align: right;
+}
+
+.room-light-group:last-child {
+  border-bottom: 1px solid var(--hairline);
+}
+
+.room-light__swatch,
+.colour-picker__preset {
+  display: block;
+  width: 24px;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid rgb(0 0 0 / 30%);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.room-light__swatch {
+  grid-column: 2;
+}
+
+.room-light__swatch--unknown {
+  border-color: var(--btn-border);
+  background: repeating-linear-gradient(135deg, var(--bg) 0 4px, var(--hairline) 4px 5px);
+}
+
+.room-light__swatch[aria-expanded="true"] {
+  outline: 1px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.room-light__swatch:focus-visible,
+.colour-picker button:focus-visible,
+.colour-picker input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.colour-picker {
+  display: grid;
+  gap: 10px;
+  padding: 4px 0 27px;
+}
+
+.colour-picker__bar,
+.colour-picker__modes,
+.colour-picker__presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.colour-picker .btn {
+  padding: 8px 17px;
+}
+
+.colour-picker__values {
+  margin-inline-start: auto;
+  color: var(--muted);
+  font: 12px var(--mono);
+  text-transform: uppercase;
+}
+
+.colour-picker__values strong {
+  margin-inline-start: 6px;
+  color: var(--ink);
+  font-weight: 400;
+}
+
+.colour-picker__close {
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.colour-picker__palette {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: clamp(145px, 14vw, 220px);
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+  background:
+    linear-gradient(to bottom, transparent, #fff),
+    linear-gradient(
+      to right,
+      #0080ff,
+      #00f 8.333%,
+      #f0f 25%,
+      #f00 41.667%,
+      #ff0 58.333%,
+      #0f0 75%,
+      #0ff 91.667%,
+      #0080ff
+    );
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.colour-picker__point {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #181818;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.colour-picker__footer {
+  padding-top: 8px;
+  gap: 12px;
+}
+
+.colour-picker__presets {
+  gap: clamp(8px, 1.4vw, 20px);
+}
+
+.colour-picker__preset {
+  width: 28px;
+}
+
+.colour-picker__apply {
+  margin-inline-start: auto;
+}
+
+.colour-picker__white input {
+  display: block;
+  width: 100%;
+  height: 32px;
+  margin: 0;
+  appearance: none;
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+  background: linear-gradient(to right, #ffa45b, #fff3d8, #dfedff);
+  cursor: pointer;
+}
+
+.colour-picker__white input::-webkit-slider-thumb {
+  width: 18px;
+  height: 24px;
+  appearance: none;
+  border: 2px solid #171717;
+  border-radius: 3px;
+  background: #fff;
+}
+
+.colour-picker__white input::-moz-range-thumb {
+  width: 14px;
+  height: 20px;
+  border: 2px solid #171717;
+  border-radius: 3px;
+  background: #fff;
+}
+
+.colour-picker__temperature-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  color: var(--muted);
+  font: 11px var(--mono);
+}
+
+@container (max-width: 280px) {
+  .room-light {
+    grid-template-columns: 24px minmax(0, 1fr) 40px 44px;
+  }
+
+  .room-light > .row__name {
+    grid-column: 1 / -1;
+  }
+
+  .room-light__swatch {
+    grid-column: 1;
+  }
+
+  .room-light > .brightness-slider {
+    grid-column: 2;
+  }
+
+  .room-light__status {
+    grid-column: 3;
+  }
 }

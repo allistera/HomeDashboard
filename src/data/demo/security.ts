@@ -1,8 +1,9 @@
 import type { SecurityState } from "@/models/security";
 export const demoSecurity: SecurityState = {
   mode: "demo",
-  alarmAvailable: false,
-  armState: "home",
+  alarmState: "armed_home",
+  alarmCommandPending: false,
+  homeShortcutAlarmAvailable: false,
   secureSince: "7:02 PM",
   entries: [
     {

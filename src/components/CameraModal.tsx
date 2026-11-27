@@ -1,4 +1,5 @@
 import {
+  computed,
   defineComponent,
   nextTick,
   onBeforeUnmount,
@@ -24,14 +25,18 @@ export default defineComponent({
     // A camera integration may supply WebRTC; otherwise use its stream URL.
     // SAFETY: Vue's runtime Function constructor is narrowed to the starter signature by PropType.
     startStream: { type: Function as PropType<WebRtcStarter>, default: startHaWebRtcStream },
+    // SAFETY: When supplied, RoomCamera owns the MediaStream. Null means it is connecting.
+    previewStream: { type: Object as PropType<MediaStream | null>, default: undefined },
   },
-  emits: ["close"],
+  emits: ["close", "playing"],
   setup(props, { emit }) {
     const pageVisible = useDocumentVisible();
     const dialog = ref<HTMLElement | null>(null);
     const video = ref<HTMLVideoElement | null>(null);
     const mode = ref<StreamMode>("mjpeg");
     const webRtcStream = shallowRef<MediaStream | null>(null);
+    const ownsStream = computed(() => props.previewStream === undefined);
+    const videoPlaying = ref(false);
     const streamFailed = ref(false);
     const previouslyFocused =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -109,16 +114,18 @@ export default defineComponent({
       }
     };
 
-    if (pageVisible.value) startWebRtc();
-
-    watch(pageVisible, (visible) => {
-      if (visible) {
-        startWebRtc();
-      } else {
-        stopWebRtc();
-        webRtcStream.value = null;
-      }
-    });
+    watch(
+      [pageVisible, ownsStream, () => props.camera.entityId],
+      ([visible, owns]) => {
+        if (visible && owns) {
+          startWebRtc();
+        } else {
+          stopWebRtc();
+          webRtcStream.value = null;
+        }
+      },
+      { immediate: true },
+    );
 
     watch(
       () => props.camera.snapshotUrl,
@@ -128,7 +135,12 @@ export default defineComponent({
     );
 
     watchEffect(() => {
-      if (video.value) video.value.srcObject = webRtcStream.value;
+      const player = video.value;
+      videoPlaying.value = false;
+      if (!player) return;
+      const stream = ownsStream.value ? webRtcStream.value : (props.previewStream ?? null);
+      player.srcObject = stream;
+      if (stream) void player.play().catch(() => undefined);
     });
 
     onMounted(() => {
@@ -143,14 +155,14 @@ export default defineComponent({
     });
 
     return () => {
-      const showWebRtc = mode.value === "webrtc" && pageVisible.value;
+      const showWebRtc = pageVisible.value && (!ownsStream.value || mode.value === "webrtc");
       const showMjpeg =
         !showWebRtc &&
         mode.value === "mjpeg" &&
         !!props.camera.streamUrl &&
         !streamFailed.value &&
         pageVisible.value;
-      const live = showWebRtc ? webRtcStream.value !== null : showMjpeg;
+      const live = showWebRtc ? videoPlaying.value : showMjpeg;
       const showSnapshot =
         !showWebRtc && !showMjpeg && !!props.camera.snapshotUrl && !streamFailed.value;
       const status =
@@ -202,8 +214,12 @@ export default defineComponent({
                   autoplay
                   muted
                   playsinline
-                  poster={props.camera.snapshotUrl}
+                  poster={ownsStream.value ? props.camera.snapshotUrl : undefined}
                   aria-label={`${props.camera.name} live camera enlarged`}
+                  onPlaying={() => {
+                    videoPlaying.value = true;
+                    emit("playing");
+                  }}
                 />
               ) : showMjpeg ? (
                 <img

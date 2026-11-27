@@ -9,6 +9,7 @@ interface RoomBinding {
   roomId: string;
   areas: string[];
   deviceAllowlist: EntityId[];
+  deviceNames?: Partial<Record<EntityId, string>>;
   name?: string;
   floor?: string;
   lights: { lightId: string; entityId: EntityId }[];
@@ -19,20 +20,22 @@ interface RoomBinding {
   vacuum?: EntityId;
 }
 
+const backGardenCamera: EntityId = "camera.back_garden_back_garden_high_resolution_channel";
+
 export const roomBindings: RoomBinding[] = [
   {
     roomId: "living-room",
     areas: ["Living Room"],
     deviceAllowlist: [
-      "light.living_room_livingroom_light",
-      "light.living_room_livingroom_light_2",
       "sensor.livingroom_temperature_temperature",
       "media_player.living_room_apple_tv",
       "binary_sensor.living_room_presence_sensor_occupancy",
     ],
+    deviceNames: { "sensor.livingroom_temperature_temperature": "Livingroom Temperature" },
     lights: [
       { lightId: "livingroom-light", entityId: "light.living_room_livingroom_light" },
       { lightId: "livingroom-light-2", entityId: "light.living_room_livingroom_light_2" },
+      { lightId: "tv-backlight", entityId: "light.living_room_tv_backlight" },
     ],
     temperature: { entityId: "sensor.livingroom_temperature_temperature" },
     media: "media_player.living_room_apple_tv",
@@ -54,8 +57,6 @@ export const roomBindings: RoomBinding[] = [
     roomId: "hallway",
     areas: ["Downstairs Hallway", "Upstairs Hallway"],
     deviceAllowlist: [
-      "light.downstairs_hallway_downstairs_hallway_light",
-      "light.upstairs_hallway_upstairs_hallway_light",
       "sensor.hallway_temperature_temperature",
       "binary_sensor.hallway_motion_occupancy",
     ],
@@ -92,21 +93,22 @@ export const roomBindings: RoomBinding[] = [
   {
     roomId: "jaicobs-room",
     areas: ["Jaicobs Room"],
-    deviceAllowlist: ["media_player.jaicobs_room_jaicobs_xbox"],
+    deviceAllowlist: ["media_player.jaicobs_room_jaicobs_xbox", "sensor.jaicob_s_room_temperature"],
     lights: [],
+    temperature: { entityId: "sensor.jaicob_s_room_temperature" },
     media: "media_player.jaicobs_room_jaicobs_xbox",
   },
   {
     roomId: "elsies-room",
     areas: ["Elsies Room", "Elsie’s bedroom"],
-    deviceAllowlist: ["light.elsies_bedroom_elsies_light", "sensor.elsie_s_room_temperature"],
+    deviceAllowlist: ["sensor.elsie_s_room_temperature"],
     lights: [{ lightId: "ceiling", entityId: "light.elsies_bedroom_elsies_light" }],
     temperature: { entityId: "sensor.elsie_s_room_temperature" },
   },
   {
     roomId: "garden",
     areas: ["Back Garden"],
-    deviceAllowlist: ["camera.back_garden_back_garden_high_resolution_channel"],
+    deviceAllowlist: [backGardenCamera],
     lights: [],
   },
   {
@@ -115,7 +117,6 @@ export const roomBindings: RoomBinding[] = [
     floor: "Ground floor",
     areas: ["Toilet"],
     deviceAllowlist: [
-      "light.toilet_toilet_light",
       "sensor.toilet_temperature_temperature",
       "binary_sensor.toilet_motion_occupancy",
     ],
@@ -154,7 +155,7 @@ export const entryBindings: EntryBinding[] = [
 ];
 
 export const securityPageBindings = {
-  alarmControlPanel: "alarm_control_panel.downstairs_cupboard_udm_se_colliery_lane_alarm_manager",
+  alarmControlPanel: "alarm_control_panel.alarmo",
   people: ["person.allister_antosik", "person.tonnii_antosik", "person.jaicob_antosik"],
   frontDoorCamera: "camera.back_garden_g5_turret_ultra_high_resolution_channel",
 } satisfies {
@@ -168,21 +169,29 @@ interface HomeBindings {
   houseTemperature: EntityProperty;
   houseTarget?: EntityProperty;
   washingWeather?: EntityProperty;
+  camera: { entityId: EntityId; label: string; demoId: string };
+  alarmControlPanel: EntityId;
   mediaPlayer: { roomId: string };
   excludedRoomIds: string[];
   activityEntityIds: string[];
 }
 
+const homeShortcutAlarm =
+  "alarm_control_panel.downstairs_cupboard_udm_se_colliery_lane_alarm_manager";
+
 export const homePageBindings: HomeBindings = {
-  outsideTemperature: { entityId: "weather.home", attribute: "temperature" },
-  houseTemperature: { entityId: "sensor.kitchen_temperature_temperature" },
+  outsideTemperature: { entityId: "sensor.garden_gate_temperature" },
+  houseTemperature: { entityId: "sensor.average_indoor_temperature" },
   washingWeather: { entityId: "binary_sensor.good_drying_weather" },
+  camera: { entityId: backGardenCamera, label: "Back Garden", demoId: "back-garden" },
+  alarmControlPanel: homeShortcutAlarm,
   mediaPlayer: { roomId: "living-room" },
   excludedRoomIds: ["garden"],
   activityEntityIds: [
     ...roomBindings.flatMap((binding) => roomEntityIds(binding.roomId)),
     ...entryBindings.flatMap((entry) => entry.sensor ?? []),
     ...securityPageBindings.people,
+    homeShortcutAlarm,
     securityPageBindings.alarmControlPanel,
   ],
 };

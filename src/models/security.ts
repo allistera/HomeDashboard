@@ -39,8 +39,9 @@ export interface SecurityEvent {
 
 export interface SecurityState {
   mode: "demo" | "live";
-  alarmAvailable: boolean;
-  armState: ArmState;
+  alarmState: string | null;
+  alarmCommandPending: boolean;
+  homeShortcutAlarmAvailable: boolean;
   secureSince: string;
   entries: Entry[];
   cameras: Camera[];

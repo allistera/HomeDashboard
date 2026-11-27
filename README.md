@@ -6,8 +6,8 @@ type carries the hierarchy.
 
 ## Pages
 
-- **Home** (`/`) — headline status, room list with light toggles, house temp,
-  front-door camera, activity feed, and scene shortcuts (Good night / Movie / Away).
+- **Home** (`/`) — live headline, home status summary, room list with light toggles, house temp,
+  Back Garden camera, activity feed, and scene shortcuts (Good night / Movie / Away).
 - **Rooms** (`/rooms`) — room list on the left, the selected room's lights,
   climate, media, and activity as ruled rows on the right.
   Click a room's name or status on Home to open its details; its light toggle stays independent.
@@ -15,7 +15,7 @@ type carries the hierarchy.
   type and availability. Light controls remain below the inventory. Device counts include all
   listed devices; additions, removals, renames, and zone moves update live.
 - **Floors** (`/floors`) — the "God View": isometric floor plans of the ground
-  and first floors with live room callouts (lights, media, windows),
+  and first floors with temperatures on the plan and live room callouts (lights, media, windows),
   a floor switcher, and a stairs shortcut. `/energy` redirects here.
 - **Security** (`/security`) — arm state, camera wall, every door and window as
   a ruled row, presence, and today's events.
@@ -48,26 +48,36 @@ The dashboard's room, weather, presence, and security bindings are in
 [`src/config/homeAssistant.ts`](src/config/homeAssistant.ts). Edit a room's `deviceAllowlist` to
 choose which Home Assistant entity IDs appear in its **Devices** list and counts. Each row displays
 the entity’s current state, including its unit when available. An empty list shows no devices. Room cameras and activity use Home Assistant area assignments.
-Room lighting controls use the room's light bindings. The Kitchen uses `switch.kitchen_light` for
-on/off control. Main Bedroom uses its temperature and humidity
+Light entities appear under **Lights** and are excluded from device counts. The kitchen uses
+`switch.kitchen_light` for on/off control. Select a light's colour swatch to adjust
+its colour or white temperature, depending on the modes the light reports. **Apply to room**
+sends the selected setting to every compatible light in that room. Main Bedroom uses its temperature and humidity
 sensor and Hue Tap Dial entities. The security camera wall discovers camera
 entities. Contact sensors report open or closed. Lock controls appear only for an available
 lock entity.
 
+The homepage headline updates as Home Assistant reports connection, door, and lighting changes.
+**Indoor Temp** displays the live indoor average from `sensor.average_indoor_temperature`.
+The dashboard displays the outdoor temperature from `sensor.garden_gate_temperature`.
+
 The drying-weather reminder reads `binary_sensor.good_drying_weather`. In Home Assistant,
 **Update Drying Weather Forecast** checks the hourly forecast from `weather.home` through local
 midnight every 15 minutes. The reminder displays unavailable when the forecast cannot determine
-whether it will rain. The house target displays as unavailable until an entity is mapped.
+whether it will rain.
 
 The Get Jaicob shortcut is disabled in live mode until it has a Home Assistant action. The Away
-shortcut turns off the mapped lights and can arm the configured alarm panel.
+shortcut turns off the mapped lights and can arm the configured alarm panel. The Security page's **Home**, **Away**,
+and **Disarm** buttons control Alarmo, and the selected mode follows Home Assistant's reported state.
 
 ## Activity and cameras
 
-The activity feed subscribes to the previous 24 hours of Home Assistant logbook history and follows
-new events for `homePageBindings.activityEntityIds`. Camera previews refresh using Home Assistant's
-camera-specific snapshot URLs. The expanded view uses WebRTC when the camera supports it and
-falls back to the latest available snapshot.
+The homepage Activity feed shows Home Assistant logbook entries from the previous 24 hours and follows
+new events for `homePageBindings.activityEntityIds`. It shows the newest complete rows that fit above
+the media controls. The Home view starts the Back Garden high-resolution channel over WebRTC when
+it loads and reconnects once if video frames do not arrive. The enlarged Back Garden viewer reuses
+the homepage stream. The Security camera grid starts live previews for available Home Assistant
+cameras and shares each preview with its enlarged viewer. Camera previews and viewers fall back
+to the latest available snapshot.
 
 ## Commands
 

@@ -26,7 +26,7 @@ describe("App", () => {
     const warning = wrapper.get('[role="alert"]');
     expect(warning.text()).toContain("Home Assistant is not connected.");
     expect(wrapper.get(".topbar").element.nextElementSibling).toBe(warning.element);
-    expect(wrapper.text()).toContain("Front door unlocked by Allister.");
+    expect(wrapper.get("h1").text()).toBe("Home Assistant is not connected.");
   });
 
   it("links the Home Assistant warning directly to the Home Assistant URL setting", async () => {

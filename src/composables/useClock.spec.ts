@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { effectScope } from "vue";
 
-import { formatClock, msUntilNextMinute, useClock } from "@/composables/useClock";
+import { formatClock, formatUkDate, msUntilNextMinute, useClock } from "@/composables/useClock";
 
 describe("formatClock", () => {
   it("formats a date as time and short uppercase weekday", () => {
@@ -36,10 +36,10 @@ describe("useClock", () => {
     vi.setSystemTime(new Date(2026, 3, 16, 19, 42, 59));
     const scope = effectScope();
     const clock = scope.run(() => useClock())!;
-    expect(clock.value).toBe("7:42 PM · THU");
+    expect(formatClock(clock.value)).toBe("7:42 PM · THU");
 
     vi.advanceTimersByTime(1000);
-    expect(clock.value).toBe("7:43 PM · THU");
+    expect(formatClock(clock.value)).toBe("7:43 PM · THU");
     scope.stop();
   });
 
@@ -49,7 +49,18 @@ describe("useClock", () => {
     const clock = scope.run(() => useClock())!;
 
     vi.advanceTimersByTime(1000);
-    expect(clock.value).toBe("7:42 PM · THU");
+    expect(formatClock(clock.value)).toBe("7:42 PM · THU");
+    scope.stop();
+  });
+
+  it("updates the UK date at midnight during British Summer Time", () => {
+    vi.setSystemTime(new Date("2026-07-07T22:59:59Z"));
+    const scope = effectScope();
+    const clock = scope.run(() => useClock())!;
+    expect(formatUkDate(clock.value)).toBe("07/07/2026");
+
+    vi.advanceTimersByTime(1000);
+    expect(formatUkDate(clock.value)).toBe("08/07/2026");
     scope.stop();
   });
 
@@ -60,6 +71,6 @@ describe("useClock", () => {
     scope.stop();
 
     vi.advanceTimersByTime(60_000);
-    expect(clock.value).toBe("7:42 PM · THU");
+    expect(formatClock(clock.value)).toBe("7:42 PM · THU");
   });
 });

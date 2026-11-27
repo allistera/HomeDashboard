@@ -20,19 +20,24 @@ function event(overrides: Partial<ActivityEvent> = {}): ActivityEvent {
 describe("activity store", () => {
   beforeEach(() => setActivePinia(createPinia()));
 
-  it("does not seed activity for devices that are not in the home", () => {
+  it("starts with an empty, offline feed", () => {
     const activity = useActivityStore();
 
-    expect(activity.events.some((item) => item.domain === "cover")).toBe(false);
+    expect(activity.events).toEqual([]);
+    expect(activity.status).toBe("offline");
   });
 
-  it("replaces offline examples with Home Assistant activity", () => {
+  it("receives Home Assistant activity and clears it on reset", () => {
     const activity = useActivityStore();
     activity.beginLoading();
     activity.receive([event()]);
 
     expect(activity.status).toBe("live");
     expect(activity.events).toEqual([event()]);
+
+    activity.$reset();
+    expect(activity.events).toEqual([]);
+    expect(activity.status).toBe("offline");
   });
 
   it("merges, deduplicates and sorts streamed batches", () => {

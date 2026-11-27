@@ -4,13 +4,14 @@ import { useRouter } from "vue-router";
 import CameraModal from "@/components/CameraModal";
 import CameraTile from "@/components/CameraTile";
 import EventFeed from "@/components/EventFeed";
-import RoomCamera from "@/components/RoomCamera";
+import RoomCamera, { type CameraPreviewState } from "@/components/RoomCamera";
 import ToggleSwitch from "@/components/ToggleSwitch";
 import TopBar from "@/components/TopBar";
 import { homePageBindings } from "@/config/homeAssistant";
 import { roomBindingFor } from "@/config/homeAssistant";
 import { temperatureText } from "@/utils/temperature";
 import { useActivityStore } from "@/stores/activity";
+import { useHaStore } from "@/stores/ha";
 import { useSettingsStore } from "@/stores/settings";
 import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore, type Camera } from "@/stores/security";
@@ -21,30 +22,47 @@ export default defineComponent({
     const router = useRouter();
     const rooms = useRoomsStore();
     const activity = useActivityStore();
+    const ha = useHaStore();
     const security = useSecurityStore();
     const settings = useSettingsStore();
     const selectedCamera = ref<Camera | null>(null);
+    const cameraPreview = ref<CameraPreviewState>("off");
+    const cameraBinding = homePageBindings.camera;
     const homeCamera = computed(() =>
-      security.cameras.find((camera) => camera.id === "front-door"),
+      security.cameras.find((camera) =>
+        security.hasLiveData
+          ? camera.entityId === cameraBinding.entityId
+          : camera.id === cameraBinding.demoId,
+      ),
     );
+    const cameraStatus = computed(() => {
+      const camera = homeCamera.value;
+      if (!camera?.live) return "Unavailable";
+      if (!camera.entityId || cameraPreview.value === "playing") return "Live";
+      return cameraPreview.value === "connecting" ? "Connecting…" : "Preview";
+    });
     const mediaRoom = computed(() =>
       rooms.rooms.find((room) => room.id === homePageBindings.mediaPlayer.roomId),
     );
 
     const headline = computed(() => {
-      if (!rooms.anyLightOn) return "Lights out.";
-      const latest = activity.events[0];
-      if (!latest) return "Everything's quiet.";
-      return latest.text.endsWith(".") ? latest.text : `${latest.text}.`;
+      if (ha.status === "connecting") return "Connecting to Home Assistant…";
+      if (ha.status === "error") return "Home Assistant connection failed.";
+      if (ha.status === "disconnected") return "Home Assistant is not connected.";
+
+      const open = security.openEntries;
+      if (open.length === 1) return `${open[0]!.name} is open.`;
+      if (open.length > 1) return `${open.length} doors are open.`;
+      if (security.entries.some((entry) => !entry.statusKnown)) return "Door status unavailable.";
+
+      const litRooms = rooms.rooms.filter((room) => rooms.lightsOn(room) > 0);
+      if (litRooms.length === 1) return `${litRooms[0]!.name} lights are on.`;
+      if (litRooms.length > 1) return `Lights are on in ${litRooms.length} rooms.`;
+      return rooms.rooms.some((room) => room.lights.length > 0)
+        ? "All available lights are off."
+        : "Lighting status unavailable.";
     });
-    const headlineSize = computed(() => {
-      const length = headline.value.length;
-      if (length <= 20) return 76;
-      if (length <= 40) return 56;
-      if (length <= 65) return 44;
-      if (length <= 95) return 34;
-      return 26;
-    });
+
     const summary = computed(() => {
       const lightsOn = rooms.rooms.reduce((sum, room) => sum + rooms.lightsOn(room), 0);
       const doors =
@@ -61,19 +79,19 @@ export default defineComponent({
               : security.hasLiveData
                 ? "Doors closed"
                 : "A window is open";
-      return `${doors}, ${lightsOn} lights on, temperature ${temperatureText(rooms.houseTemp)}.`;
+      return `${doors}, ${lightsOn} lights on, average indoor temperature ${temperatureText(rooms.houseTemp)}.`;
     });
 
     const goodNight = () => {
       rooms.setAllLights(false);
-      security.arm("home");
+      security.arm("home", "home-shortcut");
     };
     const movie = () => {
       rooms.applyScene(homePageBindings.mediaPlayer.roomId, "relax");
     };
     const away = () => {
       rooms.setAllLights(false);
-      security.arm("away");
+      security.arm("away", "home-shortcut");
     };
 
     const roomMeta = (roomId: string) => {
@@ -88,9 +106,10 @@ export default defineComponent({
     };
 
     return () => (
-      <main class="main">
+      <main class="main homepage">
         <TopBar
-          left={[`OUTSIDE ${temperatureText(rooms.outsideTemp, 0)}`]}
+          left={[]}
+          showDate
           showPeople
           status={rooms.washingLabel}
           statusTone={rooms.washingTone}
@@ -98,7 +117,7 @@ export default defineComponent({
 
         <div class="hero">
           <div>
-            <h1 class="hero__title hero__title--xl" style={{ fontSize: `${headlineSize.value}px` }}>
+            <h1 class="hero__title hero__title--xl" style={{ fontSize: "34px" }} aria-live="polite">
               {headline.value}
             </h1>
             <p class="hero__sub">{summary.value}</p>
@@ -125,7 +144,7 @@ export default defineComponent({
               class="btn"
               disabled={
                 rooms.hasLiveData &&
-                !security.alarmAvailable &&
+                !security.homeShortcutAlarmAvailable &&
                 !rooms.rooms.some((room) => room.lights.length > 0)
               }
               onClick={away}
@@ -158,10 +177,7 @@ export default defineComponent({
                     <div
                       key={room.id}
                       class={["row", { "row--dim": !on }]}
-                      style={{
-                        gridTemplateColumns: "1fr auto",
-                        padding: "16px 0",
-                      }}
+                      style={{ gridTemplateColumns: "1fr auto" }}
                     >
                       <button
                         type="button"
@@ -199,16 +215,12 @@ export default defineComponent({
 
             <div class="col-foot homepage-climate">
               <div>
-                <div class="label">Target</div>
-                <div class="big-number big-number--accent" style={{ fontSize: "54px" }}>
-                  {temperatureText(rooms.houseTarget)}
-                </div>
+                <div class="label">Indoor Temp</div>
+                <div class="big-number big-number--accent">{temperatureText(rooms.houseTemp)}</div>
               </div>
               <div>
                 <div class="label">Outdoor Temp</div>
-                <div class="big-number" style={{ fontSize: "54px" }}>
-                  {temperatureText(rooms.outsideTemp)}
-                </div>
+                <div class="big-number">{temperatureText(rooms.outsideTemp)}</div>
               </div>
             </div>
           </div>
@@ -216,10 +228,10 @@ export default defineComponent({
           <div class="col">
             <div class="section-head" style={{ padding: "16px 40px 12px" }}>
               <span class="label">
-                Front door · {homeCamera.value?.live ? "Live" : "Unavailable"}
+                {cameraBinding.label} · {cameraStatus.value}
               </span>
             </div>
-            <div style={{ padding: "0 40px" }}>
+            <div class="homepage-camera">
               {homeCamera.value?.entityId ? (
                 <RoomCamera
                   camera={{
@@ -229,10 +241,14 @@ export default defineComponent({
                     snapshotUrl: homeCamera.value.snapshotUrl,
                   }}
                   height={250}
+                  livePreview={ha.status === "connected"}
+                  onPreviewState={(state: CameraPreviewState) => {
+                    cameraPreview.value = state;
+                  }}
                 />
               ) : (
                 <CameraTile
-                  name={`camera feed — ${homeCamera.value?.name ?? "front door"}`}
+                  name={`camera feed — ${homeCamera.value?.name ?? cameraBinding.label}`}
                   live={homeCamera.value?.live ?? false}
                   note={homeCamera.value?.note}
                   imageUrl={homeCamera.value?.snapshotUrl ?? ""}
@@ -244,12 +260,14 @@ export default defineComponent({
               )}
             </div>
             <div class="section-head" style={{ padding: "20px 40px 8px" }}>
-              <span class="label">
-                Activity{activity.status === "live" ? " · Home Assistant" : ""}
-              </span>
+              <span class="label">Activity</span>
             </div>
-            <div style={{ padding: "0 40px" }}>
-              <EventFeed events={activity.events.slice(0, 4)} />
+            <div class="homepage-activity">
+              <EventFeed
+                events={activity.homepageEvents}
+                emptyMessage={activity.emptyMessage}
+                fit
+              />
             </div>
             <div class="col-foot" style={{ padding: "18px 40px", alignItems: "center" }}>
               <div>
