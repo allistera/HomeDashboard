@@ -3,8 +3,14 @@ import { defineStore } from "pinia";
 
 import type { ArmState, Entry, Person, SecurityState } from "@/models/security";
 export type { ArmState, Entry, Camera, Person, SecurityEvent } from "@/models/security";
-import { entryBindings, securityPageBindings } from "@/config/homeAssistant";
+import { entryBindings, homePageBindings, securityPageBindings } from "@/config/homeAssistant";
 import { haCallService } from "@/services/haClient";
+
+const armModes = {
+  home: { state: "armed_home", action: "alarm_arm_home" },
+  away: { state: "armed_away", action: "alarm_arm_away" },
+  disarmed: { state: "disarmed", action: "alarm_disarm" },
+} as const;
 
 export const useSecurityStore = defineStore("security", {
   state: (): SecurityState => structuredClone(demoSecurity),
@@ -26,32 +32,43 @@ export const useSecurityStore = defineStore("security", {
         return false;
       return state.entries.every((e) => e.locked && !e.open);
     },
+    alarmAvailable: (state): boolean => state.mode === "live" && state.alarmState !== null,
+    armState(state): ArmState | null {
+      if (state.alarmState === "armed_home") return "home";
+      if (state.alarmState === "armed_away") return "away";
+      if (state.alarmState === "disarmed") return "disarmed";
+      return null;
+    },
     armLabel(state): string {
-      if (state.mode === "live" && !state.alarmAvailable) return "ALARM UNAVAILABLE";
-      switch (state.armState) {
-        case "home":
+      switch (state.alarmState) {
+        case "armed_home":
           return "ARMED — HOME";
-        case "away":
+        case "armed_away":
           return "ARMED — AWAY";
-        case "disarmed":
-          return "DISARMED";
+        default:
+          return state.alarmState?.replaceAll("_", " ").toUpperCase() ?? "ALARM UNAVAILABLE";
       }
     },
   },
   actions: {
-    async arm(state: ArmState) {
-      const alarm = securityPageBindings.alarmControlPanel;
-      if (this.hasLiveData && !this.alarmAvailable) return;
-      const previous = this.armState;
-      this.armState = state;
-      if (!this.hasLiveData) return;
-      const service = { home: "alarm_arm_home", away: "alarm_arm_away", disarmed: "alarm_disarm" };
-      const result = await haCallService(alarm, service[state]);
-      if (result !== "sent" && this.armState === state) this.armState = previous;
-    },
-    setArmStateFromHa(state: ArmState, changedAt: string) {
-      this.armState = state;
-      this.secureSince = changedAt;
+    async arm(state: ArmState, source: "security" | "home-shortcut" = "security") {
+      const mode = armModes[state];
+      if (!this.hasLiveData) {
+        this.alarmState = mode.state;
+        return;
+      }
+      const fromHomeShortcut = source === "home-shortcut";
+      const available = fromHomeShortcut ? this.homeShortcutAlarmAvailable : this.alarmAvailable;
+      if (!available || this.alarmCommandPending) return;
+      const alarm = fromHomeShortcut
+        ? homePageBindings.alarmControlPanel
+        : securityPageBindings.alarmControlPanel;
+      this.alarmCommandPending = true;
+      try {
+        await haCallService(alarm, mode.action);
+      } finally {
+        this.alarmCommandPending = false;
+      }
     },
     async setLocked(id: string, locked: boolean) {
       const entry = this.entries.find((e) => e.id === id);

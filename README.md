@@ -64,7 +64,8 @@ midnight every 15 minutes. The reminder displays unavailable when the forecast c
 whether it will rain. The house target displays as unavailable until an entity is mapped.
 
 The Get Jaicob shortcut is disabled in live mode until it has a Home Assistant action. The Away
-shortcut turns off the mapped lights and can arm the configured alarm panel.
+shortcut turns off the mapped lights and can arm the configured alarm panel. The Security page's **Home**, **Away**,
+and **Disarm** buttons control Alarmo, and the selected mode follows Home Assistant's reported state.
 
 ## Activity and cameras
 

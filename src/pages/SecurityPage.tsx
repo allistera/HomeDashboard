@@ -10,9 +10,10 @@ import { entryBindings, roomBindings } from "@/config/homeAssistant";
 import { useActivityStore } from "@/stores/activity";
 import { useHaStore } from "@/stores/ha";
 import { useSecurityStore, type ArmState, type Camera } from "@/stores/security";
+import { useSettingsStore } from "@/stores/settings";
 
 const armOptions: { id: ArmState; name: string }[] = [
-  { id: "home", name: "Armed — home" },
+  { id: "home", name: "Home" },
   { id: "away", name: "Away" },
   { id: "disarmed", name: "Disarm" },
 ];
@@ -23,6 +24,7 @@ export default defineComponent({
     const security = useSecurityStore();
     const activity = useActivityStore();
     const ha = useHaStore();
+    const settings = useSettingsStore();
     const selectedCamera = ref<Camera | null>(null);
 
     const openCamera = (camera: Camera) => {
@@ -33,13 +35,30 @@ export default defineComponent({
       selectedCamera.value = null;
     };
 
-    const headline = computed(() =>
-      security.hasLiveData && !security.alarmAvailable
-        ? "Alarm unavailable"
-        : security.armState === "disarmed"
-          ? "Perimeter disarmed"
-          : `Secure since ${security.secureSince}`,
+    const alarmUnavailable = computed(
+      () =>
+        (settings.configured || security.hasLiveData) &&
+        (ha.status !== "connected" || !security.alarmAvailable),
     );
+    const headline = computed(() => {
+      if (alarmUnavailable.value) return "Alarm unavailable";
+      switch (security.alarmState) {
+        case "disarmed":
+          return "Perimeter disarmed";
+        case "arming":
+          return "Alarm arming";
+        case "disarming":
+          return "Alarm disarming";
+        case "pending":
+          return "Alarm entry delay";
+        case "triggered":
+          return "Alarm triggered";
+        default:
+          return security.alarmState?.startsWith("armed_")
+            ? `Secure since ${security.secureSince}`
+            : "Alarm status unknown";
+      }
+    });
     const subline = computed(() => {
       if (security.hasLiveData) {
         const known = security.entries.filter((entry) => entry.statusKnown);
@@ -66,13 +85,13 @@ export default defineComponent({
             `${security.hasLiveData ? security.cameras.filter((camera) => camera.entityId).length : security.cameras.length} CAMERAS · ${entryBindings.filter((binding) => binding.sensor).length + roomBindings.filter((binding) => binding.motion).length} SENSORS`,
           ]}
           showPeople
-          status={security.armLabel}
+          status={alarmUnavailable.value ? "ALARM UNAVAILABLE" : security.armLabel}
         />
 
         <div class="hero" style={{ padding: "30px 40px 24px" }}>
           <div>
             <div class="label">Perimeter</div>
-            <h1 class="hero__title" style={{ fontSize: "58px" }}>
+            <h1 class="hero__title" style={{ fontSize: "58px" }} aria-live="polite">
               {headline.value}
             </h1>
             <p class="hero__sub" style={{ fontSize: "16px", marginTop: "12px" }}>
@@ -80,17 +99,21 @@ export default defineComponent({
             </p>
           </div>
           <div class="hero__actions">
-            {armOptions.map((option) => (
-              <button
-                type="button"
-                key={option.id}
-                class={["btn", { "btn--primary": security.armState === option.id }]}
-                disabled={security.hasLiveData && !security.alarmAvailable}
-                onClick={() => security.arm(option.id)}
-              >
-                {option.name}
-              </button>
-            ))}
+            {armOptions.map((option) => {
+              const active = !alarmUnavailable.value && security.armState === option.id;
+              return (
+                <button
+                  type="button"
+                  key={option.id}
+                  class={["btn", { "btn--primary": active }]}
+                  aria-pressed={active}
+                  disabled={alarmUnavailable.value || security.alarmCommandPending}
+                  onClick={() => security.arm(option.id)}
+                >
+                  {option.name}
+                </button>
+              );
+            })}
           </div>
         </div>
 

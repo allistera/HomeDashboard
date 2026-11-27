@@ -157,7 +157,7 @@ export const entryBindings: EntryBinding[] = [
 ];
 
 export const securityPageBindings = {
-  alarmControlPanel: "alarm_control_panel.downstairs_cupboard_udm_se_colliery_lane_alarm_manager",
+  alarmControlPanel: "alarm_control_panel.alarmo",
   people: ["person.allister_antosik", "person.tonnii_antosik", "person.jaicob_antosik"],
   frontDoorCamera: "camera.back_garden_g5_turret_ultra_high_resolution_channel",
 } satisfies {
@@ -172,22 +172,28 @@ interface HomeBindings {
   houseTarget?: EntityProperty;
   washingWeather?: EntityProperty;
   camera: { entityId: EntityId; label: string; demoId: string };
+  alarmControlPanel: EntityId;
   mediaPlayer: { roomId: string };
   excludedRoomIds: string[];
   activityEntityIds: string[];
 }
+
+const homeShortcutAlarm =
+  "alarm_control_panel.downstairs_cupboard_udm_se_colliery_lane_alarm_manager";
 
 export const homePageBindings: HomeBindings = {
   outsideTemperature: { entityId: "weather.home", attribute: "temperature" },
   houseTemperature: { entityId: "sensor.average_indoor_temperature" },
   washingWeather: { entityId: "binary_sensor.good_drying_weather" },
   camera: { entityId: backGardenCamera, label: "Back Garden", demoId: "back-garden" },
+  alarmControlPanel: homeShortcutAlarm,
   mediaPlayer: { roomId: "living-room" },
   excludedRoomIds: ["garden"],
   activityEntityIds: [
     ...roomBindings.flatMap((binding) => roomEntityIds(binding.roomId)),
     ...entryBindings.flatMap((entry) => entry.sensor ?? []),
     ...securityPageBindings.people,
+    homeShortcutAlarm,
     securityPageBindings.alarmControlPanel,
   ],
 };

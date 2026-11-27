@@ -300,14 +300,12 @@ export function applyEntities(entities: HassEntityStates, areas = new Map<string
   security.cameras = camerasFrom(entities, baseUrl);
   security.events = [];
   const alarm = entities[securityPageBindings.alarmControlPanel];
-  const states = { armed_home: "home", armed_away: "away", disarmed: "disarmed" } as const;
-  security.alarmAvailable =
-    available(alarm) &&
-    (alarm.state === "armed_home" || alarm.state === "armed_away" || alarm.state === "disarmed");
-  if (security.alarmAvailable) {
-    const armState = Object.entries(states).find(([state]) => alarm.state === state)?.[1];
-    if (armState) security.setArmStateFromHa(armState, formatTime(alarm.last_changed));
-  }
+  security.alarmState = available(alarm) ? alarm.state : null;
+  if (available(alarm)) security.secureSince = formatTime(alarm.last_changed);
+  const shortcutAlarm = entities[homePageBindings.alarmControlPanel];
+  security.homeShortcutAlarmAvailable =
+    available(shortcutAlarm) &&
+    ["armed_home", "armed_away", "disarmed"].includes(shortcutAlarm.state);
   security.people = securityPageBindings.people.flatMap((id) => {
     const entity = entities[id];
     if (!entity) return [];

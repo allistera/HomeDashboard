@@ -126,6 +126,12 @@ export class HomeAssistantSocket extends EventTarget {
               c: "person",
               lc: 1795626720,
             },
+            "alarm_control_panel.alarmo": {
+              s: "disarmed",
+              a: { friendly_name: "Alarmo", supported_features: 11 },
+              c: "alarmo",
+              lc: 1795626720,
+            },
           },
         });
         break;
@@ -178,6 +184,14 @@ export class HomeAssistantSocket extends EventTarget {
       type: "event",
       id: this.subscription,
       event: { c: { [testLightId]: { "+": { s: state } } } },
+    });
+  }
+
+  changeAlarm(state: string): void {
+    this.receive({
+      type: "event",
+      id: this.subscription,
+      event: { c: { "alarm_control_panel.alarmo": { "+": { s: state } } } },
     });
   }
 

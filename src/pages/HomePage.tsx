@@ -84,14 +84,14 @@ export default defineComponent({
 
     const goodNight = () => {
       rooms.setAllLights(false);
-      security.arm("home");
+      security.arm("home", "home-shortcut");
     };
     const movie = () => {
       rooms.applyScene(homePageBindings.mediaPlayer.roomId, "relax");
     };
     const away = () => {
       rooms.setAllLights(false);
-      security.arm("away");
+      security.arm("away", "home-shortcut");
     };
 
     const roomMeta = (roomId: string) => {
@@ -144,7 +144,7 @@ export default defineComponent({
               class="btn"
               disabled={
                 rooms.hasLiveData &&
-                !security.alarmAvailable &&
+                !security.homeShortcutAlarmAvailable &&
                 !rooms.rooms.some((room) => room.lights.length > 0)
               }
               onClick={away}

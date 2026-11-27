@@ -1,6 +1,8 @@
+import { flushPromises, mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import SecurityPage from "@/pages/SecurityPage";
 import { connectHa, disconnectHa } from "@/services/haClient";
 import { useActivityStore } from "@/stores/activity";
 import { useHaStore } from "@/stores/ha";
@@ -95,5 +97,53 @@ describe("Home Assistant connection", () => {
         service_data: { color_temp_kelvin: 5000 },
       },
     ]);
+  });
+
+  it("sends the Security buttons to Alarmo and displays only the reported mode", async () => {
+    await connectHa();
+    const security = useSecurityStore();
+    await vi.waitFor(() => expect(security.alarmState).toBe("disarmed"));
+    const socket = HomeAssistantSocket.active;
+    const wrapper = mount(SecurityPage);
+    try {
+      const [home, away, disarm] = wrapper.findAll<HTMLButtonElement>(".hero__actions button");
+      expect([home.text(), away.text(), disarm.text()]).toEqual(["Home", "Away", "Disarm"]);
+      expect(disarm.attributes("aria-pressed")).toBe("true");
+      await home.trigger("click");
+      await flushPromises();
+      expect(disarm.attributes("aria-pressed")).toBe("true");
+
+      socket.changeAlarm("arming");
+      await vi.waitFor(() => expect(wrapper.get("h1").text()).toBe("Alarm arming"));
+      expect(disarm.element.disabled).toBe(false);
+      socket.changeAlarm("armed_home");
+      await vi.waitFor(() => expect(home.attributes("aria-pressed")).toBe("true"));
+
+      await away.trigger("click");
+      await flushPromises();
+      socket.changeAlarm("armed_away");
+      await vi.waitFor(() => expect(away.attributes("aria-pressed")).toBe("true"));
+
+      socket.rejectAction = true;
+      await disarm.trigger("click");
+      await vi.waitFor(() =>
+        expect(useHaStore().message).toContain("alarm_control_panel.alarm_disarm"),
+      );
+      expect(away.attributes("aria-pressed")).toBe("true");
+
+      const commands = socket.requests.filter((request) => request.type === "call_service");
+      expect(commands.map((request) => request.service)).toEqual([
+        "alarm_arm_home",
+        "alarm_arm_away",
+        "alarm_disarm",
+      ]);
+      expect(commands.map((request) => request.target?.entity_id)).toEqual([
+        "alarm_control_panel.alarmo",
+        "alarm_control_panel.alarmo",
+        "alarm_control_panel.alarmo",
+      ]);
+    } finally {
+      wrapper.unmount();
+    }
   });
 });
