@@ -45,10 +45,11 @@ export const roomBindings: RoomBinding[] = [
     roomId: "kitchen",
     areas: ["Kitchen"],
     deviceAllowlist: [
+      "switch.kitchen_light",
       "sensor.kitchen_temperature_temperature",
       "binary_sensor.kitchen_motion_occupancy",
     ],
-    lights: [],
+    lights: [{ lightId: "kitchen-light", entityId: "switch.kitchen_light" }],
     temperature: { entityId: "sensor.kitchen_temperature_temperature" },
     motion: "binary_sensor.kitchen_motion_occupancy",
   },
@@ -56,8 +57,6 @@ export const roomBindings: RoomBinding[] = [
     roomId: "hallway",
     areas: ["Downstairs Hallway", "Upstairs Hallway"],
     deviceAllowlist: [
-      "light.downstairs_hallway_downstairs_hallway_light",
-      "light.upstairs_hallway_upstairs_hallway_light",
       "sensor.hallway_temperature_temperature",
       "binary_sensor.hallway_motion_occupancy",
     ],
@@ -102,7 +101,7 @@ export const roomBindings: RoomBinding[] = [
   {
     roomId: "elsies-room",
     areas: ["Elsies Room", "Elsie’s bedroom"],
-    deviceAllowlist: ["light.elsies_bedroom_elsies_light", "sensor.elsie_s_room_temperature"],
+    deviceAllowlist: ["sensor.elsie_s_room_temperature"],
     lights: [{ lightId: "ceiling", entityId: "light.elsies_bedroom_elsies_light" }],
     temperature: { entityId: "sensor.elsie_s_room_temperature" },
   },
@@ -118,7 +117,6 @@ export const roomBindings: RoomBinding[] = [
     floor: "Ground floor",
     areas: ["Toilet"],
     deviceAllowlist: [
-      "light.toilet_toilet_light",
       "sensor.toilet_temperature_temperature",
       "binary_sensor.toilet_motion_occupancy",
     ],

@@ -112,19 +112,31 @@ describe("HomePage headline", () => {
     }
   });
 
-  it("shows the indoor average in the home summary and the outdoor temperature separately", () => {
+  it("shows the average as Indoor Temp alongside the outdoor temperature", () => {
     useRoomsStore().setHomeClimateValues(8.4, 20.7, 21.5);
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
     const climateSummary = wrapper.get(".homepage-climate");
 
     expect(wrapper.get(".hero__sub").text()).toContain("average indoor temperature 20.7°");
     expect(climateSummary.findAll(".label").map((label) => label.text())).toEqual([
-      "Target",
+      "Indoor Temp",
       "Outdoor Temp",
     ]);
-    expect(climateSummary.text()).toContain("21.5°");
-    expect(climateSummary.text()).toContain("8.4°");
-    expect(climateSummary.text()).not.toContain("House temp");
-    expect(climateSummary.text()).not.toContain("20.7°");
+    expect(climateSummary.findAll(".big-number").map((value) => value.text())).toEqual([
+      "20.7°",
+      "8.4°",
+    ]);
+  });
+
+  it("shows unavailable indoor and outdoor readings in the climate row", () => {
+    useRoomsStore().mode = "live";
+    const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
+    expect(
+      wrapper
+        .get(".homepage-climate")
+        .findAll(".big-number")
+        .map((value) => value.text()),
+    ).toEqual(["—", "—"]);
+    wrapper.unmount();
   });
 });

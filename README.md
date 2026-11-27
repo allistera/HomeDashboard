@@ -15,7 +15,7 @@ type carries the hierarchy.
   type and availability. Light controls remain below the inventory. Device counts include all
   listed devices; additions, removals, renames, and zone moves update live.
 - **Floors** (`/floors`) — the "God View": isometric floor plans of the ground
-  and first floors with live room callouts (lights, media, windows),
+  and first floors with temperatures on the plan and live room callouts (lights, media, windows),
   a floor switcher, and a stairs shortcut. `/energy` redirects here.
 - **Security** (`/security`) — arm state, camera wall, every door and window as
   a ruled row, presence, and today's events.
@@ -48,7 +48,8 @@ The dashboard's room, weather, presence, and security bindings are in
 [`src/config/homeAssistant.ts`](src/config/homeAssistant.ts). Edit a room's `deviceAllowlist` to
 choose which Home Assistant entity IDs appear in its **Devices** list and counts. Each row displays
 the entity’s current state, including its unit when available. An empty list shows no devices. Room cameras and activity use Home Assistant area assignments.
-Room lighting controls use the room's light bindings. Select a light's colour swatch to adjust
+Light entities appear under **Lights** and are excluded from device counts. The kitchen uses
+`switch.kitchen_light` for on/off control. Select a light's colour swatch to adjust
 its colour or white temperature, depending on the modes the light reports. **Apply to room**
 sends the selected setting to every compatible light in that room. Main Bedroom uses its temperature and humidity
 sensor and Hue Tap Dial entities. The security camera wall discovers camera
@@ -56,13 +57,13 @@ entities. Contact sensors report open or closed. Lock controls appear only for a
 lock entity.
 
 The homepage headline updates as Home Assistant reports connection, door, and lighting changes.
-The status summary displays the indoor average from `sensor.average_indoor_temperature`.
+**Indoor Temp** displays the live indoor average from `sensor.average_indoor_temperature`.
 The dashboard displays the outdoor temperature from `sensor.garden_gate_temperature`.
 
 The drying-weather reminder reads `binary_sensor.good_drying_weather`. In Home Assistant,
 **Update Drying Weather Forecast** checks the hourly forecast from `weather.home` through local
 midnight every 15 minutes. The reminder displays unavailable when the forecast cannot determine
-whether it will rain. The house target displays as unavailable until an entity is mapped.
+whether it will rain.
 
 The Get Jaicob shortcut is disabled in live mode until it has a Home Assistant action. The Away
 shortcut turns off the mapped lights and can arm the configured alarm panel. The Security page's **Home**, **Away**,

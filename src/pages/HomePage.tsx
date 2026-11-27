@@ -215,16 +215,12 @@ export default defineComponent({
 
             <div class="col-foot homepage-climate">
               <div>
-                <div class="label">Target</div>
-                <div class="big-number big-number--accent" style={{ fontSize: "54px" }}>
-                  {temperatureText(rooms.houseTarget)}
-                </div>
+                <div class="label">Indoor Temp</div>
+                <div class="big-number big-number--accent">{temperatureText(rooms.houseTemp)}</div>
               </div>
               <div>
                 <div class="label">Outdoor Temp</div>
-                <div class="big-number" style={{ fontSize: "54px" }}>
-                  {temperatureText(rooms.outsideTemp)}
-                </div>
+                <div class="big-number">{temperatureText(rooms.outsideTemp)}</div>
               </div>
             </div>
           </div>

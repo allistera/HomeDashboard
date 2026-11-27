@@ -16,6 +16,11 @@
   min-width: 0;
 }
 
+.room-light__status {
+  grid-column: 4;
+  text-align: right;
+}
+
 .room-light-group:last-child {
   border-bottom: 1px solid var(--hairline);
 }
@@ -200,5 +205,9 @@
 
   .room-light > .brightness-slider {
     grid-column: 2;
+  }
+
+  .room-light__status {
+    grid-column: 3;
   }
 }

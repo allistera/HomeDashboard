@@ -261,6 +261,48 @@ describe("RoomsPage Home Assistant inventory", () => {
     }
   });
 
+  it("shows the Kitchen switch as a power-only light and lists it in Devices", () => {
+    const light = entity("switch.kitchen_light", "on", { friendly_name: "Kitchen Light" });
+    applyEntities(entityStates(light));
+    useRoomsStore().selectRoom("kitchen");
+    const wrapper = mount(RoomsPage, { global: { plugins: [pinia] } });
+    try {
+      expect(wrapper.get('[aria-label="Room devices"]').text()).toContain("Kitchen Light");
+      expect(wrapper.get('[aria-label="Kitchen Light power"]').attributes("aria-checked")).toBe(
+        "true",
+      );
+      expect(wrapper.get(".room-light__status").text()).toBe("ON");
+      expect(wrapper.find(".brightness-slider").exists()).toBe(false);
+      expect(wrapper.get(".hero__actions").text()).toBe("All off");
+    } finally {
+      wrapper.unmount();
+    }
+  });
+
+  it("keeps the Hallway lights out of the Devices list and count", () => {
+    const light = entity("light.downstairs_hallway_downstairs_hallway_light", "on", {
+      friendly_name: "Downstairs Hallway Light",
+      supported_color_modes: ["brightness"],
+    });
+    const sensor = entity("sensor.hallway_temperature_temperature", "19", {
+      friendly_name: "Hallway Temperature",
+    });
+    applyEntities(entityStates(light, sensor));
+    useRoomsStore().selectRoom("hallway");
+    const wrapper = mount(RoomsPage, { global: { plugins: [pinia] } });
+    try {
+      const devices = wrapper.get('[aria-label="Room devices"]');
+      expect(devices.findAll("summary")).toHaveLength(1);
+      expect(devices.text()).toContain("Hallway Temperature");
+      expect(
+        wrapper.get('[aria-label="Downstairs Hallway Light power"]').attributes("aria-checked"),
+      ).toBe("true");
+      expect(useRoomsStore().selectedRoom.deviceCount).toBe(1);
+    } finally {
+      wrapper.unmount();
+    }
+  });
+
   it("renders the configured outside temperature", () => {
     const rooms = useRoomsStore();
     rooms.setHomeClimateValues(8.4, null, null);

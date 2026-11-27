@@ -37,9 +37,9 @@ describe("HomePage bindings", () => {
     expect(wrapper.get(".topbar").text()).not.toContain("OUTSIDE");
     expect(wrapper.get(".homepage-climate").text()).toContain("Outdoor Temp");
     expect(wrapper.get(".homepage-climate").text()).toContain("8.4°");
-    expect(wrapper.get(".homepage-climate").text()).toContain("Target");
+    expect(wrapper.get(".homepage-climate").text()).toContain("Indoor Temp");
     expect(wrapper.text()).toContain("20.7°");
-    expect(wrapper.text()).toContain("21.5°");
+    expect(wrapper.get(".homepage-climate").text()).not.toContain("21.5°");
     expect(wrapper.text()).toContain("Playing · Living room");
     expect(wrapper.text()).toContain("Night Jazz");
     expect(wrapper.get(".camera__stream").attributes("src")).toContain(

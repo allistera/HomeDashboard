@@ -736,9 +736,14 @@ a {
 }
 
 .homepage-climate {
-  padding: 20px 40px;
+  padding: 20px clamp(12px, 4vw, 40px);
   align-items: baseline;
-  gap: 34px;
+  flex-wrap: wrap;
+  gap: 20px 34px;
+}
+
+.homepage-climate .big-number {
+  font-size: 54px;
 }
 
 @media (max-height: 900px) {

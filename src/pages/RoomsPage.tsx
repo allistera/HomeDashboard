@@ -45,6 +45,7 @@ export default defineComponent({
 
     return () => {
       const room = rooms.selectedRoom;
+      const hasDimmableLights = room.lights.some((light) => light.dimmable !== false);
       return (
         <main class="main">
           <TopBar
@@ -121,16 +122,18 @@ export default defineComponent({
                 </div>
                 <div class="hero__actions">
                   {room.lights.length > 0 &&
-                    scenes.map((scene) => (
-                      <button
-                        type="button"
-                        key={scene.id}
-                        class={["btn", "btn--small", { "btn--primary": scene.id === "relax" }]}
-                        onClick={() => rooms.applyScene(room.id, scene.id)}
-                      >
-                        {scene.name}
-                      </button>
-                    ))}
+                    scenes
+                      .filter((scene) => hasDimmableLights || scene.id === "all-off")
+                      .map((scene) => (
+                        <button
+                          type="button"
+                          key={scene.id}
+                          class={["btn", "btn--small", { "btn--primary": scene.id === "relax" }]}
+                          onClick={() => rooms.applyScene(room.id, scene.id)}
+                        >
+                          {scene.name}
+                        </button>
+                      ))}
                 </div>
               </div>
 

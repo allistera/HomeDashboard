@@ -10,7 +10,7 @@ import { useRoomsStore } from "@/stores/rooms";
 import { useSecurityStore } from "@/stores/security";
 import { useSettingsStore } from "@/stores/settings";
 
-import { HomeAssistantSocket, testLightId } from "@/services/haTestSupport";
+import { HomeAssistantSocket, testKitchenLightId, testLightId } from "@/services/haTestSupport";
 
 describe("Home Assistant connection", () => {
   beforeEach(() => {
@@ -54,6 +54,30 @@ describe("Home Assistant connection", () => {
     expect(ha.status).toBe("disconnected");
     expect(rooms.hasLiveData).toBe(false);
     expect(useActivityStore().status).toBe("offline");
+  });
+
+  it("sends power commands to the Kitchen switch without a brightness value", async () => {
+    await connectHa();
+    const rooms = useRoomsStore();
+    rooms.selectRoom("kitchen");
+    await vi.waitFor(() =>
+      expect(rooms.selectedRoom.lights[0]).toMatchObject({
+        id: "kitchen-light",
+        dimmable: false,
+        level: 0,
+      }),
+    );
+    rooms.setRoomLights("kitchen", true);
+    rooms.setLightPower("kitchen", "kitchen-light", false);
+
+    const requests = HomeAssistantSocket.active.requests.filter(
+      (request) => request.type === "call_service",
+    );
+    expect(requests).toMatchObject([
+      { domain: "switch", service: "turn_on", target: { entity_id: testKitchenLightId } },
+      { domain: "switch", service: "turn_off", target: { entity_id: testKitchenLightId } },
+    ]);
+    expect(requests[0].service_data?.brightness_pct).toBeUndefined();
   });
 
   it("uses the light entity as an action target and rolls back a rejected command", async () => {

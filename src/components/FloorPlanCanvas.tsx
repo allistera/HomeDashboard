@@ -3,6 +3,8 @@ import type { FloorPlan } from "@/data/floors";
 import type { Room } from "@/models/rooms";
 import { temperatureText } from "@/utils/temperature";
 import "./FloorPlanCanvas.css";
+
+const floorTemperatureOffset = 26;
 type ChipTone = "active" | "attention";
 
 export interface Chip {
@@ -55,12 +57,25 @@ export default defineComponent({
               </text>
             ))}
 
-            {props.floor.callouts.map((callout) => (
-              <g key={callout.roomId}>
-                <path d={callout.line} class="plan__lead" fill="none" />
-                <circle cx={callout.dot[0]} cy={callout.dot[1]} r="5" class="plan__dot" />
-              </g>
-            ))}
+            {props.floor.callouts.map((callout) => {
+              const temperature = props.roomById(callout.roomId)?.temp ?? null;
+              return (
+                <g key={callout.roomId}>
+                  <path d={callout.line} class="plan__lead" fill="none" />
+                  <circle cx={callout.dot[0]} cy={callout.dot[1]} r="5" class="plan__dot" />
+                  {temperature !== null && (
+                    <text
+                      x={callout.dot[0]}
+                      y={callout.dot[1] + floorTemperatureOffset}
+                      class="plan__temp"
+                      data-room={callout.roomId}
+                    >
+                      {temperatureText(temperature)}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
 
             {(props.floor.markers ?? []).map((marker) => (
               <g key={marker.label}>

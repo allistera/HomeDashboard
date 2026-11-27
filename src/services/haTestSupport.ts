@@ -20,6 +20,7 @@ export function entityStates(...entities: HassEntityState[]): HassEntityStates {
 }
 
 export const testLightId = "light.living_room_livingroom_light";
+export const testKitchenLightId = "switch.kitchen_light";
 const kitchenTemperature = "sensor.kitchen_temperature_temperature";
 const indoorAverage = "sensor.average_indoor_temperature";
 const gardenGateTemperature = "sensor.garden_gate_temperature";
@@ -107,6 +108,12 @@ export class HomeAssistantSocket extends EventTarget {
               s: "20.5",
               a: { unit_of_measurement: "°C" },
               c: "temperature",
+              lc: 1795626720,
+            },
+            [testKitchenLightId]: {
+              s: "off",
+              a: { friendly_name: "Kitchen Light" },
+              c: "kitchen-switch",
               lc: 1795626720,
             },
             [indoorAverage]: {
