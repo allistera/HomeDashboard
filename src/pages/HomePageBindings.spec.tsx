@@ -59,8 +59,12 @@ describe("HomePage bindings", () => {
     wrapper.unmount();
   });
 
-  it("shows the Back Garden high-resolution camera on Home when connected", async () => {
-    const backGarden = entity(
+  it("shows the bound Back Garden camera on Home when connected", async () => {
+    const backGarden = entity("camera.back_garden_back_garden", "idle", {
+      friendly_name: "Back Garden",
+      access_token: "fixture-camera-token",
+    });
+    const highResolution = entity(
       "camera.back_garden_back_garden_high_resolution_channel",
       "recording",
       {
@@ -68,15 +72,8 @@ describe("HomePage bindings", () => {
         access_token: "fixture-camera-token",
       },
     );
-    const frontDoor = entity(
-      "camera.back_garden_g5_turret_ultra_high_resolution_channel",
-      "recording",
-      {
-        access_token: "fixture-camera-token",
-      },
-    );
     useSettingsStore().url = "http://ha.local";
-    applyEntities(entityStates(frontDoor, backGarden));
+    applyEntities(entityStates(highResolution, backGarden));
 
     const wrapper = mount(HomePage, { global: { plugins: [pinia] } });
     try {
@@ -85,12 +82,10 @@ describe("HomePage bindings", () => {
         `/api/camera_proxy/${backGarden.entity_id}?`,
       );
       await wrapper.get(".camera").trigger("click");
-      expect(wrapper.get('[role="dialog"] .camera-modal__title').text()).toBe(
-        "Back Garden High resolution channel",
-      );
+      expect(wrapper.get('[role="dialog"] .camera-modal__title').text()).toBe("Back Garden");
       await wrapper.get('[aria-label="Close camera view"]').trigger("click");
 
-      applyEntities(entityStates(frontDoor));
+      applyEntities(entityStates(highResolution));
       await nextTick();
       expect(wrapper.text()).toContain("Back Garden · Unavailable");
       expect(wrapper.find(".camera__stream").exists()).toBe(false);

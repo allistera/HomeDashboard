@@ -73,8 +73,8 @@ and **Disarm** buttons control Alarmo, and the selected mode follows Home Assist
 
 The homepage Activity feed shows Home Assistant logbook entries from the previous 24 hours and follows
 new events for `homePageBindings.activityEntityIds`. It shows the newest complete rows that fit above
-the media controls. The Home view starts the Back Garden high-resolution channel over WebRTC when
-it loads. If WebRTC playback fails, the preview tries Home Assistant's HLS stream, then retries
+the media controls. The Home view starts `camera.back_garden_back_garden` over WebRTC when it
+loads. If WebRTC playback fails, the preview tries Home Assistant's HLS stream, then retries
 WebRTC before showing the latest available snapshot. The Security camera grid uses the same
 playback sequence for available cameras. Enlarged viewers reuse the preview's stream.
 
