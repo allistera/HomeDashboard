@@ -180,7 +180,7 @@ const homeShortcutAlarm =
   "alarm_control_panel.downstairs_cupboard_udm_se_colliery_lane_alarm_manager";
 
 export const homePageBindings: HomeBindings = {
-  outsideTemperature: { entityId: "sensor.garden_gate_temperature" },
+  outsideTemperature: { entityId: "weather.home", attribute: "temperature" },
   houseTemperature: { entityId: "sensor.average_indoor_temperature" },
   washingWeather: { entityId: "binary_sensor.good_drying_weather" },
   camera: { entityId: backGardenCamera, label: "Back Garden", demoId: "back-garden" },

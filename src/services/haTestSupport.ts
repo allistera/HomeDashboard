@@ -215,11 +215,11 @@ export class HomeAssistantSocket extends EventTarget {
     });
   }
 
-  changeOutdoorTemperature(state: string): void {
+  changeOutdoorTemperature(temperature: number): void {
     this.receive({
       type: "event",
       id: this.subscription,
-      event: { c: { [gardenGateTemperature]: { "+": { s: state } } } },
+      event: { c: { "weather.home": { "+": { a: { temperature } } } } },
     });
   }
 
