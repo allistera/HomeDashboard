@@ -1,5 +1,6 @@
-import { defineComponent, onScopeDispose, ref, watch, watchEffect, type PropType } from "vue";
+import { defineComponent, onScopeDispose, ref, watch, type PropType } from "vue";
 
+import { useCameraVideo } from "@/composables/useCameraVideo";
 import { useDocumentVisible } from "@/composables/useDocumentVisible";
 
 function withCacheBust(url: string, bust: number): string {
@@ -19,8 +20,9 @@ export default defineComponent({
     videoPreview: { type: Boolean, default: false },
     // SAFETY: Vue validates the object shape and RoomCamera supplies the negotiated MediaStream.
     videoStream: { type: Object as PropType<MediaStream | null>, default: null },
+    hlsUrl: { type: String, default: "" },
   },
-  emits: ["select", "playing"],
+  emits: ["select", "playing", "waiting", "videoError"],
   setup(props, { emit }) {
     const streamFailed = ref(false);
     const video = ref<HTMLVideoElement | null>(null);
@@ -65,12 +67,12 @@ export default defineComponent({
       { immediate: true },
     );
 
-    watchEffect(() => {
-      const player = video.value;
-      if (!player) return;
-      player.srcObject = props.videoStream;
-      if (props.videoStream) void player.play().catch(() => undefined);
-    });
+    useCameraVideo(
+      video,
+      () => props.videoStream,
+      () => props.hlsUrl,
+      () => emit("videoError"),
+    );
 
     onScopeDispose(stopRefresh);
 
@@ -96,6 +98,7 @@ export default defineComponent({
               playsinline
               aria-hidden="true"
               onPlaying={() => emit("playing")}
+              onWaiting={() => emit("waiting")}
             />
           ) : (
             showImage && (

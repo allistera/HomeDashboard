@@ -4,10 +4,13 @@ import CameraModal from "@/components/CameraModal";
 import CameraTile from "@/components/CameraTile";
 import { useDocumentVisible } from "@/composables/useDocumentVisible";
 import type { RoomCamera } from "@/models/rooms";
+import { requestHaHlsUrl } from "@/services/haHls";
 import { startHaWebRtcStream, type WebRtcSession } from "@/services/haWebRtc";
 
 export type CameraPreviewState = "off" | "connecting" | "playing";
-const previewStartupTimeoutMs = 12_000;
+const webRtcTimeoutMs = 12_000;
+const hlsTimeoutMs = 25_000;
+const playbackAttempts = ["webrtc", "hls", "webrtc"] as const;
 
 export default defineComponent({
   name: "RoomCamera",
@@ -22,8 +25,10 @@ export default defineComponent({
     const expanded = ref(false);
     const visible = useDocumentVisible();
     const stream = shallowRef<MediaStream | null>(null);
+    const hlsUrl = ref("");
     const previewState = ref<CameraPreviewState>("off");
     let startupTimer: ReturnType<typeof setTimeout> | undefined;
+    let retryPreview: (() => void) | undefined;
 
     watch(previewState, (state) => emit("previewState", state));
     watch(
@@ -38,37 +43,57 @@ export default defineComponent({
       (entityId, _, onCleanup) => {
         if (!entityId) return;
         let session: WebRtcSession | null = null;
-        let canRetry = true;
+        let attemptIndex = 0;
+        let generation = 0;
         const stop = () => {
+          generation++;
           clearTimeout(startupTimer);
           session?.stop();
           session = null;
           stream.value = null;
-        };
-        const retryOrStop = () => {
-          stop();
-          if (canRetry) {
-            canRetry = false;
-            start();
-          } else {
-            previewState.value = "off";
-          }
+          hlsUrl.value = "";
         };
         const start = () => {
+          stop();
+          const attempt = playbackAttempts[attemptIndex++];
+          if (!attempt) {
+            previewState.value = "off";
+            return;
+          }
           previewState.value = "connecting";
-          session = startHaWebRtcStream(entityId, {
+          const current = generation;
+          const retry = () => {
+            if (current === generation) start();
+          };
+          startupTimer = setTimeout(retry, attempt === "hls" ? hlsTimeoutMs : webRtcTimeoutMs);
+
+          if (attempt === "hls") {
+            void requestHaHlsUrl(entityId)
+              .then((url) => {
+                if (current !== generation) return;
+                if (url) hlsUrl.value = url;
+                else retry();
+              })
+              .catch(retry);
+            return;
+          }
+
+          const started = startHaWebRtcStream(entityId, {
             onStream: (incoming) => {
-              stream.value = incoming;
+              if (current === generation) stream.value = incoming;
             },
-            onError: retryOrStop,
+            onError: retry,
           });
-          if (session) startupTimer = setTimeout(retryOrStop, previewStartupTimeoutMs);
-          else previewState.value = "off";
+          if (current !== generation) started?.stop();
+          else if (started) session = started;
+          else retry();
         };
         onCleanup(() => {
+          retryPreview = undefined;
           stop();
           previewState.value = "off";
         });
+        retryPreview = start;
         start();
       },
       { immediate: true },
@@ -79,6 +104,14 @@ export default defineComponent({
       clearTimeout(startupTimer);
       previewState.value = "playing";
     };
+
+    const onPreviewWaiting = () => {
+      if (previewState.value !== "playing") return;
+      previewState.value = "connecting";
+      startupTimer = setTimeout(() => retryPreview?.(), webRtcTimeoutMs);
+    };
+
+    const onPreviewError = () => retryPreview?.();
 
     return () => (
       <>
@@ -97,8 +130,11 @@ export default defineComponent({
           height={props.height}
           videoPreview={previewState.value !== "off"}
           videoStream={stream.value}
+          hlsUrl={hlsUrl.value}
           live={previewState.value === "playing"}
           onPlaying={onPreviewPlaying}
+          onWaiting={onPreviewWaiting}
+          onVideoError={onPreviewError}
           onSelect={() => {
             expanded.value = true;
           }}
@@ -113,7 +149,7 @@ export default defineComponent({
               snapshotUrl: props.camera.available ? props.camera.snapshotUrl : undefined,
             }}
             previewStream={previewState.value === "off" ? undefined : stream.value}
-            onPlaying={onPreviewPlaying}
+            previewHlsUrl={hlsUrl.value}
             onClose={() => {
               expanded.value = false;
             }}

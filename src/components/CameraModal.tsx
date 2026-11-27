@@ -7,10 +7,10 @@ import {
   ref,
   shallowRef,
   watch,
-  watchEffect,
   type PropType,
 } from "vue";
 
+import { useCameraVideo } from "@/composables/useCameraVideo";
 import { useDocumentVisible } from "@/composables/useDocumentVisible";
 import { startHaWebRtcStream, type WebRtcSession, type WebRtcStarter } from "@/services/haWebRtc";
 import type { Camera } from "@/stores/security";
@@ -27,6 +27,7 @@ export default defineComponent({
     startStream: { type: Function as PropType<WebRtcStarter>, default: startHaWebRtcStream },
     // SAFETY: When supplied, RoomCamera owns the MediaStream. Null means it is connecting.
     previewStream: { type: Object as PropType<MediaStream | null>, default: undefined },
+    previewHlsUrl: { type: String, default: "" },
   },
   emits: ["close", "playing"],
   setup(props, { emit }) {
@@ -36,6 +37,9 @@ export default defineComponent({
     const mode = ref<StreamMode>("mjpeg");
     const webRtcStream = shallowRef<MediaStream | null>(null);
     const ownsStream = computed(() => props.previewStream === undefined);
+    const currentStream = computed(() =>
+      ownsStream.value ? webRtcStream.value : (props.previewStream ?? null),
+    );
     const videoPlaying = ref(false);
     const streamFailed = ref(false);
     const previouslyFocused =
@@ -134,14 +138,17 @@ export default defineComponent({
       },
     );
 
-    watchEffect(() => {
-      const player = video.value;
+    watch([video, currentStream, () => props.previewHlsUrl], () => {
       videoPlaying.value = false;
-      if (!player) return;
-      const stream = ownsStream.value ? webRtcStream.value : (props.previewStream ?? null);
-      player.srcObject = stream;
-      if (stream) void player.play().catch(() => undefined);
     });
+    useCameraVideo(
+      video,
+      () => currentStream.value,
+      () => props.previewHlsUrl,
+      () => {
+        videoPlaying.value = false;
+      },
+    );
 
     onMounted(() => {
       document.body.style.overflow = "hidden";
@@ -219,6 +226,9 @@ export default defineComponent({
                   onPlaying={() => {
                     videoPlaying.value = true;
                     emit("playing");
+                  }}
+                  onWaiting={() => {
+                    videoPlaying.value = false;
                   }}
                 />
               ) : showMjpeg ? (

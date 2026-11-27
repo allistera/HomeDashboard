@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 
 import RoomCamera from "@/components/RoomCamera";
+import * as haHls from "@/services/haHls";
 import * as webRtc from "@/services/haWebRtc";
 
 const camera = {
@@ -36,6 +37,7 @@ describe("RoomCamera", () => {
     vi.useFakeTimers();
     const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
     const play = vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+    const requestHls = vi.spyOn(haHls, "requestHaHlsUrl").mockResolvedValue(null);
     const stop = vi.fn();
     const stream: Partial<MediaStream> = { id: "preview-stream" };
     const start = vi.spyOn(webRtc, "startHaWebRtcStream").mockImplementation((_, handlers) => {
@@ -53,6 +55,7 @@ describe("RoomCamera", () => {
 
       await vi.advanceTimersByTimeAsync(12_000);
       expect(start).toHaveBeenCalledTimes(2);
+      expect(requestHls).toHaveBeenCalledWith(camera.id);
       expect(stop).toHaveBeenCalledOnce();
       await wrapper.get("video").trigger("playing");
       await vi.advanceTimersByTimeAsync(12_000);
@@ -66,6 +69,51 @@ describe("RoomCamera", () => {
     } finally {
       wrapper.unmount();
       start.mockRestore();
+      requestHls.mockRestore();
+      play.mockRestore();
+      visibility.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  it("plays the Home Assistant HLS stream inline and in the viewer when WebRTC times out", async () => {
+    vi.useFakeTimers();
+    const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
+    const play = vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+    const load = vi.spyOn(HTMLMediaElement.prototype, "load").mockImplementation(() => undefined);
+    const canPlay = vi.spyOn(HTMLMediaElement.prototype, "canPlayType").mockReturnValue("probably");
+    const url = "https://ha.example/api/hls/fixture/master_playlist.m3u8";
+    const requestHls = vi.spyOn(haHls, "requestHaHlsUrl").mockResolvedValue(url);
+    const stop = vi.fn();
+    const start = vi.spyOn(webRtc, "startHaWebRtcStream").mockReturnValue({ stop });
+    const wrapper = mount(RoomCamera, { props: { camera, livePreview: true } });
+    try {
+      await vi.advanceTimersByTimeAsync(12_000);
+      expect(stop).toHaveBeenCalledOnce();
+      const preview = wrapper.get(".camera > video");
+      expect(preview.attributes("src")).toBe(url);
+      await preview.trigger("playing");
+
+      await wrapper.get(".camera").trigger("click");
+      const viewer = wrapper.get('[role="dialog"] video');
+      expect(viewer.attributes("src")).toBe(url);
+      await viewer.trigger("playing");
+      expect(wrapper.get('[role="dialog"] .label').text()).toBe("Camera · Live");
+      expect(start).toHaveBeenCalledOnce();
+      expect(requestHls).toHaveBeenCalledOnce();
+
+      await wrapper.get('[aria-label="Close camera view"]').trigger("click");
+      await preview.trigger("waiting");
+      expect(wrapper.text()).toContain("Connecting…");
+      await vi.advanceTimersByTimeAsync(12_000);
+      expect(start).toHaveBeenCalledTimes(2);
+      expect(preview.attributes("src")).toBeUndefined();
+    } finally {
+      wrapper.unmount();
+      start.mockRestore();
+      requestHls.mockRestore();
+      canPlay.mockRestore();
+      load.mockRestore();
       play.mockRestore();
       visibility.mockRestore();
       vi.useRealTimers();

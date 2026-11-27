@@ -68,6 +68,7 @@ class FakePeer implements WebRtcPeer {
     this.signalingState = "stable";
   }
   async addIceCandidate(candidate: RTCIceCandidateInit): Promise<void> {
+    if (!this.remoteDescription) throw new Error("Remote description required");
     this.addedCandidates.push(candidate);
   }
   close(): void {
@@ -183,15 +184,16 @@ describe("startWebRtcStream", () => {
     ]);
   });
 
-  it("applies the answer and remote candidates to the peer connection", async () => {
+  it("keeps early remote candidates until the answer has been applied", async () => {
     const { connection, peer } = setup();
     await flush();
 
-    connection.offerCallback?.({ type: "answer", answer: "v=0 fake answer" });
     connection.offerCallback?.({
       type: "candidate",
       candidate: { candidate: "candidate:9 remote", sdpMid: "1", sdpMLineIndex: 1 },
     });
+    expect(peer.addedCandidates).toEqual([]);
+    connection.offerCallback?.({ type: "answer", answer: "v=0 fake answer" });
     connection.offerCallback?.({
       type: "candidate",
       candidate: { candidate: "candidate:10 bare" },

@@ -92,7 +92,9 @@ export function startWebRtcStream(
   let sessionId: string | null = null;
   let remoteStream: MediaStream | null = null;
   let announcedStream: MediaStream | null = null;
-  const pendingCandidates: RTCIceCandidateInit[] = [];
+  let hasRemoteDescription = false;
+  const pendingLocalCandidates: RTCIceCandidateInit[] = [];
+  const pendingRemoteCandidates: RTCIceCandidateInit[] = [];
 
   const stop = () => {
     if (stopped) return;
@@ -116,7 +118,7 @@ export function startWebRtcStream(
 
   const sendCandidate = (candidate: RTCIceCandidateInit) => {
     if (sessionId === null) {
-      pendingCandidates.push(candidate);
+      pendingLocalCandidates.push(candidate);
       return;
     }
     void connection
@@ -130,15 +132,23 @@ export function startWebRtcStream(
   };
 
   const onOfferEvent = (event: WebRtcOfferEvent) => {
-    if (stopped || !peer) return;
+    const current = peer;
+    if (stopped || !current) return;
     switch (event.type) {
       case "session":
         sessionId = event.session_id;
-        for (const candidate of pendingCandidates.splice(0)) sendCandidate(candidate);
+        for (const candidate of pendingLocalCandidates.splice(0)) sendCandidate(candidate);
         break;
       case "answer":
-        peer
+        current
           .setRemoteDescription({ type: "answer", sdp: event.answer })
+          .then(() => {
+            if (stopped) return;
+            hasRemoteDescription = true;
+            for (const candidate of pendingRemoteCandidates.splice(0)) {
+              void current.addIceCandidate(candidate).catch(() => undefined);
+            }
+          })
           .catch((error: Error | string) => fail(describeError(error)));
         break;
       case "candidate": {
@@ -148,7 +158,11 @@ export function startWebRtcStream(
           remote.sdpMid || remote.sdpMLineIndex != null
             ? remote
             : { candidate: remote.candidate, sdpMid: "0" };
-        peer.addIceCandidate(candidate).catch(() => undefined);
+        if (hasRemoteDescription) {
+          void current.addIceCandidate(candidate).catch(() => undefined);
+        } else {
+          pendingRemoteCandidates.push(candidate);
+        }
         break;
       }
       case "error":
@@ -218,7 +232,7 @@ export function startWebRtcStream(
 
 // Default starter for the dashboard: uses the live Home Assistant connection
 // and the browser's RTCPeerConnection. Returns null when either is missing so
-// callers can fall back to the MJPEG proxy.
+// callers can use another playback method.
 export function startHaWebRtcStream(
   entityId: string,
   handlers: WebRtcStreamHandlers,
