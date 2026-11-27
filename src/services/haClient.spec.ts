@@ -34,6 +34,7 @@ describe("Home Assistant connection", () => {
     await vi.waitFor(() => {
       expect(ha.status).toBe("connected");
       expect(rooms.houseTemp).toBe(20.4);
+      expect(rooms.outsideTemp).toBe(8.4);
       expect(rooms.rooms.find((room) => room.id === "kitchen")?.temp).toBe(20.5);
       expect(rooms.selectedRoom.lights[0].level).toBe(50);
       expect(rooms.selectedRoom.activityEntityIds).toContain("sensor.example");
@@ -46,6 +47,8 @@ describe("Home Assistant connection", () => {
 
     HomeAssistantSocket.active.changeLight("off");
     await vi.waitFor(() => expect(rooms.selectedRoom.lights[0].level).toBe(0));
+    HomeAssistantSocket.active.changeOutdoorTemperature("7.3");
+    await vi.waitFor(() => expect(rooms.outsideTemp).toBe(7.3));
 
     disconnectHa();
     expect(ha.status).toBe("disconnected");

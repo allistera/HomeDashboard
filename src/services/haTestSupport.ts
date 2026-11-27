@@ -22,6 +22,7 @@ export function entityStates(...entities: HassEntityState[]): HassEntityStates {
 export const testLightId = "light.living_room_livingroom_light";
 const kitchenTemperature = "sensor.kitchen_temperature_temperature";
 const indoorAverage = "sensor.average_indoor_temperature";
+const gardenGateTemperature = "sensor.garden_gate_temperature";
 
 interface Request {
   type: string;
@@ -114,6 +115,18 @@ export class HomeAssistantSocket extends EventTarget {
               c: "temperature",
               lc: 1795626720,
             },
+            [gardenGateTemperature]: {
+              s: "8.4",
+              a: { unit_of_measurement: "°C" },
+              c: "garden-gate",
+              lc: 1795626720,
+            },
+            "weather.home": {
+              s: "cloudy",
+              a: { temperature: 12 },
+              c: "weather",
+              lc: 1795626720,
+            },
             "sensor.example": {
               s: "21",
               a: { friendly_name: "Additional sensor" },
@@ -192,6 +205,14 @@ export class HomeAssistantSocket extends EventTarget {
       type: "event",
       id: this.subscription,
       event: { c: { "alarm_control_panel.alarmo": { "+": { s: state } } } },
+    });
+  }
+
+  changeOutdoorTemperature(state: string): void {
+    this.receive({
+      type: "event",
+      id: this.subscription,
+      event: { c: { [gardenGateTemperature]: { "+": { s: state } } } },
     });
   }
 

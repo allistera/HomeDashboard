@@ -57,6 +57,7 @@ lock entity.
 
 The homepage headline updates as Home Assistant reports connection, door, and lighting changes.
 The status summary displays the indoor average from `sensor.average_indoor_temperature`.
+The dashboard displays the outdoor temperature from `sensor.garden_gate_temperature`.
 
 The drying-weather reminder reads `binary_sensor.good_drying_weather`. In Home Assistant,
 **Update Drying Weather Forecast** checks the hourly forecast from `weather.home` through local
