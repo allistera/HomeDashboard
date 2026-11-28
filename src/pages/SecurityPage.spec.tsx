@@ -5,7 +5,7 @@ import { nextTick } from "vue";
 
 import SecurityPage from "@/pages/SecurityPage";
 import { applyEntities } from "@/services/haSync";
-import { entity, entityStates } from "@/services/haTestSupport";
+import { entity, entityStates, makeVideoReady } from "@/services/haTestSupport";
 import * as webRtc from "@/services/haWebRtc";
 import { useHaStore } from "@/stores/ha";
 import { useSecurityStore } from "@/stores/security";
@@ -73,6 +73,7 @@ describe("SecurityPage Home Assistant entities", () => {
       const video = tile.get<HTMLVideoElement>("video");
       expect(video.element.srcObject).toBe(stream);
       expect(tile.text()).toContain("Connecting…");
+      makeVideoReady(video.element);
       await video.trigger("playing");
       expect(tile.text()).toContain("LIVE");
 

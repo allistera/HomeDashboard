@@ -4,6 +4,7 @@ import { nextTick } from "vue";
 
 import RoomCamera from "@/components/RoomCamera";
 import * as haHls from "@/services/haHls";
+import { makeVideoReady } from "@/services/haTestSupport";
 import * as webRtc from "@/services/haWebRtc";
 
 const camera = {
@@ -12,14 +13,6 @@ const camera = {
   available: true,
   snapshotUrl: "https://ha.example/api/camera_proxy/camera.front_door?token=camera-fixture",
 };
-
-function makeVideoReady(video: HTMLVideoElement) {
-  Object.defineProperties(video, {
-    paused: { value: false },
-    videoWidth: { value: 1920 },
-    readyState: { value: HTMLMediaElement.HAVE_CURRENT_DATA },
-  });
-}
 
 describe("RoomCamera", () => {
   it("shows a Home Assistant snapshot and opens it in the camera viewer", async () => {

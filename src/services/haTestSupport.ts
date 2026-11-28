@@ -19,6 +19,14 @@ export function entityStates(...entities: HassEntityState[]): HassEntityStates {
   return Object.fromEntries(entities.map((state) => [state.entity_id, state]));
 }
 
+export function makeVideoReady(video: HTMLVideoElement): void {
+  Object.defineProperties(video, {
+    paused: { value: false },
+    videoWidth: { value: 1920 },
+    readyState: { value: HTMLMediaElement.HAVE_CURRENT_DATA },
+  });
+}
+
 export const testLightId = "light.living_room_livingroom_light";
 export const testKitchenLightId = "switch.kitchen_light";
 const kitchenTemperature = "sensor.kitchen_temperature_temperature";
