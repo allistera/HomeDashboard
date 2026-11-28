@@ -33,7 +33,7 @@ describe("RoomCamera", () => {
     }
   });
 
-  it("retries a live preview without frames, then keeps the active player", async () => {
+  it("gives a negotiated WebRTC stream time to play before retrying", async () => {
     vi.useFakeTimers();
     const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
     const play = vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
@@ -53,12 +53,14 @@ describe("RoomCamera", () => {
       expect(play).toHaveBeenCalledOnce();
       expect(wrapper.text()).toContain("Connecting…");
 
-      await vi.advanceTimersByTimeAsync(12_000);
+      await vi.advanceTimersByTimeAsync(29_999);
+      expect(start).toHaveBeenCalledOnce();
+      await vi.advanceTimersByTimeAsync(1);
       expect(start).toHaveBeenCalledTimes(2);
       expect(requestHls).toHaveBeenCalledWith(camera.id);
       expect(stop).toHaveBeenCalledOnce();
       await wrapper.get("video").trigger("playing");
-      await vi.advanceTimersByTimeAsync(12_000);
+      await vi.advanceTimersByTimeAsync(30_000);
       expect(start).toHaveBeenCalledTimes(2);
       expect(wrapper.text()).toContain("LIVE");
 
@@ -88,7 +90,7 @@ describe("RoomCamera", () => {
     const start = vi.spyOn(webRtc, "startHaWebRtcStream").mockReturnValue({ stop });
     const wrapper = mount(RoomCamera, { props: { camera, livePreview: true } });
     try {
-      await vi.advanceTimersByTimeAsync(12_000);
+      await vi.advanceTimersByTimeAsync(20_000);
       expect(stop).toHaveBeenCalledOnce();
       const preview = wrapper.get(".camera > video");
       expect(preview.attributes("src")).toBe(url);

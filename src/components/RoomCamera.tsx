@@ -8,7 +8,9 @@ import { requestHaHlsUrl } from "@/services/haHls";
 import { startHaWebRtcStream, type WebRtcSession } from "@/services/haWebRtc";
 
 export type CameraPreviewState = "off" | "connecting" | "playing";
-const webRtcTimeoutMs = 12_000;
+const webRtcNegotiationTimeoutMs = 20_000;
+const webRtcFirstFrameTimeoutMs = 30_000;
+const videoStallTimeoutMs = 12_000;
 const hlsTimeoutMs = 25_000;
 const playbackAttempts = ["webrtc", "hls", "webrtc"] as const;
 
@@ -65,7 +67,10 @@ export default defineComponent({
           const retry = () => {
             if (current === generation) start();
           };
-          startupTimer = setTimeout(retry, attempt === "hls" ? hlsTimeoutMs : webRtcTimeoutMs);
+          startupTimer = setTimeout(
+            retry,
+            attempt === "hls" ? hlsTimeoutMs : webRtcNegotiationTimeoutMs,
+          );
 
           if (attempt === "hls") {
             void requestHaHlsUrl(entityId)
@@ -80,7 +85,13 @@ export default defineComponent({
 
           const started = startHaWebRtcStream(entityId, {
             onStream: (incoming) => {
-              if (current === generation) stream.value = incoming;
+              if (current !== generation) return;
+              if (!stream.value) {
+                // Negotiation can finish before the browser receives a decodable video frame.
+                clearTimeout(startupTimer);
+                startupTimer = setTimeout(retry, webRtcFirstFrameTimeoutMs);
+              }
+              stream.value = incoming;
             },
             onError: retry,
           });
@@ -108,7 +119,7 @@ export default defineComponent({
     const onPreviewWaiting = () => {
       if (previewState.value !== "playing") return;
       previewState.value = "connecting";
-      startupTimer = setTimeout(() => retryPreview?.(), webRtcTimeoutMs);
+      startupTimer = setTimeout(() => retryPreview?.(), videoStallTimeoutMs);
     };
 
     const onPreviewError = () => retryPreview?.();
