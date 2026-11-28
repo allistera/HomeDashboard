@@ -155,7 +155,7 @@ export const entryBindings: EntryBinding[] = [
 export const securityPageBindings = {
   alarmControlPanel: "alarm_control_panel.alarmo",
   people: ["person.allister_antosik", "person.tonnii_antosik", "person.jaicob_antosik"],
-  frontDoorCamera: "camera.back_garden_g5_turret_ultra_high_resolution_channel",
+  frontDoorCamera: "camera.back_garden_back_garden",
 } satisfies {
   alarmControlPanel: EntityId;
   people: EntityId[];

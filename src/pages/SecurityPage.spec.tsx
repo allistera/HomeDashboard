@@ -51,7 +51,9 @@ describe("SecurityPage Home Assistant entities", () => {
   it("starts live previews for available cameras and shares the stream with the viewer", async () => {
     const pinia = createPinia();
     setActivePinia(pinia);
-    const garden = entity("camera.garden", "recording", { friendly_name: "Garden camera" });
+    const garden = entity("camera.back_garden_back_garden", "idle", {
+      friendly_name: "Back Garden",
+    });
     const doorbell = entity("camera.doorbell", "unavailable", { friendly_name: "Doorbell" });
     applyEntities(entityStates(garden, doorbell));
     const ha = useHaStore();
@@ -63,13 +65,13 @@ describe("SecurityPage Home Assistant entities", () => {
       expect(start).not.toHaveBeenCalled();
       ha.status = "connected";
       await nextTick();
-      expect(start).toHaveBeenCalledExactlyOnceWith("camera.garden", expect.any(Object));
+      expect(start).toHaveBeenCalledExactlyOnceWith(garden.entity_id, expect.any(Object));
 
       const stream: Partial<MediaStream> = { id: "garden-stream" };
       // SAFETY: jsdom does not implement MediaStream. Players only assign it to their video elements.
       start.mock.calls[0]![1].onStream(stream as MediaStream);
       await nextTick();
-      const tile = wrapper.get('[aria-label="Open Garden camera camera in larger view"]');
+      const tile = wrapper.get('[aria-label="Open Front door camera in larger view"]');
       const video = tile.get<HTMLVideoElement>("video");
       expect(video.element.srcObject).toBe(stream);
       expect(tile.text()).toContain("Connecting…");

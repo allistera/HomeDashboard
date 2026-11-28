@@ -75,9 +75,9 @@ The homepage Activity feed shows Home Assistant logbook entries from the previou
 new events for `homePageBindings.activityEntityIds`. It shows the newest complete rows that fit above
 the media controls. The Home view starts `camera.back_garden_back_garden` over WebRTC when it
 loads. If the live picture is still starting after five seconds, the homepage also starts Home
-Assistant's HLS stream and keeps whichever plays first. The Security grid starts HLS after
-WebRTC fails. Previews retry WebRTC once if both streams fail, then show the latest available
-snapshot. Enlarged viewers reuse the preview's stream.
+Assistant's HLS stream and keeps whichever plays first. The Security grid uses that same entity
+for its Front door tile and starts HLS after WebRTC fails. If both streams fail, previews retry
+WebRTC once and then show the latest available snapshot. Enlarged viewers reuse the preview's stream.
 
 ## Commands
 
