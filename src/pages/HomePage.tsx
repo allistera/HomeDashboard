@@ -236,7 +236,7 @@ export default defineComponent({
                 <RoomCamera
                   camera={{
                     id: homeCamera.value.entityId,
-                    name: homeCamera.value.name,
+                    name: cameraBinding.label,
                     available: homeCamera.value.available ?? false,
                     snapshotUrl: homeCamera.value.snapshotUrl,
                   }}
