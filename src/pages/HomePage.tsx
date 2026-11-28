@@ -242,6 +242,7 @@ export default defineComponent({
                   }}
                   height={250}
                   livePreview={ha.status === "connected"}
+                  hlsFallbackDelayMs={5_000}
                   onPreviewState={(state: CameraPreviewState) => {
                     cameraPreview.value = state;
                   }}

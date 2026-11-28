@@ -13,6 +13,14 @@ const camera = {
   snapshotUrl: "https://ha.example/api/camera_proxy/camera.front_door?token=camera-fixture",
 };
 
+function makeVideoReady(video: HTMLVideoElement) {
+  Object.defineProperties(video, {
+    paused: { value: false },
+    videoWidth: { value: 1920 },
+    readyState: { value: HTMLMediaElement.HAVE_CURRENT_DATA },
+  });
+}
+
 describe("RoomCamera", () => {
   it("shows a Home Assistant snapshot and opens it in the camera viewer", async () => {
     const wrapper = mount(RoomCamera, { props: { camera, height: 250 } });
@@ -59,7 +67,9 @@ describe("RoomCamera", () => {
       expect(start).toHaveBeenCalledTimes(2);
       expect(requestHls).toHaveBeenCalledWith(camera.id);
       expect(stop).toHaveBeenCalledOnce();
-      await wrapper.get("video").trigger("playing");
+      const preview = wrapper.get<HTMLVideoElement>("video");
+      makeVideoReady(preview.element);
+      await preview.trigger("playing");
       await vi.advanceTimersByTimeAsync(30_000);
       expect(start).toHaveBeenCalledTimes(2);
       expect(wrapper.text()).toContain("LIVE");
@@ -92,8 +102,9 @@ describe("RoomCamera", () => {
     try {
       await vi.advanceTimersByTimeAsync(20_000);
       expect(stop).toHaveBeenCalledOnce();
-      const preview = wrapper.get(".camera > video");
+      const preview = wrapper.get<HTMLVideoElement>(".camera > video");
       expect(preview.attributes("src")).toBe(url);
+      makeVideoReady(preview.element);
       await preview.trigger("playing");
 
       await wrapper.get(".camera").trigger("click");
@@ -121,6 +132,67 @@ describe("RoomCamera", () => {
       vi.useRealTimers();
     }
   });
+
+  it.each(["webrtc", "hls"] as const)(
+    "keeps %s when it starts playing first in the homepage preview",
+    async (winner) => {
+      vi.useFakeTimers();
+      const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
+      const play = vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue();
+      const load = vi.spyOn(HTMLMediaElement.prototype, "load").mockImplementation(() => undefined);
+      const canPlay = vi
+        .spyOn(HTMLMediaElement.prototype, "canPlayType")
+        .mockReturnValue("probably");
+      const url = "https://ha.example/api/hls/fixture/master_playlist.m3u8";
+      const requestHls = vi.spyOn(haHls, "requestHaHlsUrl").mockResolvedValue(url);
+      const stop = vi.fn();
+      const start = vi.spyOn(webRtc, "startHaWebRtcStream").mockReturnValue({ stop });
+      const wrapper = mount(RoomCamera, {
+        props: { camera, livePreview: true, hlsFallbackDelayMs: 5_000 },
+      });
+      try {
+        const stream: Partial<MediaStream> = { id: "preview-stream" };
+        // SAFETY: jsdom has no MediaStream. The player only assigns it to the video element.
+        start.mock.calls[0]![1].onStream(stream as MediaStream);
+        await vi.advanceTimersByTimeAsync(4_999);
+        expect(requestHls).not.toHaveBeenCalled();
+        await vi.advanceTimersByTimeAsync(1);
+        expect(requestHls).toHaveBeenCalledWith(camera.id);
+        expect(stop).not.toHaveBeenCalled();
+
+        const videos = wrapper.findAll<HTMLVideoElement>(".camera > video");
+        expect(videos).toHaveLength(2);
+        const playing = videos.find((video) =>
+          winner === "webrtc"
+            ? video.element.srcObject === stream
+            : video.attributes("src") === url,
+        );
+        expect(playing).toBeDefined();
+        await playing!.trigger("playing");
+        expect(wrapper.findAll(".camera > video")).toHaveLength(2);
+        makeVideoReady(playing!.element);
+        await playing!.trigger("loadeddata");
+        expect(wrapper.findAll(".camera > video")).toHaveLength(1);
+        expect(wrapper.text()).toContain("LIVE");
+        expect(stop).toHaveBeenCalledTimes(winner === "hls" ? 1 : 0);
+
+        await wrapper.get(".camera").trigger("click");
+        const viewer = wrapper.get<HTMLVideoElement>('[role="dialog"] video');
+        if (winner === "webrtc") expect(viewer.element.srcObject).toBe(stream);
+        else expect(viewer.attributes("src")).toBe(url);
+        expect(start).toHaveBeenCalledOnce();
+      } finally {
+        wrapper.unmount();
+        start.mockRestore();
+        requestHls.mockRestore();
+        canPlay.mockRestore();
+        load.mockRestore();
+        play.mockRestore();
+        visibility.mockRestore();
+        vi.useRealTimers();
+      }
+    },
+  );
 
   it("opens the enlarged viewer with the same live session and keeps it on close", async () => {
     const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");

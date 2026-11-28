@@ -1,7 +1,7 @@
 import { defineComponent, ref, shallowRef, watch, type PropType } from "vue";
 
 import CameraModal from "@/components/CameraModal";
-import CameraTile from "@/components/CameraTile";
+import CameraTile, { type CameraTransport } from "@/components/CameraTile";
 import { useDocumentVisible } from "@/composables/useDocumentVisible";
 import type { RoomCamera } from "@/models/rooms";
 import { requestHaHlsUrl } from "@/services/haHls";
@@ -12,7 +12,7 @@ const webRtcNegotiationTimeoutMs = 20_000;
 const webRtcFirstFrameTimeoutMs = 30_000;
 const videoStallTimeoutMs = 12_000;
 const hlsTimeoutMs = 25_000;
-const playbackAttempts = ["webrtc", "hls", "webrtc"] as const;
+type PreviewEvents = Record<"playing" | "waiting" | "error", (transport: CameraTransport) => void>;
 
 export default defineComponent({
   name: "RoomCamera",
@@ -21,6 +21,7 @@ export default defineComponent({
     camera: { type: Object as PropType<RoomCamera>, required: true },
     height: { type: Number, default: 150 },
     livePreview: { type: Boolean, default: false },
+    hlsFallbackDelayMs: { type: Number, default: undefined },
   },
   emits: ["previewState"],
   setup(props, { emit }) {
@@ -29,8 +30,8 @@ export default defineComponent({
     const stream = shallowRef<MediaStream | null>(null);
     const hlsUrl = ref("");
     const previewState = ref<CameraPreviewState>("off");
-    let startupTimer: ReturnType<typeof setTimeout> | undefined;
-    let retryPreview: (() => void) | undefined;
+    const activeTransport = ref<CameraTransport | null>(null);
+    let previewEvents: PreviewEvents | undefined;
 
     watch(previewState, (state) => emit("previewState", state));
     watch(
@@ -45,84 +46,128 @@ export default defineComponent({
       (entityId, _, onCleanup) => {
         if (!entityId) return;
         let session: WebRtcSession | null = null;
-        let attemptIndex = 0;
-        let generation = 0;
-        const stop = () => {
-          generation++;
-          clearTimeout(startupTimer);
+        let webRtcAttempts = 0;
+        let webRtcRunning = false;
+        let hlsRunning = false;
+        let hlsTried = false;
+        let hlsGeneration = 0;
+        let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+        const deadlines: Partial<Record<CameraTransport, ReturnType<typeof setTimeout>>> = {};
+        const isRunning = (source: CameraTransport) =>
+          source === "webrtc" ? webRtcRunning : hlsRunning;
+
+        const stopWebRtc = () => {
+          webRtcRunning = false;
+          clearTimeout(deadlines.webrtc);
+          clearTimeout(fallbackTimer);
           session?.stop();
           session = null;
           stream.value = null;
+        };
+        const stopHls = () => {
+          hlsRunning = false;
+          hlsGeneration++;
+          clearTimeout(deadlines.hls);
           hlsUrl.value = "";
         };
-        const start = () => {
-          stop();
-          const attempt = playbackAttempts[attemptIndex++];
-          if (!attempt) {
-            previewState.value = "off";
-            return;
+
+        const fail = (source: CameraTransport) => {
+          if (!isRunning(source)) return;
+          if (source === "webrtc") stopWebRtc();
+          else {
+            hlsTried = true;
+            stopHls();
           }
+          if (activeTransport.value === source) activeTransport.value = null;
+          if (webRtcRunning || hlsRunning) return;
+          if (!hlsTried) startHls();
+          else if (webRtcAttempts < 2) startWebRtc();
+          else previewState.value = "off";
+        };
+        const setDeadline = (source: CameraTransport, timeout: number) => {
+          clearTimeout(deadlines[source]);
+          deadlines[source] = setTimeout(() => fail(source), timeout);
+        };
+
+        const startHls = () => {
+          if (hlsRunning || hlsTried) return;
+          hlsRunning = true;
           previewState.value = "connecting";
-          const current = generation;
-          const retry = () => {
-            if (current === generation) start();
-          };
-          startupTimer = setTimeout(
-            retry,
-            attempt === "hls" ? hlsTimeoutMs : webRtcNegotiationTimeoutMs,
-          );
-
-          if (attempt === "hls") {
-            void requestHaHlsUrl(entityId)
-              .then((url) => {
-                if (current !== generation) return;
-                if (url) hlsUrl.value = url;
-                else retry();
-              })
-              .catch(retry);
-            return;
-          }
-
+          const current = ++hlsGeneration;
+          setDeadline("hls", hlsTimeoutMs);
+          void requestHaHlsUrl(entityId)
+            .then((url) => {
+              if (current !== hlsGeneration) return;
+              if (url) hlsUrl.value = url;
+              else fail("hls");
+            })
+            .catch(() => {
+              if (current === hlsGeneration) fail("hls");
+            });
+        };
+        const startWebRtc = () => {
+          webRtcRunning = true;
+          previewState.value = "connecting";
+          const attempt = ++webRtcAttempts;
+          const isCurrent = () => webRtcRunning && webRtcAttempts === attempt;
+          setDeadline("webrtc", webRtcNegotiationTimeoutMs);
           const started = startHaWebRtcStream(entityId, {
             onStream: (incoming) => {
-              if (current !== generation) return;
+              if (!isCurrent()) return;
               if (!stream.value) {
                 // Negotiation can finish before the browser receives a decodable video frame.
-                clearTimeout(startupTimer);
-                startupTimer = setTimeout(retry, webRtcFirstFrameTimeoutMs);
+                setDeadline("webrtc", webRtcFirstFrameTimeoutMs);
               }
               stream.value = incoming;
             },
-            onError: retry,
+            onError: () => {
+              if (isCurrent()) fail("webrtc");
+            },
           });
-          if (current !== generation) started?.stop();
-          else if (started) session = started;
-          else retry();
+          if (!isCurrent()) started?.stop();
+          else if (!started) fail("webrtc");
+          else session = started;
+        };
+
+        previewEvents = {
+          playing: (source) => {
+            if (
+              !isRunning(source) ||
+              (activeTransport.value === source && previewState.value === "playing")
+            ) {
+              return;
+            }
+            clearTimeout(deadlines[source]);
+            clearTimeout(fallbackTimer);
+            if (source === "webrtc") stopHls();
+            else {
+              hlsTried = true;
+              stopWebRtc();
+            }
+            activeTransport.value = source;
+            previewState.value = "playing";
+          },
+          waiting: (source) => {
+            if (activeTransport.value !== source || previewState.value !== "playing") return;
+            previewState.value = "connecting";
+            setDeadline(source, videoStallTimeoutMs);
+          },
+          error: fail,
         };
         onCleanup(() => {
-          retryPreview = undefined;
-          stop();
+          previewEvents = undefined;
+          stopWebRtc();
+          stopHls();
+          activeTransport.value = null;
           previewState.value = "off";
         });
-        retryPreview = start;
-        start();
+        startWebRtc();
+        if (webRtcRunning && props.hlsFallbackDelayMs !== undefined) {
+          fallbackTimer = setTimeout(startHls, props.hlsFallbackDelayMs);
+        }
       },
       { immediate: true },
     );
-
-    const onPreviewPlaying = () => {
-      if (previewState.value === "off") return;
-      clearTimeout(startupTimer);
-      previewState.value = "playing";
-    };
-
-    const onPreviewWaiting = () => {
-      if (previewState.value !== "playing") return;
-      previewState.value = "connecting";
-      startupTimer = setTimeout(() => retryPreview?.(), videoStallTimeoutMs);
-    };
-
-    const onPreviewError = () => retryPreview?.();
 
     return () => (
       <>
@@ -142,10 +187,11 @@ export default defineComponent({
           videoPreview={previewState.value !== "off"}
           videoStream={stream.value}
           hlsUrl={hlsUrl.value}
+          activeTransport={activeTransport.value}
           live={previewState.value === "playing"}
-          onPlaying={onPreviewPlaying}
-          onWaiting={onPreviewWaiting}
-          onVideoError={onPreviewError}
+          onPlaying={(source: CameraTransport) => previewEvents?.playing(source)}
+          onWaiting={(source: CameraTransport) => previewEvents?.waiting(source)}
+          onVideoError={(source: CameraTransport) => previewEvents?.error(source)}
           onSelect={() => {
             expanded.value = true;
           }}
@@ -159,8 +205,14 @@ export default defineComponent({
               entityId: props.camera.available ? props.camera.id : undefined,
               snapshotUrl: props.camera.available ? props.camera.snapshotUrl : undefined,
             }}
-            previewStream={previewState.value === "off" ? undefined : stream.value}
-            previewHlsUrl={hlsUrl.value}
+            previewStream={
+              previewState.value === "off"
+                ? undefined
+                : activeTransport.value === "hls"
+                  ? null
+                  : stream.value
+            }
+            previewHlsUrl={activeTransport.value === "hls" || !stream.value ? hlsUrl.value : ""}
             onClose={() => {
               expanded.value = false;
             }}

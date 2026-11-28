@@ -3,6 +3,8 @@ import { defineComponent, onScopeDispose, ref, watch, type PropType } from "vue"
 import { useCameraVideo } from "@/composables/useCameraVideo";
 import { useDocumentVisible } from "@/composables/useDocumentVisible";
 
+export type CameraTransport = "webrtc" | "hls";
+
 function withCacheBust(url: string, bust: number): string {
   const separator = url.includes("?") ? "&" : "?";
   return `${url}${separator}time=${bust}`;
@@ -21,11 +23,14 @@ export default defineComponent({
     // SAFETY: Vue validates the object shape and RoomCamera supplies the negotiated MediaStream.
     videoStream: { type: Object as PropType<MediaStream | null>, default: null },
     hlsUrl: { type: String, default: "" },
+    // SAFETY: RoomCamera supplies only the negotiated transport or null during startup.
+    activeTransport: { type: String as PropType<CameraTransport | null>, default: null },
   },
   emits: ["select", "playing", "waiting", "videoError"],
   setup(props, { emit }) {
     const streamFailed = ref(false);
-    const video = ref<HTMLVideoElement | null>(null);
+    const webRtcVideo = ref<HTMLVideoElement | null>(null);
+    const hlsVideo = ref<HTMLVideoElement | null>(null);
     const visible = useDocumentVisible();
     const bust = ref(Date.now());
     let timer: ReturnType<typeof setInterval> | undefined;
@@ -68,11 +73,39 @@ export default defineComponent({
     );
 
     useCameraVideo(
-      video,
+      webRtcVideo,
       () => props.videoStream,
-      () => props.hlsUrl,
-      () => emit("videoError"),
+      () => "",
+      () => emit("videoError", "webrtc"),
     );
+    useCameraVideo(
+      hlsVideo,
+      () => null,
+      () => props.hlsUrl,
+      () => emit("videoError", "hls"),
+    );
+
+    const reportPlaying = (source: CameraTransport, player: HTMLVideoElement | null) => {
+      if (
+        player &&
+        !player.paused &&
+        player.videoWidth > 0 &&
+        player.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
+      ) {
+        emit("playing", source);
+      }
+    };
+    const reportWebRtcPlaying = () => reportPlaying("webrtc", webRtcVideo.value);
+    const reportHlsPlaying = () => reportPlaying("hls", hlsVideo.value);
+
+    watch([webRtcVideo, hlsVideo], ([rtc, hls], _, onCleanup) => {
+      rtc?.addEventListener("resize", reportWebRtcPlaying);
+      hls?.addEventListener("resize", reportHlsPlaying);
+      onCleanup(() => {
+        rtc?.removeEventListener("resize", reportWebRtcPlaying);
+        hls?.removeEventListener("resize", reportHlsPlaying);
+      });
+    });
 
     onScopeDispose(stopRefresh);
 
@@ -89,30 +122,46 @@ export default defineComponent({
           aria-haspopup="dialog"
           onClick={() => emit("select")}
         >
-          {props.videoPreview ? (
+          {props.videoPreview && (props.videoStream || !props.hlsUrl) && (
             <video
               class="camera__stream"
-              ref={video}
+              ref={webRtcVideo}
+              style={{ opacity: props.activeTransport === "webrtc" ? 1 : 0 }}
               autoplay
               muted
               playsinline
               aria-hidden="true"
-              onPlaying={() => emit("playing")}
-              onWaiting={() => emit("waiting")}
+              onPlaying={reportWebRtcPlaying}
+              onLoadeddata={reportWebRtcPlaying}
+              onWaiting={() => emit("waiting", "webrtc")}
+              onError={() => emit("videoError", "webrtc")}
             />
-          ) : (
-            showImage && (
-              <img
-                class="camera__stream"
-                src={url}
-                alt={`${props.name} camera`}
-                decoding="async"
-                referrerpolicy="no-referrer"
-                onError={() => {
-                  streamFailed.value = true;
-                }}
-              />
-            )
+          )}
+          {props.videoPreview && props.hlsUrl && (
+            <video
+              class="camera__stream"
+              ref={hlsVideo}
+              style={{ opacity: props.activeTransport === "hls" ? 1 : 0 }}
+              autoplay
+              muted
+              playsinline
+              aria-hidden="true"
+              onPlaying={reportHlsPlaying}
+              onLoadeddata={reportHlsPlaying}
+              onWaiting={() => emit("waiting", "hls")}
+            />
+          )}
+          {showImage && (
+            <img
+              class="camera__stream"
+              src={url}
+              alt={`${props.name} camera`}
+              decoding="async"
+              referrerpolicy="no-referrer"
+              onError={() => {
+                streamFailed.value = true;
+              }}
+            />
           )}
           <span class="camera__tag">{props.name}</span>
           {props.live && (props.videoPreview || showImage) && (
