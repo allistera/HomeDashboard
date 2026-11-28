@@ -1,4 +1,5 @@
 import { mount } from "@vue/test-utils";
+import Hls from "hls.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import CameraTile from "@/components/CameraTile";
@@ -99,5 +100,28 @@ describe("CameraTile", () => {
     });
 
     expect(wrapper.text()).not.toContain("LIVE");
+  });
+
+  it("uses the HLS player when native support is uncertain", async () => {
+    const canPlay = vi.spyOn(HTMLMediaElement.prototype, "canPlayType").mockReturnValue("maybe");
+    const isSupported = vi.spyOn(Hls, "isSupported").mockReturnValue(true);
+    const loadSource = vi.spyOn(Hls.prototype, "loadSource").mockImplementation(() => undefined);
+    const attachMedia = vi.spyOn(Hls.prototype, "attachMedia").mockImplementation(() => undefined);
+    const hlsUrl = "https://ha.example/api/hls/fixture/master_playlist.m3u8";
+    const wrapper = mount(CameraTile, {
+      props: { name: "Back Garden", videoPreview: true, hlsUrl },
+    });
+
+    try {
+      await vi.dynamicImportSettled();
+      expect(loadSource).toHaveBeenCalledWith(hlsUrl);
+      expect(attachMedia).toHaveBeenCalledWith(wrapper.get("video").element);
+    } finally {
+      wrapper.unmount();
+      canPlay.mockRestore();
+      isSupported.mockRestore();
+      loadSource.mockRestore();
+      attachMedia.mockRestore();
+    }
   });
 });

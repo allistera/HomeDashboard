@@ -21,18 +21,7 @@ export function useCameraVideo(
         return;
       }
       if (!hlsUrl) return;
-
-      if (player.canPlayType("application/vnd.apple.mpegurl")) {
-        player.src = hlsUrl;
-        player.addEventListener("error", onError);
-        onCleanup(() => {
-          player.removeEventListener("error", onError);
-          player.removeAttribute("src");
-          player.load();
-        });
-        play();
-        return;
-      }
+      const nativeSupport = player.canPlayType("application/vnd.apple.mpegurl");
 
       let cancelled = false;
       let destroy: (() => void) | undefined;
@@ -40,11 +29,29 @@ export function useCameraVideo(
         cancelled = true;
         destroy?.();
       });
+
+      const playNative = () => {
+        player.src = hlsUrl;
+        player.addEventListener("error", onError);
+        destroy = () => {
+          player.removeEventListener("error", onError);
+          player.removeAttribute("src");
+          player.load();
+        };
+        play();
+      };
+      // Some browsers report "maybe" but fail to play Home Assistant's HLS natively.
+      if (nativeSupport === "probably") {
+        playNative();
+        return;
+      }
+
       void import("hls.js")
         .then(({ default: Hls }) => {
           if (cancelled) return;
           if (!Hls.isSupported()) {
-            onError();
+            if (nativeSupport) playNative();
+            else onError();
             return;
           }
           const hls = new Hls({ enableWorker: false, backBufferLength: 30 });
